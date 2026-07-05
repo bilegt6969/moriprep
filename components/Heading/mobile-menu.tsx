@@ -69,15 +69,6 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
                       Home
                     </Link>
                   </li>
-                  <li className="border-b border-neutral-200/70 px-6 py-5">
-                    <Link
-                      href="/search"
-                      onClick={handleClose}
-                      className="flex items-center text-[26px] font-semibold tracking-tight text-black transition-colors hover:text-neutral-500"
-                    >
-                      Search
-                    </Link>
-                  </li>
 
                   {/* Categories Accordion */}
                   <li className="border-b border-neutral-200/70 px-6 py-5">

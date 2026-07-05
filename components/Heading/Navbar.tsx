@@ -6,7 +6,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useMediaQuery } from "hooks/use-media-query";
 import { cn } from "lib/cn";
 import type { NavLink } from "lib/navigation";
-import { Menu as MenuIcon, Search, X } from "lucide-react";
+import { Menu as MenuIcon, X } from "lucide-react";
 // @ts-ignore - metal-fx types not resolving correctly
 // @ts-ignore - border-beam types may not resolve correctly
 import { BorderBeam } from "border-beam";
@@ -16,7 +16,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Menu from "./menu";
 import MobileMenu from "./mobile-menu";
-import { NavbarSearchModal } from "./NavbarSearchModal";
 import { SignInButton } from "./sign-in-button";
 
 const smoothEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -31,7 +30,6 @@ export default function Navbar({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -68,17 +66,6 @@ export default function Navbar({
     };
   }, [isOpen, isMobile]);
 
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        if (isSearchOpen) setIsSearchOpen(false);
-        else setIsSearchOpen(true);
-      }
-    };
-    document.addEventListener("keydown", handleGlobalKeyDown);
-    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [isSearchOpen]);
 
   const navbarVariants: Variants = {
     hidden: { y: -50, opacity: 0 },
@@ -162,31 +149,6 @@ export default function Navbar({
                 />
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <div className="relative">
-                  <BorderBeam
-                    size="md"
-                    colorVariant="mono"
-                    className="rounded-full"
-                  >
-                    <div className="island-inset flex h-8 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-medium text-neutral-800 transition-opacity hover:opacity-80 sm:px-3.5 sm:text-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setIsSearchOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer p-0 text-inherit"
-                        aria-label="Search"
-                      >
-                        <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
-                        <span className="hidden min-[440px]:inline tracking-tight">
-                          Search
-                        </span>
-                      </button>
-                    </div>
-                  </BorderBeam>
-                </div>
-
                 <div className="text-neutral-800 [&_button]:text-neutral-800">
                   <CartModal cartButtonVariant="island" />
                 </div>
@@ -204,7 +166,6 @@ export default function Navbar({
                 <button
                   type="button"
                   onClick={() => {
-                    setIsSearchOpen(false);
                     setIsOpen((prev) => !prev);
                   }}
                   className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-black/5 lg:hidden"
@@ -230,11 +191,6 @@ export default function Navbar({
         )}
       </AnimatePresence>
 
-      <NavbarSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onOpen={() => setIsSearchOpen(true)}
-      />
     </div>
   );
 }
