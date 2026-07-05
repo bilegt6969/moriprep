@@ -3,6 +3,7 @@ export type Image = {
   altText: string;
   width: number;
   height: number;
+  scale?: number;
 };
 
 export type Money = {

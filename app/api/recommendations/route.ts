@@ -44,7 +44,11 @@ const PRODUCT_PROJECTION = `{
   "updatedAt": _updatedAt,
   availableForSale,
   outOfStock,
-  images,
+  images[]{
+    asset,
+    alt,
+    scale,
+  },
   variants,
   purchaseBundles,
   bestFor
@@ -83,8 +87,9 @@ function mapSanityProduct(doc: SanityProduct): RecommendationProduct {
           altText: doc.title || "",
           width: 800,
           height: 800,
+          scale: images[0]?.scale || 1.0,
         }
-      : { url: "", altText: doc.title || "", width: 0, height: 0 };
+      : { url: "", altText: doc.title || "", width: 0, height: 0, scale: 1.0 };
 
   return {
     id: doc._id,

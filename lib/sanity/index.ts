@@ -55,7 +55,11 @@ const productFields = `
   availableForSale,
   outOfStock,
   tags,
-  images,
+  images[]{
+    asset,
+    alt,
+    scale,
+  },
   options,
   variants,
   seo,

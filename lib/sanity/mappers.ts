@@ -24,6 +24,7 @@ import { urlForImage } from "./image";
 type SanityImage = {
   asset?: { _ref: string };
   alt?: string;
+  scale?: number;
 };
 
 type SanityVariant = {
@@ -180,6 +181,7 @@ function mapImage(
     altText: image.alt || fallbackAlt,
     width,
     height,
+    scale: image.scale || 1.0,
   };
 }
 
@@ -353,6 +355,7 @@ export function mapSanityProduct(
     altText: doc.title,
     width: 0,
     height: 0,
+    scale: 1.0,
   };
 
   const options: ProductOption[] =

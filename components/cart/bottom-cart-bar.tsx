@@ -24,6 +24,7 @@ const EXCLUDED_PATHS = [
   "/sign-in",
   "/signup",
   "/checkout",
+  "/studio",
 ];
 
 export default function BottomCartBar() {

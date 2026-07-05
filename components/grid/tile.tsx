@@ -7,6 +7,7 @@ export function GridTileImage({
   isInteractive = true,
   active,
   label,
+  scale,
   ...props
 }: {
   isInteractive?: boolean;
@@ -17,6 +18,7 @@ export function GridTileImage({
     currencyCode: string;
     position?: "bottom" | "center";
   };
+  scale?: number;
 } & React.ComponentProps<typeof Image>) {
   return (
     <div
@@ -32,11 +34,15 @@ export function GridTileImage({
       {props.src ? (
         <Image
           className={clsx("relative h-full rounded w-full object-contain", {
-            "p-6 pb-16": label,
             "transition duration-300 ease-in-out group-hover:scale-105":
               isInteractive,
           })}
           quality={90}
+          style={{
+            padding: scale && scale > 1 
+              ? `${(1 - 1/scale) * 50}%` 
+              : label ? undefined : undefined,
+          }}
           {...props}
         />
       ) : null}

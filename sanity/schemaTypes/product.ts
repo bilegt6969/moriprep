@@ -144,6 +144,14 @@ export const product = defineType({
               title: "Alt text",
               type: "string",
             }),
+            defineField({
+              name: "scale",
+              title: "Image Scale",
+              type: "number",
+              description: "1.0 = original size (no padding), higher values = image scaled down with white padding (e.g., 1.25, 1.5, 2.0)",
+              initialValue: 1.0,
+              validation: (rule) => rule.min(1.0),
+            }),
           ],
         },
       ],
@@ -177,15 +185,29 @@ export const product = defineType({
       name: "variants",
       title: "Variants",
       type: "array",
+      description: "Add different versions of this product (e.g., different colors, sizes, or names with their own prices)",
       of: [
         {
           type: "object",
           fields: [
             defineField({
               name: "title",
-              title: "Title",
+              title: "Variant Name",
               type: "string",
               validation: (rule) => rule.required(),
+              description: "e.g., 'Bass Pro Hat - Black', 'Bass Pro Hat - Red'",
+            }),
+            defineField({
+              name: "color",
+              title: "Color",
+              type: "string",
+              description: "e.g., 'Black', 'Red', 'Blue', 'Green'",
+            }),
+            defineField({
+              name: "size",
+              title: "Size",
+              type: "string",
+              description: "e.g., 'S', 'M', 'L', 'XL', 'One Size'",
             }),
             defineField({
               name: "availableForSale",
@@ -198,17 +220,19 @@ export const product = defineType({
               title: "Price (MNT)",
               type: "number",
               validation: (rule) => rule.required().min(0),
+              description: "Price specific to this variant",
             }),
             defineField({
               name: "compareAtPrice",
               title: "Compare at Price (MNT)",
               type: "number",
-              description: "Leave empty if no discount on this variant.",
+              description: "Original price before discount. Leave empty if no discount on this variant.",
             }),
             defineField({
               name: "selectedOptions",
-              title: "Selected options",
+              title: "Additional Options",
               type: "array",
+              description: "Any other options not covered by color/size fields",
               of: [
                 {
                   type: "object",
@@ -228,6 +252,20 @@ export const product = defineType({
               ],
             }),
           ],
+          preview: {
+            select: {
+              title: "title",
+              color: "color",
+              size: "size",
+              price: "price",
+            },
+            prepare({ title, color, size, price }) {
+              return {
+                title: title,
+                subtitle: `${color || ''} ${size ? `• ${size}` : ''} • ${price} MNT`,
+              };
+            },
+          },
         },
       ],
       validation: (rule) => rule.min(1),

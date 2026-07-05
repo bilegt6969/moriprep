@@ -80,14 +80,20 @@ export function HomeProductCard({
           sizes={imageSizes}
           priority={priority}
           unoptimized
+          style={{
+            objectFit: 'contain',
+            padding: product.featuredImage.scale && product.featuredImage.scale > 1 
+              ? `${(1 - 1/product.featuredImage.scale) * 50}%` 
+              : undefined,
+          }}
           className={cn(
-            "object-contain p-3 pb-16",
-            isCompact && "max-lg:object-cover max-lg:p-2 max-lg:pb-20",
-            isBento && "object-cover p-4 pb-20",
+            "transition duration-500 ease-out",
+            isCompact && "max-lg:object-cover",
+            isBento && "object-cover",
             !isCompact &&
-              "max-sm:object-cover max-sm:p-2 max-sm:pb-2 sm:px-2 sm:py-4",
+              "max-sm:object-cover",
             !isOutOfStock &&
-              "transition duration-500 ease-out group-hover:-translate-y-2",
+              "group-hover:-translate-y-2",
           )}
         />
       ) : null}

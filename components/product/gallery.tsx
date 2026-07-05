@@ -79,7 +79,7 @@ const StableImageEffect = ({
 export function Gallery({
   images,
 }: {
-  images: { src: string; altText: string }[];
+  images: { src: string; altText: string; scale?: number }[];
 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -289,6 +289,7 @@ export function Gallery({
                       active={isActive}
                       isInteractive={false}
                       className="h-full w-full object-cover"
+                      scale={image.scale}
                     />
                   </button>
                 </li>
@@ -340,6 +341,11 @@ export function Gallery({
                     src={images[imageIndex]!.src}
                     priority
                     quality={90}
+                    style={{
+                      padding: images[imageIndex]?.scale && images[imageIndex].scale > 1 
+                        ? `${(1 - 1/images[imageIndex].scale) * 50}%` 
+                        : undefined,
+                    }}
                   />
                 )}
               </div>
@@ -377,6 +383,11 @@ export function Gallery({
                       src={images[imageIndex]!.src}
                       priority
                       quality={90}
+                      style={{
+                        padding: images[imageIndex]?.scale && images[imageIndex].scale > 1 
+                          ? `${(1 - 1/images[imageIndex].scale) * 50}%` 
+                          : undefined,
+                      }}
                     />
                   )}
                 </motion.div>
@@ -483,6 +494,7 @@ export function Gallery({
                         active={isActive}
                         isInteractive={false}
                         className="h-full w-full object-cover"
+                        scale={image.scale}
                       />
                     </button>
                   </li>

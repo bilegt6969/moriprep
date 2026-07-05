@@ -58,10 +58,16 @@ export function SearchProductCard({
           sizes="(max-width: 1023px) 45vw, 30vw"
           priority={priority}
           quality={90}
+          style={{
+            objectFit: 'contain',
+            padding: product.featuredImage.scale && product.featuredImage.scale > 1 
+              ? `${(1 - 1/product.featuredImage.scale) * 50}%` 
+              : undefined,
+          }}
           className={cn(
-            "object-cover p-4",
+            "transition duration-500 ease-out",
             !isOutOfStock &&
-              "transition duration-500 ease-out group-hover:scale-[1.03]",
+              "group-hover:scale-[1.03]",
           )}
         />
       ) : null}
