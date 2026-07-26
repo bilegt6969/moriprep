@@ -64,9 +64,9 @@ export default function TermsOfService() {
           <Link href="/">
             <div className="flex items-center h-5 cursor-pointer">
               <img
-                src="/Lelogo.svg"
+                src="/morin.svg"
                 alt="Brand Logo"
-                className="h-full w-auto object-contain invert"
+                className="h-full w-auto object-contain opacity-80"
               />
             </div>
           </Link>

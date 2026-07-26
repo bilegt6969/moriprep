@@ -89,7 +89,7 @@ export function RecommendationsClient({
         {products.map((product) => (
           <div
             key={product.id}
-            className="border border-neutral-100 bg-[#f5f5f5] rounded-2xl p-4"
+            className="border border-neutral-100 bg-[#f9f9f9] rounded-2xl p-4"
           >
             <div className="text-sm font-medium">{product.title}</div>
             <div className="text-xs text-neutral-600">{product.brand}</div>

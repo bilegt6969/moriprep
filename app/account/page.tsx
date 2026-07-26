@@ -171,9 +171,9 @@ export default function AccountPage() {
           {/* Logo Brand Frame */}
           <Link href="/" className="flex items-center h-5">
             <img
-              src="/Lelogo.svg"
+              src="/morin.svg"
               alt="Sainto Logo"
-              className="h-full w-auto object-contain invert"
+              className="h-full w-auto object-contain opacity-80"
             />
           </Link>
         </div>
@@ -400,7 +400,7 @@ export default function AccountPage() {
                     </div>
 
                     {/* Bottom: Pipeline & Destination */}
-                    <div className="bg-[#fbfbfd] border-t border-gray-100 p-7 flex flex-col md:flex-row justify-between gap-8">
+                    <div className="bg-[#f9f9f9] border-t border-gray-100 p-7 flex flex-col md:flex-row justify-between gap-8">
                       {/* Destination */}
                       <div className="flex-1">
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-1.5">

@@ -2,9 +2,14 @@
 
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { cn } from "lib/cn";
-import type { NavLink } from "lib/navigation";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
+
+interface NavLink {
+  label: string;
+  href: string;
+  description?: string;
+}
 
 // Match website's island-motion easing
 const islandTiming =
@@ -23,19 +28,25 @@ interface CompanyLink {
 
 const companyLinks: CompanyLink[] = [
   {
-    label: "About Us",
-    href: "/about",
-    description: "Learn about our mission, values, and story.",
+    label: "Our Story",
+    href: "/story",
+    description:
+      "Learn about our mission to build Mongolia's education ecosystem.",
   },
   {
-    label: "Blog",
-    href: "/blog",
-    description: "The latest articles, insights, and company updates.",
+    label: "ByteLabs",
+    href: "/labs",
+    description: "Real-world projects and portfolio building opportunities.",
+  },
+  {
+    label: "Byte Network",
+    href: "/network",
+    description: "Connect with Mongolia's most ambitious students.",
   },
   {
     label: "Contact",
     href: "/contact",
-    description: "Get in touch with our team for support or inquiries.",
+    description: "Get in touch with our team for questions and partnerships.",
   },
 ];
 
@@ -54,16 +65,16 @@ export default function Menu({
       <NavigationMenu.List className="flex items-center gap-8">
         <NavigationMenu.Item>
           <NavigationMenu.Link asChild>
-            <Link href="/" className={linkClass}>
-              Home
+            <Link href="/dsat" className={linkClass}>
+              DSAT
             </Link>
           </NavigationMenu.Link>
         </NavigationMenu.Item>
 
         <NavigationMenu.Item>
           <NavigationMenu.Link asChild>
-            <Link href="/category" className={linkClass}>
-              Category
+            <Link href="/code" className={linkClass}>
+              Coding
             </Link>
           </NavigationMenu.Link>
         </NavigationMenu.Item>
@@ -105,8 +116,8 @@ export default function Menu({
                     <p className="text-[10px] font-semibold tracking-widest text-neutral-400 uppercase">
                       Overview
                     </p>
-                    <h3 className="mt-2.5 text-[13px] font-semibold leading-relaxed tracking-tight text-neutral-900">
-                      Discover our company story and what drives us forward.
+                    <h3 className="mt-2.5 text-[13px] font-semibold leading-relaxed tracking-tight text-neutral-900 font-eb-garamond">
+                      The complete operating system for your future.
                     </h3>
                   </div>
                   <Link

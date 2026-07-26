@@ -1,11 +1,9 @@
 "use client";
 
-import CartModal from "components/cart/modal";
 import Wrapper from "components/global/wrapper";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useMediaQuery } from "hooks/use-media-query";
 import { cn } from "lib/cn";
-import type { NavLink } from "lib/navigation";
 import { Menu as MenuIcon, X } from "lucide-react";
 // @ts-ignore - metal-fx types not resolving correctly
 // @ts-ignore - border-beam types may not resolve correctly
@@ -17,6 +15,12 @@ import { useEffect, useState } from "react";
 import Menu from "./menu";
 import MobileMenu from "./mobile-menu";
 import { SignInButton } from "./sign-in-button";
+
+interface NavLink {
+  label: string;
+  href: string;
+  description?: string;
+}
 
 const smoothEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
@@ -65,7 +69,6 @@ export default function Navbar({
       document.body.style.overflow = "";
     };
   }, [isOpen, isMobile]);
-
 
   const navbarVariants: Variants = {
     hidden: { y: -50, opacity: 0 },
@@ -135,11 +138,11 @@ export default function Navbar({
                   }}
                 >
                   <Image
-                    src="/Lelogo.svg"
+                    src="/morin.svg"
                     alt={siteName}
                     width={1666}
                     height={360}
-                    className="h-4 w-auto max-w-[5.5rem] object-contain object-left brightness-50 sm:h-[1rem] sm:max-w-[6rem]"
+                    className="h-4 w-auto max-w-[5.5rem] object-contain object-left opacity-60 sm:h-[1rem] sm:max-w-[6rem]"
                     priority
                   />
                 </Link>
@@ -149,10 +152,6 @@ export default function Navbar({
                 />
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <div className="text-neutral-800 [&_button]:text-neutral-800">
-                  <CartModal cartButtonVariant="island" />
-                </div>
-
                 <div className="relative flex items-center">
                   <BorderBeam
                     size="line"
@@ -190,7 +189,6 @@ export default function Navbar({
           </motion.header>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

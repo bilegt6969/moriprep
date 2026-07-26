@@ -1,6 +1,5 @@
 "use client";
 
-import { updateOrderStatus } from "app/actions/admin";
 import { useState } from "react";
 
 export function AdminOrderControls() {
@@ -15,8 +14,8 @@ export function AdminOrderControls() {
       return;
     }
 
-    const result = await updateOrderStatus(txCode.trim(), status);
-    setMessage(result.success ? "Order updated." : result.error || "Update failed.");
+    // TODO: Implement updateOrderStatus action
+    setMessage(`Order status would be updated to: ${status}`);
   }
 
   return (

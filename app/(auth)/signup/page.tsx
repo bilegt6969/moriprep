@@ -35,9 +35,9 @@ function AuthNavbar() {
             className="bg-transparent border-none cursor-pointer p-0 h-5 flex items-center"
           >
             <img
-              src="/Lelogo.svg"
+              src="/morin.svg"
               alt="Brand Logo"
-              className="h-full w-auto object-contain invert"
+              className="h-full w-auto object-contain opacity-80"
             />
           </button>
         </div>

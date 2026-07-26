@@ -19,6 +19,11 @@
 # misc
 .DS_Store
 *.pem
+*.json
+!package.json
+!package-lock.json
+!pnpm-lock.yaml
+!tsconfig.json
 
 # debug
 npm-debug.log*

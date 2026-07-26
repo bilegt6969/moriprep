@@ -1,17 +1,13 @@
 import { AuthSessionSync } from "components/auth/auth-session-sync";
-import BottomCartBar from "components/cart/bottom-cart-bar";
-import { CartProvider } from "components/cart/cart-context";
 import { CookieConsentProvider } from "components/cookie-consent";
-import InvestButton from "components/InvestButton";
-import { WelcomeCommerce } from "components/welcome-commerce";
-import { getCart } from "lib/commerce";
 import { baseUrl } from "lib/utils";
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { EB_Garamond, Geist } from "next/font/google";
 // @ts-ignore - nextjs-toploader types may not resolve correctly
 import { Analytics } from "@vercel/analytics/next";
+import { Providers } from "components/providers/tooltip-provider";
 import NextTopLoader from "nextjs-toploader";
-import { ReactNode, Suspense } from "react";
+import { ReactNode } from "react";
 import "./globals.css";
 
 const { SITE_NAME } = process.env;
@@ -22,16 +18,22 @@ const geist = Geist({
   display: "swap",
 });
 
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"] as const,
+  variable: "--font-eb-garamond",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Sainto: Sneakers, Clothes, Accessories, Watches, Tech, Lifestyle",
-    template: `%s | Sainto`,
+    default: "Byte - The Operating System for Your Future",
+    template: `%s | Byte`,
   },
   description:
-    "Buy and sell the hottest sneakers, streetwear, accessories, watches, tech products, and lifestyle items. Discover curated fashion and designer products updated weekly.",
+    "Byte is the complete operating system for your future. Access DSAT prep, coding practice, and educational resources all in one place.",
   keywords:
-    "sneakers, streetwear, clothes, accessories, watches, tech, lifestyle, fashion, online shopping, Sainto, buy and sell, гутал, хувцас, аксессуар",
+    "DSAT, SAT prep, coding practice, education, learning, Byte, future, career prep",
   robots: {
     follow: true,
     index: true,
@@ -40,7 +42,6 @@ export const metadata: Metadata = {
     canonical: "/",
     languages: {
       "en-US": "/",
-      "mn-MN": "/",
     },
   },
   icons: {
@@ -56,29 +57,17 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: baseUrl,
-    siteName: "Sainto",
-    title: "Sainto: Sneakers, Clothes, Accessories, Watches, Tech, Lifestyle",
+    siteName: "Byte",
+    title: "Byte - The Operating System for Your Future",
     description:
-      "Buy and sell the hottest sneakers, streetwear, accessories, watches, tech products, and lifestyle items. Discover curated fashion and designer products updated weekly.",
-  },
-  other: {
-    "description-mn":
-      "Хамгийн сүүлийн үеийн гутал, хувцас, аксессуар, цаг, техник хэрэгсэл, амьдралын хэрэглээний зүйлсийг худалдах, худалдан авах. Долоо хоног бүр шинээр шинэчлэгддэг загварын бүтээгдэхүүнүүдийг нээ.",
-    "keywords-mn":
-      "гутал, хувцас, аксессуар, цаг, техник, амьдралын хэрэглээ, загвар, онлайн худалдаа, Sainto, худалдах, худалдан авах",
+      "Byte is the complete operating system for your future. Access DSAT prep, coding practice, and educational resources all in one place.",
   },
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const cart = getCart();
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={geist.variable}>
-      <body className="bg-[#f5f5f5] text-neutral-900 antialiased selection:bg-neutral-200">
+    <html lang="en" className={`${geist.variable} ${ebGaramond.variable}`}>
+      <body className="bg-[#f9f9f9] text-neutral-900 antialiased selection:bg-neutral-200">
         <NextTopLoader
           color="#111"
           initialPosition={0.08}
@@ -92,19 +81,12 @@ export default async function RootLayout({
           zIndex={1600}
           showAtBottom={false}
         />
-        <CookieConsentProvider>
-          <AuthSessionSync />
-          <CartProvider cartPromise={cart}>
-            <main>
-              {children}
-              <WelcomeCommerce />
-            </main>
-            <Suspense fallback={null}>
-              <BottomCartBar />
-            </Suspense>
-          </CartProvider>
-        </CookieConsentProvider>
-        <InvestButton />
+        <Providers>
+          <CookieConsentProvider>
+            <AuthSessionSync />
+            <main>{children}</main>
+          </CookieConsentProvider>
+        </Providers>
       </body>
       <Analytics />
     </html>

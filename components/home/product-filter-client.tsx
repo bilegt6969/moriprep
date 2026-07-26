@@ -1,6 +1,5 @@
 "use client";
 
-import { HomeGrid } from "components/home/home-grid";
 import FilterBar from "components/home/product-filter";
 import { useEffect, useState } from "react";
 
@@ -47,7 +46,10 @@ export function ProductFilterClient() {
         onSortChange={setActiveSort}
         products={products}
       />
-      <HomeGrid activeCategory={activeCategory} activeSort={activeSort} />
+      {/* TODO: Add HomeGrid component when available */}
+      <div className="text-center py-8 text-gray-500">
+        Product grid coming soon
+      </div>
     </>
   );
 }

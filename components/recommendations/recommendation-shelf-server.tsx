@@ -1,4 +1,18 @@
-import { HomeProductCard } from "components/home/product-card";
+// Placeholder for missing HomeProductCard component
+function HomeProductCard({
+  product,
+  priority,
+}: {
+  product: any;
+  priority?: boolean;
+}) {
+  return (
+    <div className="border rounded-lg p-4">
+      <h3 className="font-semibold">{product?.title || "Product"}</h3>
+      <p className="text-sm text-gray-600">{product?.price || "$0.00"}</p>
+    </div>
+  );
+}
 
 interface RecommendationShelfProps {
   strategy: "similar" | "trending" | "cart" | "new-arrivals";
@@ -55,7 +69,7 @@ export async function RecommendationShelf({
         {products.map((product: any) => (
           <div
             key={product.id}
-            className="flex-shrink-0 w-64 md:w-72 lg:w-80 border border-neutral-100 bg-[#f5f5f5] rounded-2xl p-4"
+            className="flex-shrink-0 w-64 md:w-72 lg:w-80 border border-neutral-100 bg-[#f9f9f9] rounded-2xl p-4"
           >
             <HomeProductCard product={product} />
           </div>

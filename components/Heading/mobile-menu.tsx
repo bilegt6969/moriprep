@@ -1,11 +1,16 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import type { NavLink } from "lib/navigation";
 import { Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { SignInButton } from "./sign-in-button";
+
+interface NavLink {
+  label: string;
+  href: string;
+  description?: string;
+}
 
 interface Props {
   isOpen: boolean;
@@ -62,62 +67,22 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
                   {/* Static Links */}
                   <li className="border-b border-neutral-200/70 px-6 py-5">
                     <Link
-                      href="/"
+                      href="/dsat"
                       onClick={handleClose}
                       className="flex items-center text-[26px] font-semibold tracking-tight text-black transition-colors hover:text-neutral-500"
                     >
-                      Home
+                      DSAT
                     </Link>
                   </li>
 
-                  {/* Categories Accordion */}
                   <li className="border-b border-neutral-200/70 px-6 py-5">
-                    <div className="flex flex-col">
-                      <button
-                        onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                        className="flex w-full items-center justify-between text-left text-[26px] font-semibold tracking-tight text-black"
-                      >
-                        Categories
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 transition-colors hover:bg-neutral-200">
-                          {isCategoriesOpen ? (
-                            <Minus
-                              className="h-4 w-4 text-black"
-                              strokeWidth={2.5}
-                            />
-                          ) : (
-                            <Plus
-                              className="h-4 w-4 text-black"
-                              strokeWidth={2.5}
-                            />
-                          )}
-                        </span>
-                      </button>
-
-                      {/* Accordion Content */}
-                      <div
-                        className={`grid transition-all duration-300 ease-in-out ${
-                          isCategoriesOpen
-                            ? "grid-rows-[1fr] pt-5 opacity-100"
-                            : "grid-rows-[0fr] opacity-0"
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <ul className="flex flex-col gap-4">
-                            {categories.map((item) => (
-                              <li key={item.href}>
-                                <Link
-                                  href={item.href}
-                                  onClick={handleClose}
-                                  className="text-[20px] font-medium text-neutral-800 transition-colors hover:text-neutral-500"
-                                >
-                                  {item.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
+                    <Link
+                      href="/code"
+                      onClick={handleClose}
+                      className="flex items-center text-[26px] font-semibold tracking-tight text-black transition-colors hover:text-neutral-500"
+                    >
+                      Coding
+                    </Link>
                   </li>
 
                   {/* Companies Accordion */}

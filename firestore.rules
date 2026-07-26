@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow all access for development
+    match /userProgress/{document=**} {
+      allow read, write: if true;
+    }
+    
+    match /userStats/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Fallback for any other collections
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

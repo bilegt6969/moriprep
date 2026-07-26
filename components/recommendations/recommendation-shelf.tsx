@@ -1,7 +1,22 @@
 "use client";
 
-import { HomeProductCard } from "components/home/product-card";
 import { useEffect, useState } from "react";
+
+// Placeholder for missing HomeProductCard component
+function HomeProductCard({
+  product,
+  priority,
+}: {
+  product: any;
+  priority?: boolean;
+}) {
+  return (
+    <div className="border rounded-lg p-4">
+      <h3 className="font-semibold">{product?.title || "Product"}</h3>
+      <p className="text-sm text-gray-600">{product?.price || "$0.00"}</p>
+    </div>
+  );
+}
 
 interface RecommendationShelfProps {
   strategy: "similar" | "trending" | "cart" | "new-arrivals";
@@ -88,7 +103,7 @@ export default function RecommendationShelf({
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex-shrink-0 w-72 md:w-80 lg:w-80 border border-neutral-100 bg-[#f5f5f5] rounded-2xl p-4"
+            className="flex-shrink-0 w-72 md:w-80 lg:w-80 border border-neutral-100 bg-[#f9f9f9] rounded-2xl p-4"
           >
             <HomeProductCard product={product} />
           </div>

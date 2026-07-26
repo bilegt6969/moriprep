@@ -1,8 +1,5 @@
 "use client";
 
-import { HomeProductCard } from "components/home/product-card";
-import { ProductGridShell } from "components/home/product-grid-shell";
-import { RecentlyViewedBlackCard } from "components/home/recently-viewed-black-card";
 import { useEffect, useState } from "react";
 
 const RECENTLY_VIEWED_KEY = "recentlyViewed";
@@ -31,15 +28,14 @@ export function RecentlyViewedSection() {
   }
 
   return (
-    <ProductGridShell
-      variant="home"
-      sidebar={<RecentlyViewedBlackCard />}
-      emptyMessage="No recently viewed products yet."
-    >
-      {recentProducts.map((handle) => (
-        <RecentlyViewedProductCard key={handle} handle={handle} />
-      ))}
-    </ProductGridShell>
+    <div className="py-8">
+      <h2 className="text-2xl font-bold mb-4">Recently Viewed</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {recentProducts.map((handle) => (
+          <RecentlyViewedProductCard key={handle} handle={handle} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -60,8 +56,18 @@ function RecentlyViewedProductCard({ handle }: { handle: string }) {
   }, [handle]);
 
   if (loading || !product) {
-    return null;
+    return (
+      <div className="border rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+        <div className="h-3 bg-gray-200 rounded"></div>
+      </div>
+    );
   }
 
-  return <HomeProductCard product={product} priority={false} />;
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <h3 className="font-semibold">{product?.title || "Product"}</h3>
+      <p className="text-sm text-gray-600">{product?.price || "$0.00"}</p>
+    </div>
+  );
 }

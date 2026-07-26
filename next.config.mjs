@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  cacheComponents: true,
+  cacheComponents: false,
 
   allowedDevOrigins: ["172.20.10.6"],
 
@@ -18,15 +18,6 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     qualities: [75, 90],
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
-        pathname: "/s/files/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.sanity.io",
-      },
       {
         protocol: "https",
         hostname: "i.pinimg.com",

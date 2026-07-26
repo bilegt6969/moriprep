@@ -1,9 +1,16 @@
 "use client";
 
-import { NAV_CATEGORIES } from "lib/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+const NAV_CATEGORIES = [
+  { label: "All", href: "/search" },
+  { label: "New Arrivals", href: "/search?q=new" },
+  { label: "Clothing", href: "/search?q=clothing" },
+  { label: "Accessories", href: "/search?q=accessories" },
+  { label: "Shoes", href: "/search?q=shoes" },
+];
 
 const BRANDS = [
   { label: "Moscot", href: "/search?q=Moscot" },
@@ -53,11 +60,11 @@ export function HomeSidebar() {
       <div className="relative flex aspect-[4/3] w-full flex-col overflow-hidden rounded-2xl bg-black p-4 sm:p-5">
         <Link href="/" className="mb-4 inline-block" aria-label={siteName}>
           <Image
-            src="/Lelogo.svg"
+            src="/morin.svg"
             alt={siteName}
             width={1666}
             height={360}
-            className="h-12 w-auto max-w-[16.5rem] object-contain object-left brightness-0 invert sm:h-[3.375rem] sm:max-w-[19.5rem]"
+            className="h-12 w-auto max-w-[16.5rem] object-contain object-left opacity-60 sm:h-[3.375rem] sm:max-w-[19.5rem]"
             priority
           />
         </Link>

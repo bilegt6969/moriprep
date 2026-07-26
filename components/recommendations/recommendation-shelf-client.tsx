@@ -1,8 +1,23 @@
 "use client";
 
-import { HomeProductCard } from "components/home/product-card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
+
+// Placeholder for missing HomeProductCard component
+function HomeProductCard({
+  product,
+  priority,
+}: {
+  product: any;
+  priority?: boolean;
+}) {
+  return (
+    <div className="border rounded-lg p-4">
+      <h3 className="font-semibold">{product?.title || "Product"}</h3>
+      <p className="text-sm text-gray-600">{product?.price || "$0.00"}</p>
+    </div>
+  );
+}
 
 interface RecommendationShelfClientProps {
   products: any[];
@@ -100,7 +115,7 @@ export default function RecommendationShelfClient({
         {infiniteProducts.map((product, index) => (
           <div
             key={`${product.id}-${index}`}
-            className="w-56 flex-shrink-0 rounded-2xl border border-neutral-100 bg-[#f5f5f5] p-2 sm:w-72 md:w-80 lg:w-80 sm:p-4"
+            className="w-56 flex-shrink-0 rounded-2xl border border-neutral-100 bg-[#f9f9f9] p-2 sm:w-72 md:w-80 lg:w-80 sm:p-4"
           >
             <HomeProductCard product={product} />
           </div>

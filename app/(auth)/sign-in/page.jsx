@@ -8,8 +8,8 @@ import {
 import { motion } from "framer-motion";
 import { auth, googleProvider } from "lib/firebase";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function AuthNavbar() {
   return (
@@ -39,9 +39,9 @@ function AuthNavbar() {
             className="bg-transparent border-none cursor-pointer p-0 h-5 flex items-center"
           >
             <img
-              src="/Lelogo.svg"
+              src="/morin.svg"
               alt="Brand Logo"
-              className="h-full w-auto object-contain invert"
+              className="h-full w-auto object-contain opacity-80"
             />
           </button>
         </div>
@@ -69,8 +69,6 @@ function SignInContent({
   setShowReset,
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/";
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
@@ -78,7 +76,7 @@ function SignInContent({
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push(nextPath);
+      router.push("/");
     } catch (err) {
       console.error("Email sign-in error:", err);
       setError(
@@ -96,7 +94,7 @@ function SignInContent({
     setError("");
     try {
       await signInWithPopup(auth, googleProvider);
-      router.push(nextPath);
+      router.push("/");
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError(
@@ -297,51 +295,24 @@ export default function SignInPage() {
   return (
     <>
       <AuthNavbar />
-      <Suspense
-        fallback={
-          <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-4 py-16">
-            <svg
-              className="h-6 w-6 animate-spin text-neutral-400"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-          </div>
-        }
-      >
-        <SignInContent
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          error={error}
-          setError={setError}
-          loading={loading}
-          setLoading={setLoading}
-          resetEmail={resetEmail}
-          setResetEmail={setResetEmail}
-          resetSent={resetSent}
-          setResetSent={setResetSent}
-          resetError={resetError}
-          setResetError={setResetError}
-          showReset={showReset}
-          setShowReset={setShowReset}
-        />
-      </Suspense>
+      <SignInContent
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        error={error}
+        setError={setError}
+        loading={loading}
+        setLoading={setLoading}
+        resetEmail={resetEmail}
+        setResetEmail={setResetEmail}
+        resetSent={resetSent}
+        setResetSent={setResetSent}
+        resetError={resetError}
+        setResetError={setResetError}
+        showReset={showReset}
+        setShowReset={setShowReset}
+      />
 
       {/* Password Reset Modal */}
       {showReset && (
