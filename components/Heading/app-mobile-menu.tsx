@@ -18,7 +18,11 @@ interface Props {
   categories: NavLink[];
 }
 
-export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
+export default function AppMobileMenu({
+  isOpen,
+  setIsOpen,
+  categories,
+}: Props) {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCompaniesOpen, setIsCompaniesOpen] = useState(false);
 

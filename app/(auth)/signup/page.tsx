@@ -1,5 +1,7 @@
 "use client";
 
+import { OnboardingFlow } from "components/auth/onboarding-flow";
+import LiteNavbar from "components/LiteNavbar";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, googleProvider } from "lib/firebase";
@@ -7,50 +9,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 
-function AuthNavbar() {
-  return (
-    <div className="w-full bg-[#f4f4f6]/70 backdrop-blur-xl border-b border-gray-200/50 flex justify-center shrink-0">
-      <div className="w-full max-w-[1040px] flex justify-between items-center px-10 py-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#86868b] hover:text-[#1d1d1f] transition-colors bg-transparent border-none cursor-pointer p-0"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
-        <div className="flex items-center h-5">
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="bg-transparent border-none cursor-pointer p-0 h-5 flex items-center"
-          >
-            <img
-              src="/morin.svg"
-              alt="Brand Logo"
-              className="h-full w-auto object-contain opacity-80"
-            />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SignUpContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
@@ -60,7 +24,7 @@ function SignUpContent() {
     try {
       if (!auth) throw new Error("Auth not initialized");
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      setShowOnboarding(true);
     } catch (err) {
       console.error("Email sign-up error:", err);
       setError(
@@ -77,7 +41,7 @@ function SignUpContent() {
     try {
       if (!auth) throw new Error("Auth not initialized");
       await signInWithPopup(auth, googleProvider);
-      router.push("/");
+      setShowOnboarding(true);
     } catch (err) {
       console.error("Google sign-up error:", err);
       setError(
@@ -87,6 +51,14 @@ function SignUpContent() {
       setLoading(false);
     }
   };
+
+  const handleOnboardingComplete = () => {
+    router.push("/home");
+  };
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <motion.div
@@ -231,7 +203,7 @@ function SignUpContent() {
 export default function SignUpPage() {
   return (
     <>
-      <AuthNavbar />
+      <LiteNavbar />
       <Suspense
         fallback={
           <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-4 py-16">

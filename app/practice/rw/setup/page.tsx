@@ -39,6 +39,8 @@ export default function RWSetupPage() {
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
     [],
   );
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [attemptFilter, setAttemptFilter] = useState<string>("all");
 
   const toggleDomain = (domain: string) => {
     setSelectedDomains((prev: string[]) =>
@@ -64,7 +66,13 @@ export default function RWSetupPage() {
     if (selectedDifficulties.length > 0) {
       params.set("difficulties", selectedDifficulties.join(","));
     }
-    router.push(`/dsat/rw?${params.toString()}`);
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    }
+    if (attemptFilter !== "all") {
+      params.set("attempted", attemptFilter);
+    }
+    router.push(`/practice/rw?${params.toString()}`);
   };
 
   return (
@@ -72,7 +80,7 @@ export default function RWSetupPage() {
       {/* Header */}
       <header className="px-6 py-6">
         <Link
-          href="/dsat/rw"
+          href="/practice/rw"
           className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-black transition-colors"
         >
           <ChevronLeft size={16} strokeWidth={2.5} />
@@ -185,11 +193,125 @@ export default function RWSetupPage() {
           )}
         </motion.div>
 
-        {/* Start Button */}
+        {/* Section: Question Status */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: customEase, delay: 0.4 }}
+          className="mb-12"
+        >
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-6">
+            Filter by Performance
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                id: "all",
+                label: "All Questions",
+                description: "Show all questions regardless of status",
+              },
+              {
+                id: "correct",
+                label: "Correct Only",
+                description: "Only show questions you answered correctly",
+              },
+              {
+                id: "incorrect",
+                label: "Incorrect Only",
+                description: "Only show questions you got wrong",
+              },
+            ].map((status) => (
+              <motion.button
+                key={status.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setStatusFilter(status.id)}
+                className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
+                  statusFilter === status.id
+                    ? "border-black bg-black text-white"
+                    : "border-neutral-200 bg-white hover:border-neutral-300"
+                }`}
+              >
+                {statusFilter === status.id && (
+                  <div className="absolute top-4 right-4">
+                    <Check className="w-5 h-5" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold block mb-2">
+                    {status.label}
+                  </span>
+                  <span className="text-sm opacity-80">
+                    {status.description}
+                  </span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Section: Attempt Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: customEase, delay: 0.5 }}
+          className="mb-12"
+        >
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-6">
+            Filter by Attempt Status
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                id: "all",
+                label: "All Questions",
+                description: "Show both tried and untried questions",
+              },
+              {
+                id: "tried",
+                label: "Tried Only",
+                description: "Only show questions you've attempted",
+              },
+              {
+                id: "not-tried",
+                label: "Not Tried Only",
+                description: "Only show new questions",
+              },
+            ].map((attempt) => (
+              <motion.button
+                key={attempt.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setAttemptFilter(attempt.id)}
+                className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
+                  attemptFilter === attempt.id
+                    ? "border-black bg-black text-white"
+                    : "border-neutral-200 bg-white hover:border-neutral-300"
+                }`}
+              >
+                {attemptFilter === attempt.id && (
+                  <div className="absolute top-4 right-4">
+                    <Check className="w-5 h-5" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold block mb-2">
+                    {attempt.label}
+                  </span>
+                  <span className="text-sm opacity-80">
+                    {attempt.description}
+                  </span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Start Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: customEase, delay: 0.6 }}
           className="text-center"
         >
           <motion.button

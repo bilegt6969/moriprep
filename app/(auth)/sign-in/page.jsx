@@ -1,5 +1,7 @@
 "use client";
 
+import { OnboardingFlow } from "components/auth/onboarding-flow";
+import LiteNavbar from "components/LiteNavbar";
 import {
     sendPasswordResetEmail,
     signInWithEmailAndPassword,
@@ -67,6 +69,8 @@ function SignInContent({
   setResetError,
   showReset,
   setShowReset,
+  showOnboarding,
+  setShowOnboarding,
 }) {
   const router = useRouter();
 
@@ -76,7 +80,7 @@ function SignInContent({
     setError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      setShowOnboarding(true);
     } catch (err) {
       console.error("Email sign-in error:", err);
       setError(
@@ -94,7 +98,7 @@ function SignInContent({
     setError("");
     try {
       await signInWithPopup(auth, googleProvider);
-      router.push("/");
+      setShowOnboarding(true);
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError(
@@ -277,6 +281,8 @@ export default function SignInPage() {
   const [resetSent, setResetSent] = useState(false);
   const [resetError, setResetError] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const router = useRouter();
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
@@ -292,9 +298,17 @@ export default function SignInPage() {
     }
   };
 
+  const handleOnboardingComplete = () => {
+    router.push("/home");
+  };
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <>
-      <AuthNavbar />
+      <LiteNavbar />
       <SignInContent
         email={email}
         setEmail={setEmail}
@@ -312,6 +326,8 @@ export default function SignInPage() {
         setResetError={setResetError}
         showReset={showReset}
         setShowReset={setShowReset}
+        showOnboarding={showOnboarding}
+        setShowOnboarding={setShowOnboarding}
       />
 
       {/* Password Reset Modal */}

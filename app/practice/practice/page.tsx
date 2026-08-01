@@ -5,7 +5,7 @@ import { DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { ChevronDown, ChevronLeft, Filter, MoreHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 interface TopicProgress {
   name: string;
@@ -16,7 +16,7 @@ interface TopicProgress {
   correct: number;
 }
 
-export default function PracticePage() {
+function PracticePage() {
   const [questions, setQuestions] = useState<DSATQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -458,3 +458,19 @@ export default function PracticePage() {
     </div>
   );
 }
+
+function PracticePageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          Loading...
+        </div>
+      }
+    >
+      <PracticePage />
+    </Suspense>
+  );
+}
+
+export default PracticePageWrapper;

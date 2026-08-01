@@ -49,7 +49,7 @@ export function DsatSection() {
             </motion.h2>
             <motion.div variants={itemVariants}>
               <Link
-                href="/dsat"
+                href="/practice"
                 className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-neutral-900 text-white font-medium text-base hover:bg-neutral-800 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md"
               >
                 Open App

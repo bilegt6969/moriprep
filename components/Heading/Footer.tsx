@@ -21,7 +21,7 @@ const footerLinks2 = [
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
   { label: "Privacy Policy", href: "/info/privacy-policy" },
-  { label: "Terms of Usage", href: "/info/toc" },
+  { label: "Terms of Usage", href: "/info/terms" },
   { label: "Cookie Policy", href: "/info/cookie-policy" },
 ];
 
@@ -100,99 +100,10 @@ function HomeFooter({
   return (
     <footer
       className={`pt-16 sm:pt-24 relative overflow-hidden selection:bg-neutral-200 border-t border-gray-200 ${
-        useWhiteBg ? "bg-white" : "bg-[#fcfcfc]"
+        useWhiteBg ? "bg-white" : "bg-[#fafafa]"
       }`}
     >
       {/* Dynamic CTA Banner */}
-      {pathname === "/" && (
-        <div className="px-4 sm:px-6 mb-24 lg:mb-32 w-full relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: slowEase }}
-            className="max-w-[1200px] mx-auto relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-[#11162b] min-h-[400px] sm:min-h-[360px] flex items-center justify-center shadow-2xl"
-          >
-            <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay pointer-events-none">
-              <svg
-                viewBox="0 0 200 200"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-full"
-              >
-                <filter id="noiseFilter">
-                  <feTurbulence
-                    type="fractalNoise"
-                    baseFrequency="0.85"
-                    numOctaves="3"
-                    stitchTiles="stitch"
-                  />
-                </filter>
-                <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-              </svg>
-            </div>
-            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-              <svg
-                className="absolute -left-12 -top-12 w-64 h-64 text-[#1a2347]"
-                viewBox="0 0 100 100"
-                fill="currentColor"
-              >
-                <path d="M0,0 L100,0 C70,30 50,70 0,100 Z" />
-              </svg>
-              <svg
-                className="absolute -left-20 -bottom-16 w-96 h-96 text-[#1f306e]"
-                viewBox="0 0 100 100"
-                fill="currentColor"
-              >
-                <path d="M0,100 L100,100 C80,60 40,30 0,0 Z" />
-              </svg>
-              <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-[#c8e3ff] rounded-[4rem] rotate-12 opacity-90 blur-[1px]" />
-              <svg
-                className="absolute -right-10 -bottom-10 w-[500px] h-[500px] text-[#2c4fa6]"
-                viewBox="0 0 100 100"
-                fill="currentColor"
-              >
-                <path d="M100,100 L0,100 C30,70 50,20 100,0 Z" />
-              </svg>
-              <svg
-                className="absolute -right-4 -top-10 w-72 h-72 text-[#4682e8]"
-                viewBox="0 0 100 100"
-                fill="currentColor"
-              >
-                <path d="M100,0 L100,100 C60,60 20,40 0,0 Z" />
-              </svg>
-              <div className="absolute -right-8 -bottom-12 w-48 h-32 bg-[#c8e3ff] rounded-full rotate-[-15deg] opacity-90" />
-              <svg
-                className="absolute left-[30%] -bottom-12 w-80 h-48 text-[#1a2b66]"
-                viewBox="0 0 100 100"
-                fill="currentColor"
-              >
-                <path d="M0,100 C20,40 60,30 100,100 Z" />
-              </svg>
-            </div>
-
-            <div className="relative z-10 text-center px-6 max-w-3xl py-12">
-              <h2 className="text-3xl md:text-5xl font-medium text-white mb-8 tracking-tight leading-tight">
-                Join a growing community of 500+ ambitious Mongolian students
-                building their future.
-              </h2>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/signin"
-                  className="w-full sm:w-auto px-8 py-3 rounded-full border border-white/40 text-white font-medium hover:bg-white/10 transition-colors duration-300 text-center"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="w-full sm:w-auto px-8 py-3 rounded-full bg-white text-[#11162b] font-medium hover:bg-gray-100 transition-colors duration-300 text-center"
-                >
-                  Sign up for free
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {/* Balanced 4-Column Layout */}
       <motion.div
@@ -206,9 +117,9 @@ function HomeFooter({
           {/* Column 1: Logo & Slim Tagline */}
           <div className="flex flex-col items-start">
             <img src="/morin.svg" alt="Logo" className="h-10 w-auto mb-4" />
-            <p className="text-xs text-neutral-500 italic max-w-[180px] leading-relaxed">
-              "Mani hed cn mongol shde, ghde ene bur goy shaah ed bgz te
-              kshohguyu"
+            <p className="text-xs text-neutral-500 max-w-[180px] leading-relaxed">
+              Mori Prep is a student-built, non-profit platform making
+              world-class education accessible to everyone.
             </p>
           </div>
 
@@ -266,7 +177,7 @@ function HomeFooter({
       </motion.div>
 
       {/* Footer Illustrations and Floating Copyright */}
-      <div className="relative w-full mt-16 md:mt-24 flex items-end justify-center z-0 h-[250px] sm:h-[300px] lg:h-[350px]">
+      <div className="relative w-full mt-4 md:mt-8 flex items-end justify-center z-0 h-[150px] sm:h-[200px] lg:h-[250px]">
         <div className="absolute bottom-0 w-full flex items-end justify-center lg:justify-between pointer-events-none h-full">
           <img
             alt="Left drawing"

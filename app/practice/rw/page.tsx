@@ -1,34 +1,34 @@
 "use client";
 
+import { saveUserProgress, updateUserStats } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
-import Navbar from "components/navbar";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    BellOff,
-    Bookmark,
-    CheckCircle2,
-    ChevronDown,
-    ChevronLeft,
-    Clock,
-    Command,
-    Copy,
-    Flag,
-    Highlighter,
-    History,
-    Info,
-    List,
-    Maximize2,
-    Moon,
-    MoreVertical,
-    Pause,
-    Play,
-    Shuffle,
-    Trash2,
-    Underline as UnderlineIcon,
-    X,
+  AlertCircle,
+  BellOff,
+  Bookmark,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Command,
+  Copy,
+  Flag,
+  Highlighter,
+  History,
+  Info,
+  List,
+  Maximize2,
+  Moon,
+  MoreVertical,
+  Pause,
+  Play,
+  Shuffle,
+  Trash2,
+  Underline as UnderlineIcon,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -184,9 +184,6 @@ function RWPracticePageContent() {
     Map<string, { isCorrect: boolean; answer: string }>
   >(new Map());
 
-  const [difficulty, setDifficulty] = useState<string>(
-    difficultyParam || "all",
-  );
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
     difficultiesParam
       ? difficultiesParam.split(",")
@@ -197,8 +194,11 @@ function RWPracticePageContent() {
   const [selectedDomains, setSelectedDomains] = useState<string[]>(
     domainsParam ? domainsParam.split(",") : domainParam ? [domainParam] : [],
   );
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skill, setSkill] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [attemptFilter, setAttemptFilter] = useState<string>("all");
 
   const [user, setUser] = useState<any>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
@@ -243,7 +243,7 @@ function RWPracticePageContent() {
       !difficultyParam &&
       !difficultiesParam
     )
-      setDifficulty(savedDifficulty);
+      setSelectedDifficulties([savedDifficulty]);
     if (savedDomains && !domainsParam && !domainParam)
       setSelectedDomains(JSON.parse(savedDomains));
     if (savedSkill && !domainsParam && !difficultyParam && !difficultiesParam)
@@ -254,7 +254,13 @@ function RWPracticePageContent() {
 
   useEffect(() => {
     filterQuestions();
-  }, [questions, selectedDomains, selectedDifficulties]);
+  }, [
+    questions,
+    selectedDomains,
+    selectedDifficulties,
+    statusFilter,
+    attemptFilter,
+  ]);
 
   useEffect(() => {
     filterQuestions();
@@ -264,12 +270,11 @@ function RWPracticePageContent() {
       !difficultiesParam &&
       !domainParam
     ) {
-      localStorage.setItem("dsat_difficulty", difficulty);
+      localStorage.setItem("dsat_difficulty", selectedDifficulties[0] || "");
       localStorage.setItem("dsat_domains", JSON.stringify(selectedDomains));
       localStorage.setItem("dsat_skill", skill);
     }
   }, [
-    difficulty,
     selectedDifficulties,
     selectedDomains,
     skill,
@@ -377,8 +382,6 @@ function RWPracticePageContent() {
       filtered = filtered.filter((q) =>
         selectedDifficulties.includes(q.difficulty),
       );
-    } else if (difficulty !== "all") {
-      filtered = filtered.filter((q) => q.difficulty === difficulty);
     }
     if (selectedDomains.length > 0) {
       filtered = filtered.filter((q) => selectedDomains.includes(q.domain));
@@ -386,6 +389,26 @@ function RWPracticePageContent() {
     if (skill !== "all") {
       filtered = filtered.filter((q) => q.skill === skill);
     }
+
+    // Filter by status (correct/incorrect)
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((q) => {
+        const answered = answeredQuestions.get(q.question_id);
+        if (!answered) return false;
+        return statusFilter === "correct"
+          ? answered.isCorrect
+          : !answered.isCorrect;
+      });
+    }
+
+    // Filter by attempt status (tried/not-tried)
+    if (attemptFilter !== "all") {
+      filtered = filtered.filter((q) => {
+        const attempted = answeredQuestions.has(q.question_id);
+        return attemptFilter === "tried" ? attempted : !attempted;
+      });
+    }
+
     setFilteredQuestions(filtered);
   }
 
@@ -437,6 +460,22 @@ function RWPracticePageContent() {
           JSON.stringify(attempts),
         );
         setQuestionAttempts(attempts);
+
+        // Save to Firebase if user is authenticated
+        if (user) {
+          try {
+            await saveUserProgress(
+              user.uid,
+              selectedQuestion.question_id,
+              highlightedAnswer,
+              isCorrect,
+              timeSpent,
+            );
+            await updateUserStats(user.uid, isCorrect, timeSpent);
+          } catch (error) {
+            console.error("Error saving to Firebase:", error);
+          }
+        }
       }
     }
   }
@@ -737,29 +776,27 @@ function RWPracticePageContent() {
   }, []);
 
   const domainSkills: Record<string, string[]> = {
+    "Information and Ideas": [
+      "Central Ideas and Details",
+      "Inferences",
+      "Command of Evidence",
+    ],
     "Craft and Structure": [
       "Words in Context",
       "Text Structure and Purpose",
       "Cross-Text Connections",
     ],
-    "Information and Ideas": [
-      "Central Ideas and Details",
-      "Command of Evidence (Textual)",
-      "Command of Evidence (Quantitative)",
-      "Inferences",
+    "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
+    "Standard English Conventions": [
+      "Boundaries",
+      "Form, Structure, and Sense",
     ],
-    "Standard English Convention": ["Boundaries", "Form, Structure, and Sense"],
-    "Expression of Ideas": ["Transitions", "Rhetorical Synthesis"],
   };
   const domains = Object.keys(domainSkills);
   const availableSkills =
     selectedDomains.length === 0
       ? Array.from(new Set(questions.map((q) => q.skill)))
       : selectedDomains.flatMap((d) => domainSkills[d] || []);
-
-  // Show selection screen if no filters are applied
-  const showSelectionScreen =
-    !domainParam && !domainsParam && !difficultyParam && !difficultiesParam;
 
   if (loading) {
     return (
@@ -792,188 +829,6 @@ function RWPracticePageContent() {
           </div>
         </main>
         <SkeletonFooter />
-      </div>
-    );
-  }
-
-  // Selection Screen Component
-  if (showSelectionScreen) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F7]">
-        <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white/70 backdrop-blur-xl sticky top-0 z-50">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleGoBack}
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors"
-            >
-              <ChevronLeft size={16} strokeWidth={2} /> Go back
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <div className="text-lg font-bold text-black">
-              DSAT Reading & Writing
-            </div>
-            <div className="text-sm text-gray-500">Practice Session</div>
-          </div>
-          <div className="w-32" />
-        </header>
-
-        <main className="max-w-4xl mx-auto px-6 py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              Ready to begin?
-            </h1>
-            <p className="text-lg text-gray-600 mb-2">
-              Select a question to start practicing, or adjust the filters above
-              to focus on specific skills.
-            </p>
-          </div>
-
-          {/* Domain Selection */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Domains
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {domains.map((domain) => {
-                const domainQuestions = questions.filter(
-                  (q) => q.domain === domain,
-                );
-                const isSelected = selectedDomains.includes(domain);
-
-                return (
-                  <button
-                    key={domain}
-                    onClick={() => {
-                      setSelectedDomains((prev) =>
-                        prev.includes(domain)
-                          ? prev.filter((d) => d !== domain)
-                          : [...prev, domain],
-                      );
-                    }}
-                    className={`p-6 rounded-xl border-2 transition-all text-left ${
-                      isSelected
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 bg-white hover:border-gray-400"
-                    }`}
-                  >
-                    <div className="font-semibold text-lg mb-2">{domain}</div>
-                    <div
-                      className={`text-sm ${isSelected ? "text-gray-300" : "text-gray-500"}`}
-                    >
-                      {domainQuestions.length} questions
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {domainSkills[domain]?.map((skill) => (
-                        <span
-                          key={skill}
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            isSelected
-                              ? "bg-white/20 text-white"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Difficulty Selection */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Difficulty
-            </h2>
-            <div className="flex gap-3">
-              {["Easy", "Medium", "Hard"].map((diff) => {
-                const isSelected = selectedDifficulties.includes(diff);
-                return (
-                  <button
-                    key={diff}
-                    onClick={() => {
-                      setSelectedDifficulties((prev) =>
-                        prev.includes(diff)
-                          ? prev.filter((d) => d !== diff)
-                          : [...prev, diff],
-                      );
-                    }}
-                    className={`px-6 py-3 rounded-full border-2 font-medium transition-all ${
-                      isSelected
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 bg-white hover:border-gray-400 text-gray-700"
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Start Practice Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (selectedDomains.length > 0) {
-                  params.set("domains", selectedDomains.join(","));
-                }
-                if (selectedDifficulties.length > 0) {
-                  params.set("difficulties", selectedDifficulties.join(","));
-                }
-                router.push(`/dsat/rw?${params.toString()}`);
-              }}
-              disabled={
-                selectedDomains.length === 0 &&
-                selectedDifficulties.length === 0
-              }
-              className="px-8 py-4 bg-black text-white rounded-xl font-semibold text-lg shadow-lg hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Start Practice Session
-            </button>
-          </div>
-
-          {/* Question Preview */}
-          {filteredQuestions.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {filteredQuestions.length} questions selected
-              </h3>
-              <div className="space-y-3">
-                {filteredQuestions.slice(0, 5).map((q, idx) => (
-                  <div
-                    key={q.question_id}
-                    className="p-4 bg-white rounded-lg border border-gray-200"
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-sm font-medium text-gray-500">
-                        {idx + 1}.
-                      </span>
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                        {q.difficulty}
-                      </span>
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600">
-                        {q.domain}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 line-clamp-2">
-                      {q.prompt || q.question}
-                    </p>
-                  </div>
-                ))}
-                {filteredQuestions.length > 5 && (
-                  <p className="text-sm text-gray-500 text-center">
-                    +{filteredQuestions.length - 5} more questions
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </main>
       </div>
     );
   }
@@ -1424,52 +1279,87 @@ function RWPracticePageContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-30"
+                className="absolute inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-30 p-4"
                 onClick={() => setShowExplanation(false)}
               >
                 <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
+                  initial={{ scale: 0.92, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.92, opacity: 0, y: 10 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] overflow-hidden"
+                  className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden border border-gray-100/50"
                 >
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-bold">Explanation</h2>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-8 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <CheckCircle2 size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+                          Explanation
+                        </h2>
+                        <p className="text-xs text-gray-500 font-medium">
+                          Question Analysis
+                        </p>
+                      </div>
+                    </div>
                     <button
                       onClick={() => setShowExplanation(false)}
-                      className="text-gray-400 hover:text-black transition-colors"
+                      className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 flex items-center justify-center"
                     >
-                      <X size={20} />
+                      <X size={18} strokeWidth={2} />
                     </button>
                   </div>
 
-                  <div className="p-6 overflow-y-auto max-h-[60vh]">
-                    <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-6">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        Correct Answer
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
+                  {/* Content */}
+                  <div className="p-8 overflow-y-auto max-h-[calc(85vh-80px)]">
+                    {/* Correct Answer Section */}
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl p-6 mb-8 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                          <CheckCircle2 size={12} className="text-white" />
+                        </div>
+                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                          Correct Answer
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-500/30 shrink-0">
                           {selectedQuestion.correct_answer}
                         </div>
-                        <span className="font-serif text-[15px]">
-                          {
-                            selectedQuestion.choices[
-                              selectedQuestion.correct_answer as keyof typeof selectedQuestion.choices
-                            ]
-                          }
-                        </span>
+                        <div className="flex-1 pt-1">
+                          <p className="text-gray-800 leading-relaxed font-medium text-[16px]">
+                            {
+                              selectedQuestion.choices[
+                                selectedQuestion.correct_answer as keyof typeof selectedQuestion.choices
+                              ]
+                            }
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-gray-900">
-                        Step-by-step explanation
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed font-serif">
-                        {selectedQuestion.rationale}
-                      </p>
+                    {/* Explanation Section */}
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                          <Info
+                            size={16}
+                            className="text-indigo-600"
+                            strokeWidth={2.5}
+                          />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 tracking-tight">
+                          Step-by-step explanation
+                        </h3>
+                      </div>
+                      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                        <p className="text-gray-700 leading-[1.8] font-serif text-[15px]">
+                          {selectedQuestion.rationale}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -1732,171 +1622,231 @@ function RWPracticePageContent() {
       ) : (
         /* Standard Pre-Selection Setup / Dashboard */
         <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden">
-          <Navbar />
-          <div className="flex flex-1 flex-col bg-[#F5F5F7] min-h-[calc(100vh-4rem)] relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-400/10 blur-[100px] rounded-full pointer-events-none" />
+          <div className="flex flex-1 flex-col min-h-[calc(100vh-4rem)] relative overflow-hidden">
             <div className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-12 z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center mb-16"
-              >
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-gray-900 mb-6">
-                  Reading & Writing
-                </h1>
-                <p className="text-xl md:text-2xl text-gray-600 font-normal max-w-2xl mx-auto leading-relaxed">
-                  Master the digital SAT format with adaptive practice.
-                </p>
-              </motion.div>
-
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, height: "auto", scale: 1 }}
-                    exit={{ opacity: 0, height: 0, scale: 0.98 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="overflow-hidden mb-12"
-                  >
-                    <div className="bg-white/90 backdrop-blur-3xl rounded-3xl shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_20px_50px_-12px_rgba(0,0,0,0.08)] p-10 border border-white/50">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {/* Difficulty Filter */}
-                        <div className="space-y-4">
-                          <label className="block text-sm font-semibold text-gray-900 tracking-tight">
-                            Difficulty
-                          </label>
-                          <select
-                            value={difficulty}
-                            onChange={(e) => setDifficulty(e.target.value)}
-                            className="w-full bg-gray-50/80 border border-gray-200 text-gray-900 text-sm rounded-2xl focus:ring-2 focus:ring-black/10 focus:border-black/20 block p-4 transition-all appearance-none hover:border-gray-300"
-                          >
-                            <option value="all">All Difficulties</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                          </select>
-                        </div>
-
-                        {/* Domain Filter */}
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <label className="block text-sm font-semibold text-gray-900 tracking-tight">
-                              Domain
-                            </label>
-                            {selectedDomains.length > 0 && (
-                              <button
-                                onClick={() => setSelectedDomains([])}
-                                className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                              >
-                                Clear
-                              </button>
-                            )}
-                          </div>
-                          <div className="space-y-2.5 max-h-44 overflow-y-auto pr-2 custom-scrollbar">
-                            {domains.map((d) => (
-                              <label
-                                key={d}
-                                className="flex items-center space-x-3 cursor-pointer group"
-                              >
-                                <div className="relative flex items-center justify-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedDomains.includes(d)}
-                                    onChange={(e) => {
-                                      if (e.target.checked)
-                                        setSelectedDomains([
-                                          ...selectedDomains,
-                                          d,
-                                        ]);
-                                      else
-                                        setSelectedDomains(
-                                          selectedDomains.filter(
-                                            (domain) => domain !== d,
-                                          ),
-                                        );
-                                    }}
-                                    className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-md checked:bg-blue-600 checked:border-blue-600 transition-all"
-                                  />
-                                  <CheckCircle2 className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
-                                </div>
-                                <span className="text-sm text-gray-700 group-hover:text-black transition-colors">
-                                  {d}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Skill Filter */}
-                        <div className="space-y-4">
-                          <label className="block text-sm font-semibold text-gray-900 tracking-tight">
-                            Skill
-                          </label>
-                          <select
-                            value={skill}
-                            onChange={(e) => setSkill(e.target.value)}
-                            className="w-full bg-gray-50/80 border border-gray-200 text-gray-900 text-sm rounded-2xl focus:ring-2 focus:ring-black/10 focus:border-black/20 block p-4 transition-all appearance-none disabled:opacity-50 hover:border-gray-300"
-                            disabled={
-                              selectedDomains.length > 0 &&
-                              availableSkills.length === 0
+              <div className="w-full bg-white p-10 flex flex-col gap-10 font-sans">
+                {/* Difficulty Filter */}
+                <div className="flex flex-col gap-3.5">
+                  <div className="flex justify-between items-center w-full max-w-2xl">
+                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                      Difficulty
+                    </label>
+                    {selectedDifficulties.length > 0 && (
+                      <button
+                        onClick={() => setSelectedDifficulties([])}
+                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {[
+                      { label: "Easy", value: "Easy" },
+                      { label: "Medium", value: "Medium" },
+                      { label: "Hard", value: "Hard" },
+                    ].map((item) => {
+                      const isSelected = selectedDifficulties.includes(
+                        item.value,
+                      );
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedDifficulties(
+                                selectedDifficulties.filter(
+                                  (d) => d !== item.value,
+                                ),
+                              );
+                            } else {
+                              setSelectedDifficulties([
+                                ...selectedDifficulties,
+                                item.value,
+                              ]);
                             }
-                          >
-                            <option value="all">All Skills</option>
-                            {availableSkills.map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="mt-10 pt-8 border-t border-gray-100 flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-500">
-                          Showing{" "}
-                          <span className="text-black font-semibold">
-                            {filteredQuestions.length}
-                          </span>{" "}
-                          matching questions
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                          }}
+                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                            isSelected
+                              ? "bg-zinc-900 text-white shadow-md"
+                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-              {/* Start Practice Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.2,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="text-center"
-              >
-                <h3 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-5">
-                  Ready to begin?
-                </h3>
-                <p className="text-gray-500 mb-12 max-w-lg mx-auto text-lg leading-relaxed">
-                  Select a question to start practicing, or adjust the filters
-                  above to focus on specific skills.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    if (filteredQuestions.length > 0) {
-                      setSelectedQuestion(filteredQuestions[0] || null);
-                    }
-                  }}
-                  disabled={filteredQuestions.length === 0}
-                  className="px-12 py-5 bg-black text-white rounded-full font-semibold shadow-[0_4px_20px_rgba(0,0,0,0.15)] disabled:opacity-50 hover:bg-gray-900 hover:shadow-[0_6px_30px_rgba(0,0,0,0.2)] transition-all text-lg"
-                >
-                  Start Practice Session
-                </motion.button>
-              </motion.div>
+                {/* Domain Filter */}
+                <div className="flex flex-col gap-3.5">
+                  <div className="flex justify-between items-center w-full max-w-2xl">
+                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                      Domain
+                    </label>
+                    {selectedDomains.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setSelectedDomains([]);
+                          setSelectedSkills([]);
+                        }}
+                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 pb-1">
+                    {domains.map((d) => {
+                      const isSelected = selectedDomains.includes(d);
+                      return (
+                        <button
+                          key={d}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedDomains(
+                                selectedDomains.filter(
+                                  (domain) => domain !== d,
+                                ),
+                              );
+                              setSelectedSkills([]);
+                            } else {
+                              setSelectedDomains([...selectedDomains, d]);
+                            }
+                          }}
+                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                            isSelected
+                              ? "bg-zinc-900 text-white shadow-md"
+                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Skills Filter */}
+                {selectedDomains.length > 0 && (
+                  <div className="flex flex-col gap-3.5">
+                    <div className="flex justify-between items-center w-full max-w-2xl">
+                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                        Skills
+                      </label>
+                      {selectedSkills.length > 0 && (
+                        <button
+                          onClick={() => setSelectedSkills([])}
+                          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 pb-1">
+                      {availableSkills.map((skill) => {
+                        const isSelected = selectedSkills.includes(skill);
+                        return (
+                          <button
+                            key={skill}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedSkills(
+                                  selectedSkills.filter((s) => s !== skill),
+                                );
+                              } else {
+                                setSelectedSkills([...selectedSkills, skill]);
+                              }
+                            }}
+                            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                              isSelected
+                                ? "bg-zinc-900 text-white shadow-md"
+                                : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                            }`}
+                          >
+                            {skill}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Performance Filter */}
+                <div className="flex flex-col gap-3.5">
+                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                    Performance
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {[
+                      { label: "All Questions", value: "all" },
+                      { label: "Correct Only", value: "correct" },
+                      { label: "Incorrect Only", value: "incorrect" },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() => setStatusFilter(item.value)}
+                        className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                          statusFilter === item.value
+                            ? "bg-zinc-900 text-white shadow-md"
+                            : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Attempt Filter */}
+                <div className="flex flex-col gap-3.5">
+                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                    Attempt Status
+                  </label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {[
+                      { label: "All Questions", value: "all" },
+                      { label: "Tried Only", value: "tried" },
+                      { label: "Not Tried Only", value: "not-tried" },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() => setAttemptFilter(item.value)}
+                        className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                          attemptFilter === item.value
+                            ? "bg-zinc-900 text-white shadow-md"
+                            : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Footer / Action Area */}
+                <div className="mt-8 pt-8 border-t border-zinc-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <p className="text-[13px] font-medium text-zinc-500 transition-all duration-300">
+                    Showing{" "}
+                    <span className="text-zinc-900 font-semibold bg-zinc-100 px-2 py-0.5 rounded-md mx-1">
+                      {filteredQuestions.length}
+                    </span>{" "}
+                    matching questions
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (filteredQuestions.length > 0) {
+                        setSelectedQuestion(filteredQuestions[0] || null);
+                      }
+                    }}
+                    disabled={filteredQuestions.length === 0}
+                    className="px-8 py-3 bg-zinc-900 text-white text-[13px] rounded-full font-medium shadow-md hover:bg-black transition-all duration-300 ease-out active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                  >
+                    Start Practice
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BookOpenIcon, CalculatorIcon } from "lucide-react";
+import { BookOpenIcon, CalculatorIcon, LockIcon } from "lucide-react";
+import Link from "next/link";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
@@ -10,45 +11,54 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3,
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
     },
   },
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 40, filter: "blur(10px)" },
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.9, ease: customEase },
+    transition: { duration: 0.8, ease: customEase },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.96 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.8, ease: customEase },
   },
 };
 
 const practiceAreas = [
   {
+    id: "reading-writing",
     title: "Reading & Writing",
-    description: "1492 questions covering all domains",
-    icon: <BookOpenIcon className="w-8 h-8 stroke-[1.5]" />,
+    description: "1,492 questions spanning all four College Board domains.",
+    icon: <BookOpenIcon className="w-7 h-7 stroke-[1.5]" />,
     available: true,
-    href: "/dsat/rw",
+    href: "/practice/rw",
+    buttonText: "Start Practicing",
   },
   {
-    title: "Math",
-    description: "2390 questions covering all topics",
-    icon: <CalculatorIcon className="w-8 h-8 stroke-[1.5]" />,
+    id: "math",
+    title: "Mathematics",
+    description: "2,390 questions covering advanced algebra and data analysis.",
+    icon: <CalculatorIcon className="w-7 h-7 stroke-[1.5]" />,
     available: false,
     href: "#",
+    buttonText: "Coming Soon",
   },
 ];
 
 export function DSATPracticeCards() {
   return (
-    <section className="py-32 px-6 bg-[#fafafa] overflow-hidden relative selection:bg-neutral-200">
-      {/* Subtle radial background gradient mimicking the soft light in the screenshots */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-[#fafafa] to-[#fafafa] pointer-events-none" />
-
+    <section className="py-32 px-6 bg-[#FAFAFA] text-neutral-900 selection:bg-neutral-200 selection:text-neutral-900 relative overflow-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -56,79 +66,69 @@ export function DSATPracticeCards() {
         viewport={{ once: true, margin: "-100px" }}
         className="max-w-5xl mx-auto relative z-10"
       >
-        {/* Updated Heading to match the Serif aesthetic */}
-        <motion.div variants={cardVariants} className="text-center mb-20">
-          <h2 className="text-5xl md:text-[4rem] font-serif text-neutral-900 tracking-tight mb-6 leading-tight">
-            Choose Your Practice.
-          </h2>
-          <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto font-light leading-relaxed">
-            Select a section to begin practicing with real exam-style questions.
-            Track your progress, identify weaknesses, and achieve your target
-            score.
-          </p>
-        </motion.div>
-
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12 max-w-4xl mx-auto">
-          {practiceAreas.map((area, index) => (
+        {/* Modern Cards Grid */}
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+          {practiceAreas.map((area) => (
             <motion.div
-              key={index}
-              variants={cardVariants}
-              whileHover={{
-                scale: area.available ? 1.02 : 1,
-                y: area.available ? -8 : 0,
-                transition: { duration: 0.4, ease: customEase },
-              }}
+              key={area.id}
+              variants={scaleIn}
+              whileHover={area.available ? { y: -6 } : { y: 0 }}
+              transition={{ duration: 0.5, ease: customEase }}
               className="h-full"
             >
-              {/* Minimalist Cards with subtle borders and shadows */}
               <div
-                className={`h-full p-10 md:p-12 rounded-[2.5rem] bg-white border border-neutral-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative flex flex-col items-center text-center ${
-                  !area.available ? "opacity-60 grayscale-[50%]" : ""
+                className={`h-full flex flex-col p-8 md:p-10 rounded-[2.5rem] border transition-all duration-500 ${
+                  area.available
+                    ? "bg-white border-neutral-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-neutral-300"
+                    : "bg-white/40 backdrop-blur-xl border-neutral-200/40 shadow-sm"
                 }`}
               >
-                <div className="mb-8">
-                  <div className="bg-neutral-50 p-5 rounded-full border border-neutral-100 text-neutral-800">
+                {/* Top: Lightest Visual Weight */}
+                <div className="flex items-start justify-between mb-10">
+                  <div
+                    className={`p-4 rounded-2xl transition-colors duration-300 flex items-center justify-center ${
+                      area.available
+                        ? "bg-neutral-50 text-neutral-900 shadow-inner"
+                        : "bg-white/50 text-neutral-400"
+                    }`}
+                  >
                     {area.icon}
                   </div>
+                  <span className="text-2xl font-medium text-neutral-300 font-mono tracking-tighter">
+                    {area.id === "reading-writing" ? "01" : "02"}
+                  </span>
                 </div>
 
-                <h3 className="text-3xl font-serif text-neutral-900 tracking-tight mb-3">
-                  {area.title}
-                </h3>
-                <p className="text-neutral-500 font-light leading-relaxed mb-10 text-lg">
-                  {area.description}
-                </p>
+                {/* Middle: Medium Visual Weight */}
+                <div className="flex-1">
+                  <h3 className="text-2xl md:text-3xl font-medium tracking-tight mb-4 text-neutral-900">
+                    {area.title}
+                  </h3>
+                  <p className="text-neutral-500 text-base leading-relaxed">
+                    {area.description}
+                  </p>
+                </div>
 
-                {area.available ? (
-                  <button
-                    onClick={() => (window.location.href = area.href)}
-                    className="mt-auto w-full py-4 px-8 bg-[#111] hover:bg-black text-white rounded-full font-medium text-lg transition-all duration-300 shadow-md hover:shadow-xl focus:ring-4 focus:ring-neutral-200"
-                  >
-                    Start Practicing
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="mt-auto w-full py-4 px-8 bg-neutral-100 text-neutral-400 rounded-full font-medium text-lg cursor-not-allowed border border-neutral-200"
-                  >
-                    Coming Soon
-                  </button>
-                )}
+                {/* Bottom: Heaviest Visual Weight (Anchors the card) */}
+                <div className="mt-10 pt-8 border-t border-neutral-100">
+                  {area.available ? (
+                    <Link
+                      href={area.href}
+                      className="w-full inline-flex items-center justify-center px-8 py-4 bg-neutral-900 text-white rounded-full font-medium text-base transition-all duration-300 hover:bg-black hover:shadow-xl hover:shadow-black/10 active:scale-[0.98]"
+                    >
+                      {area.buttonText}
+                    </Link>
+                  ) : (
+                    <div className="w-full inline-flex items-center justify-center px-8 py-4 bg-white/50 text-neutral-400 rounded-full font-medium text-base border border-neutral-200/80 gap-2 cursor-not-allowed">
+                      <LockIcon className="w-4 h-4" />
+                      {area.buttonText}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
-
-        <motion.div
-          variants={cardVariants}
-          className="mt-20 text-center text-sm text-neutral-400 font-light"
-        >
-          <p>SAT® is a registered trademark of the College Board.</p>
-          <p>
-            This practice is not affiliated with or endorsed by the College
-            Board.
-          </p>
-        </motion.div>
       </motion.div>
     </section>
   );

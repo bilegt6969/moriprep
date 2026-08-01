@@ -2,7 +2,7 @@
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
-import { auth } from "lib/firebase";
+import { auth, db, doc, getDoc } from "lib/firebase";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,6 +76,8 @@ export default function AccountPage() {
   const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
   const [userCreatedDate, setUserCreatedDate] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [loadingOnboarding, setLoadingOnboarding] = useState(true);
 
   useEffect(() => {
     if (!auth) return;
@@ -101,6 +103,28 @@ export default function AccountPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  // Fetch onboarding data from Firebase
+  useEffect(() => {
+    const fetchOnboardingData = async () => {
+      if (!auth?.currentUser) return;
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+        if (userDoc.exists()) {
+          setOnboardingData(userDoc.data());
+        }
+      } catch (error) {
+        console.error("Error fetching onboarding data:", error);
+      } finally {
+        setLoadingOnboarding(false);
+      }
+    };
+
+    if (authReady) {
+      fetchOnboardingData();
+    }
+  }, [authReady]);
 
   const {
     data: orders,
@@ -235,6 +259,160 @@ export default function AccountPage() {
             </button>
           </div>
         </motion.div>
+
+        {/* Onboarding Data Card */}
+        {onboardingData && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springTransition, delay: 0.15 }}
+            className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden mb-8"
+          >
+            <div className="p-7">
+              <h3 className="text-lg font-semibold text-[#1d1d1f] mb-6">
+                Your Profile Information
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {onboardingData.role && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">Role</p>
+                    <p className="text-sm font-medium text-[#1d1d1f] capitalize">
+                      {onboardingData.role}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.school && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">School</p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.school}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.graduationYear && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Graduation Year
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.graduationYear}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.childGraduationYear && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Child's Graduation Year
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.childGraduationYear}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.studentsTutored && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Students Tutored
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.studentsTutored}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.schoolSatStudents && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      School SAT Students
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.schoolSatStudents}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.bestRwScore && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Best Reading & Writing Score
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.bestRwScore}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.bestMathScore && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Best Math Score
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.bestMathScore}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.bestTotalScore && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      Best Total Score
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.bestTotalScore}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.goalScore && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">Goal Score</p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.goalScore}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.howDidYouHear && (
+                  <div>
+                    <p className="text-xs text-[#86868b] mb-1">
+                      How did you hear about us
+                    </p>
+                    <p className="text-sm font-medium text-[#1d1d1f]">
+                      {onboardingData.howDidYouHear}
+                    </p>
+                  </div>
+                )}
+
+                {onboardingData.satTestDates &&
+                  onboardingData.satTestDates.length > 0 && (
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-[#86868b] mb-1">
+                        SAT Test Dates
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {onboardingData.satTestDates.map(
+                          (date: string, index: number) => (
+                            <span
+                              key={index}
+                              className="text-sm font-medium text-[#1d1d1f] bg-gray-100 px-3 py-1 rounded-full"
+                            >
+                              {date}
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Data Grid */}
         <div className="flex flex-col gap-6">

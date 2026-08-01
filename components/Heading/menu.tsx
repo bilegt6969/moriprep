@@ -65,17 +65,22 @@ export default function Menu({
       <NavigationMenu.List className="flex items-center gap-8">
         <NavigationMenu.Item>
           <NavigationMenu.Link asChild>
-            <Link href="/dsat" className={linkClass}>
-              DSAT
+            <Link href="/practice" className={linkClass}>
+              Practice
             </Link>
           </NavigationMenu.Link>
         </NavigationMenu.Item>
 
         <NavigationMenu.Item>
           <NavigationMenu.Link asChild>
-            <Link href="/code" className={linkClass}>
+            <a
+              href="https://bytecode-smoky.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkClass}
+            >
               Coding
-            </Link>
+            </a>
           </NavigationMenu.Link>
         </NavigationMenu.Item>
 
@@ -116,7 +121,7 @@ export default function Menu({
                     <p className="text-[10px] font-semibold tracking-widest text-neutral-400 uppercase">
                       Overview
                     </p>
-                    <h3 className="mt-2.5 text-[13px] font-semibold leading-relaxed tracking-tight text-neutral-900 font-eb-garamond">
+                    <h3 className="mt-2.5 text-[13px] font-medium leading-relaxed tracking-tight text-neutral-900">
                       The complete operating system for your future.
                     </h3>
                   </div>

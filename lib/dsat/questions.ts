@@ -12,6 +12,7 @@ import {
     where,
 } from "firebase/firestore";
 
+// Firestore helper functions for Practice questions
 export async function getQuestions(filters?: {
   difficulty?: string;
   domain?: string;
@@ -123,7 +124,7 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
   return null;
 }
 
-async function updateUserStats(
+export async function updateUserStats(
   userId: string,
   isCorrect: boolean,
   timeSpent: number,

@@ -2,7 +2,6 @@
 
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
-import Navbar from "components/navbar";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bookmark, ChevronLeft } from "lucide-react";
@@ -247,7 +246,7 @@ function RWPracticePageContent() {
   }
 
   function handleGoBack() {
-    router.push("/dsat/rw");
+    router.push("/practice/rw");
   }
 
   function handleQuestionSelect(index: number) {
@@ -272,8 +271,6 @@ function RWPracticePageContent() {
 
   return (
     <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
-      <Navbar />
-
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Passage */}
