@@ -29,7 +29,8 @@ const blogPosts = [
   {
     id: 1,
     title: "How to Ace the Digital SAT Reading Section",
-    excerpt: "Learn proven strategies for tackling the new digital SAT reading format with confidence.",
+    excerpt:
+      "Learn proven strategies for tackling the new digital SAT reading format with confidence.",
     date: "July 28, 2026",
     category: "Reading",
     readTime: "5 min read",
@@ -47,7 +48,8 @@ const blogPosts = [
   {
     id: 3,
     title: "The Ultimate SAT Study Schedule for 2026",
-    excerpt: "Plan your preparation with our optimized study timeline for maximum results.",
+    excerpt:
+      "Plan your preparation with our optimized study timeline for maximum results.",
     date: "July 20, 2026",
     category: "Strategy",
     readTime: "6 min read",

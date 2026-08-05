@@ -9,7 +9,7 @@ export default function LessonsLayout({
   return (
     <>
       <AppNavbar
-        siteName="Bytecode"
+        siteName="Mori Prep"
         categories={[
           { label: "Home", href: "/home" },
           { label: "Practice", href: "/practice" },
@@ -18,7 +18,7 @@ export default function LessonsLayout({
         ]}
       />
       {children}
-      <Footer siteName="Bytecode" />
+      <Footer siteName="Mori Prep" />
     </>
   );
 }

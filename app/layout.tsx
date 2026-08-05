@@ -27,13 +27,13 @@ const ebGaramond = EB_Garamond({
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Byte - The Operating System for Your Future",
-    template: `%s | Byte`,
+    default: "Mori Prep - Master the DSAT",
+    template: `%s | Mori Prep`,
   },
   description:
-    "Byte is the complete operating system for your future. Access DSAT prep, coding practice, and educational resources all in one place.",
+    "Mori Prep is your complete DSAT preparation platform. Practice with exam-calibrated questions, track your progress, and master the Digital SAT with comprehensive study tools.",
   keywords:
-    "DSAT, SAT prep, coding practice, education, learning, Byte, future, career prep",
+    "DSAT, Digital SAT, SAT prep, SAT practice, college prep, standardized testing, exam preparation, Mori Prep, SAT study",
   robots: {
     follow: true,
     index: true,
@@ -57,16 +57,34 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: baseUrl,
-    siteName: "Byte",
-    title: "Byte - The Operating System for Your Future",
+    siteName: "Mori Prep",
+    title: "Mori Prep - Master the DSAT",
     description:
-      "Byte is the complete operating system for your future. Access DSAT prep, coding practice, and educational resources all in one place.",
+      "Mori Prep is your complete DSAT preparation platform. Practice with exam-calibrated questions, track your progress, and master the Digital SAT with comprehensive study tools.",
+  },
+  other: {
+    "google-font-preconnect": "https://fonts.googleapis.com",
+    "google-font-preconnect-crossorigin": "https://fonts.gstatic.com",
+    "google-font-stylesheet":
+      "https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap",
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${geist.variable} ${ebGaramond.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="bg-[#f9f9f9] text-neutral-900 antialiased selection:bg-neutral-200">
         <NextTopLoader
           color="#111"

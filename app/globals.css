@@ -152,6 +152,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .font-gochi-hand {
+    font-family: "Gochi Hand", cursive;
+  }
 }
 
 @supports (font: -apple-system-body) and (-webkit-appearance: none) {

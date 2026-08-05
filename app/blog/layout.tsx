@@ -1,15 +1,20 @@
+"use client";
+
 import Footer from "components/Heading/Footer";
 import Navbar from "components/Heading/Navbar";
+import { useBannerVisible } from "hooks/use-banner-visible";
 
 export default function BlogLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const isBannerVisible = useBannerVisible();
+
   return (
     <>
       <Navbar
-        siteName="Bytecode"
+        siteName="Mori Prep"
         categories={[
           { label: "Home", href: "/home" },
           { label: "Practice", href: "/practice" },
@@ -17,8 +22,8 @@ export default function BlogLayout({
           { label: "Analytics", href: "/analytics" },
         ]}
       />
-      {children}
-      <Footer siteName="Bytecode" />
+      <div className={isBannerVisible ? "pt-24" : ""}>{children}</div>
+      <Footer siteName="Mori Prep" />
     </>
   );
 }

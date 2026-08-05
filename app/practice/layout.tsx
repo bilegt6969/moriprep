@@ -1,12 +1,14 @@
 "use client";
 
 import AppNavbar from "components/Heading/app-navbar";
+import { useBannerVisible } from "hooks/use-banner-visible";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isBannerVisible = useBannerVisible();
 
   // Hide navbar and footer for practice session pages
   const isPracticeSession =
@@ -23,7 +25,7 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <AppNavbar
-        siteName="Bytecode"
+        siteName="Mori Prep"
         categories={[
           { label: "Home", href: "/home" },
           { label: "Practice", href: "/practice" },
@@ -31,7 +33,7 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
           { label: "Analytics", href: "/analytics" },
         ]}
       />
-      {children}
+      <div className={isBannerVisible ? "pt-24" : ""}>{children}</div>
     </>
   );
 }

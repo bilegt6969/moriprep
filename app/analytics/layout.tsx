@@ -8,7 +8,7 @@ export default function AnalyticsLayout({
   return (
     <>
       <AppNavbar
-        siteName="Bytecode"
+        siteName="Mori Prep"
         categories={[
           { label: "Home", href: "/home" },
           { label: "Practice", href: "/practice" },

@@ -8,9 +8,9 @@ import { Menu as MenuIcon, X } from "lucide-react";
 // @ts-ignore - metal-fx types not resolving correctly
 // @ts-ignore - border-beam types may not resolve correctly
 import { BorderBeam } from "border-beam";
+import AnnouncementBanner from "components/announcement-banner";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Menu from "./menu";
 import MobileMenu from "./mobile-menu";
@@ -31,7 +31,6 @@ export default function Navbar({
   siteName: string;
   categories: NavLink[];
 }) {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -92,7 +91,7 @@ export default function Navbar({
       */}
       <div
         className={cn(
-          "pointer-events-none fixed inset-0 z-[95] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "pointer-events-none fixed inset-0 z-[40] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
           isDesktopMenuOpen ? "opacity-100" : "opacity-0",
         )}
       />
@@ -104,7 +103,7 @@ export default function Navbar({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: smoothEase }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-[90] h-32 bg-white/20 backdrop-blur-md"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[40] h-32 bg-white/20 backdrop-blur-md"
         style={{
           WebkitMaskImage:
             "linear-gradient(to bottom, black 20%, transparent 100%)",
@@ -119,11 +118,11 @@ export default function Navbar({
             initial="hidden"
             animate="show"
             exit="hidden"
-            className="fixed inset-x-0 top-3 z-[100] flex justify-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
+            className="fixed inset-x-0 top-3 z-[100] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
           >
             <Wrapper
               className={cn(
-                "island-surface flex h-12 w-fit max-w-[calc(100vw-1.5rem)] items-center justify-between gap-2.5 rounded-full px-2 sm:gap-4 sm:px-2",
+                "island-surface relative z-10 flex h-12 w-fit max-w-[calc(100vw-1.5rem)] items-center justify-between gap-2.5 rounded-full px-2 sm:gap-4 sm:px-2",
               )}
             >
               <div className="flex items-center gap-4 sm:gap-6">
@@ -148,7 +147,7 @@ export default function Navbar({
                 </Link>
                 <Menu
                   categories={categories}
-                  onOpenChange={setIsDesktopMenuOpen}
+                  handleMenuOpenChangeAction={setIsDesktopMenuOpen}
                 />
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
@@ -186,6 +185,9 @@ export default function Navbar({
                 />
               )}
             </Wrapper>
+            <div className="mt-1 relative">
+              <AnnouncementBanner />
+            </div>
           </motion.header>
         )}
       </AnimatePresence>

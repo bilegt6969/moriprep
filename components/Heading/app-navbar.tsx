@@ -5,6 +5,7 @@ import { cn } from "lib/cn";
 import { Menu as MenuIcon, X } from "lucide-react";
 // @ts-ignore - border-beam types may not resolve correctly
 import { BorderBeam } from "border-beam";
+import AnnouncementBanner from "components/announcement-banner";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -47,19 +48,9 @@ export default function Navbar({
 
   return (
     <div className="relative w-full">
-      {/* Global Backdrop Blur */}
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-0 z-[95] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          isDesktopMenuOpen ? "opacity-100" : "opacity-0",
-        )}
-      />
-
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[99] h-[88px]" />
-
       {/* Top scroll blur (mobile + desktop) */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-[90] h-32 bg-white/20 backdrop-blur-md"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[10] h-32 bg-white/20 backdrop-blur-md"
         style={{
           WebkitMaskImage:
             "linear-gradient(to bottom, black 20%, transparent 100%)",
@@ -67,7 +58,17 @@ export default function Navbar({
         }}
       />
 
-      <header className="fixed inset-x-0 top-3 z-[100] flex justify-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4">
+      {/* Global Backdrop Blur - only for desktop menu */}
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-0 z-[20] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          isDesktopMenuOpen ? "opacity-100" : "opacity-0",
+        )}
+      />
+
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[30] h-[88px]" />
+
+      <header className="fixed inset-x-0 top-3 z-[50] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4">
         {/* Reduced gap to match the tight spacing in the screenshot */}
         <div className="relative flex items-center justify-between w-full">
           {/* Logo - Far Left */}
@@ -122,6 +123,10 @@ export default function Navbar({
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="mt-1 relative z-0">
+          <AnnouncementBanner />
         </div>
 
         {!isLargeScreen && (

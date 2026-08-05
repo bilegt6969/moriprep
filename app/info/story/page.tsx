@@ -73,10 +73,10 @@ export default function MissionPage() {
             <motion.p variants={textVariants}>
               We started{" "}
               <Link
-                href="https://bytecode-smoky.vercel.app/"
+                href="https://moriprep.xyz/"
                 className="underline font-medium decoration-2 decoration-gray-400 text-neutral-400 hover:text-neutral-700 transition-colors"
               >
-                Bytecode
+                Mori Prep
               </Link>{" "}
               in the summer of 2023 with a simple belief:
             </motion.p>
@@ -98,9 +98,9 @@ export default function MissionPage() {
               So we built the platform we wished we had.
             </motion.p>
             <motion.p variants={textVariants}>
-              Mori Prep is the next evolution of Bytecode — a free, non-profit
-              learning platform helping students prepare for the Digital SAT and
-              develop the skills to create, innovate, and solve problems.
+              Mori Prep is a free, non-profit learning platform helping students
+              prepare for the Digital SAT and develop the skills to create,
+              innovate, and solve problems.
             </motion.p>
             <motion.p variants={textVariants}>
               We don't believe education is about memorizing answers.

@@ -40,9 +40,10 @@ export async function RecommendationShelf({
   }
 
   const baseUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://www.sainto.app"
-      : "http://localhost:3000";
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : "http://localhost:3000");
 
   const response = await fetch(
     `${baseUrl}/api/recommendations?${params.toString()}`,
@@ -96,9 +97,10 @@ export async function RecommendationShelfData({
   }
 
   const baseUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://www.sainto.app"
-      : "http://localhost:3000";
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : "http://localhost:3000");
 
   const response = await fetch(
     `${baseUrl}/api/recommendations?${params.toString()}`,

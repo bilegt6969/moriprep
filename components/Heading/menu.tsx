@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react-hooks/rules-of-hooks */
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { cn } from "lib/cn";
 import { ChevronDown } from "lucide-react";
@@ -52,15 +53,16 @@ const companyLinks: CompanyLink[] = [
 
 export default function Menu({
   categories,
-  onOpenChange,
+  handleMenuOpenChangeAction,
 }: {
   categories: NavLink[];
-  onOpenChange?: (open: boolean) => void;
+  handleMenuOpenChangeAction?: (open: boolean) => void;
 }) {
   return (
     <NavigationMenu.Root
-      onValueChange={(value) => onOpenChange?.(value !== "")}
-      className="relative z-50 hidden lg:block"
+      onValueChange={(value) => handleMenuOpenChangeAction?.(value !== "")}
+      className="relative hidden lg:block"
+      delayDuration={0}
     >
       <NavigationMenu.List className="flex items-center gap-8">
         <NavigationMenu.Item>
@@ -103,7 +105,7 @@ export default function Menu({
 
           <NavigationMenu.Content
             className={cn(
-              "absolute left-1/2 top-full mt-4 -translate-x-1/2",
+              "fixed left-1/2 top-[56px] -translate-x-1/2 z-[99999]",
               "data-[state=open]:animate-in data-[state=closed]:animate-out",
               "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
               "data-[state=closed]:zoom-out-[0.98] data-[state=open]:zoom-in-100",
@@ -113,7 +115,7 @@ export default function Menu({
             )}
           >
             {/* Main Panel Container - using island-surface design system */}
-            <div className="island-surface w-[540px] overflow-hidden rounded-2xl p-6">
+            <div className="island-surface relative z-30 w-[540px] overflow-hidden rounded-2xl p-6">
               <div className="flex gap-6">
                 {/* Left Side: Context / Overview */}
                 <div className="flex w-[36%] flex-col justify-between">

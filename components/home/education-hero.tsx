@@ -100,14 +100,36 @@ export function EducationHero() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="absolute inset-0 z-10 flex flex-col items-center justify-center -translate-y-[10vh] max-w-5xl mx-auto px-6 text-center w-full"
+        className="absolute inset-0 z-10 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 text-center w-full"
       >
-        <motion.div variants={textVariants} className="mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-neutral-200 text-sm font-medium text-neutral-800 relative">
-            ene hesegdeer logo go shaa
-            <div className="absolute -bottom-1 right-4 w-2 h-2 bg-neutral-200 rotate-45"></div>
+        {/* Apple-Style Glass Badge */}
+        <motion.div
+          variants={textVariants}
+          whileHover={{ scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="mb-8 relative inline-flex items-center justify-center overflow-hidden rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.08)] cursor-default"
+        >
+          {/* 1. Background Image Layer */}
+          <img
+            src="/home/colorful.jpg"
+            alt="Colorful background texture"
+            className="absolute inset-0 h-full w-full object-cover z-0 pointer-events-none scale-105"
+          />
+
+          {/* 2. Frosted Glass Layer - Reduced milkiness (bg-white/20), boosted saturation */}
+          <div className="absolute inset-0 z-10 bg-white/20 backdrop-blur-md backdrop-saturate-200" />
+
+          {/* 3. Glossy Edge Highlight - Crisp inner shadow and slightly transparent border */}
+          <div className="absolute inset-0 z-20 rounded-full border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9)] pointer-events-none" />
+
+          {/* 4. Text Layer (Foreground) - Dark contrast text, sleeker pill padding */}
+          <div className="relative z-30 px-6 py-1.5 md:px-8 md:py-2">
+            <p className="text-sm md:text-base font-medium tracking-tight text-white drop-shadow-sm font-gochi-hand">
+              "Nonest" Profit native intiative
+            </p>
           </div>
         </motion.div>
+        {/* End Apple-Style Glass Badge */}
 
         <motion.h1
           variants={textVariants}
@@ -141,7 +163,6 @@ export function EducationHero() {
         animate="visible"
         className="absolute bottom-0 left-0 right-0 w-full z-0 pointer-events-none"
       >
-        {/* Changed w-full to w-[85%] and added mx-auto to center it */}
         <img
           src="/home/68e8f533b2d110c6d06c6afd_Group 1261154922 (2).avif"
           alt="School logos"

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import GlassFeaturesSection from "./glass-features-section";
 
 // Apple-like buttery smooth easing curve
 const customEase = [0.16, 1, 0.3, 1] as const;
@@ -36,6 +37,105 @@ const staggerContainer = {
   },
 };
 
+function PricingSection() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white p-6 md:p-12 font-sans antialiased text-gray-900">
+      <div className="max-w-[1000px] w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center">
+        {/* Left Content */}
+        <div className="flex flex-col space-y-6">
+          <span className="text-[10px] font-semibold tracking-[0.2em] text-gray-400 uppercase">
+            Completely Free
+          </span>
+
+          <h1 className="text-4xl md:text-[3.25rem] font-medium tracking-tight leading-[1.1] text-[#111]">
+            Premium prep.
+            <br />
+            Zero cost. Forever.
+          </h1>
+
+          <p className="text-gray-500 text-[15px] max-w-sm leading-relaxed">
+            Access our complete DSAT preparation platform with no hidden fees,
+            no subscriptions, and no catch.
+          </p>
+
+          <div className="flex items-center gap-3 pt-4">
+            <div className="h-[1px] w-8 bg-gray-200"></div>
+            <span className="text-[10px] font-bold tracking-[0.1em] uppercase text-teal-800 bg-[#e0f4f0] px-2 py-0.5">
+              Non-profit · Educational initiative
+            </span>
+          </div>
+        </div>
+
+        {/* Right Content - Pricing Card */}
+        <div className="relative rounded-[32px] p-8 md:p-10 bg-gradient-to-br from-[#faf7f2] via-[#f7ebe4] to-[#f3b5b7] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white/40">
+          {/* Card Header */}
+          <div className="flex justify-between items-center mb-6">
+            <span className="font-medium text-[17px] text-gray-800">
+              Free Forever
+            </span>
+            <span className="text-[9px] font-bold tracking-widest text-gray-400 uppercase border border-gray-200/60 bg-white/40 px-3 py-1 rounded-full">
+              Full Access
+            </span>
+          </div>
+
+          {/* Price */}
+          <div className="flex items-baseline gap-1 mb-4 text-gray-400">
+            <span className="text-3xl font-medium self-start mt-2">MNT</span>
+            <span className="text-7xl font-medium tracking-tight text-gray-500">
+              0
+            </span>
+            <span className="text-lg ml-2 font-medium">forever</span>
+          </div>
+          <p className="text-gray-600 text-[13px] mb-10 leading-relaxed">
+            Your dream university shouldn't be locked behind a $2,000 prep
+            course.
+          </p>
+
+          {/* Features List */}
+          <ul className="space-y-4 mb-10">
+            <li className="flex items-center gap-3 text-[15px] text-gray-600">
+              <svg
+                className="w-[18px] h-[18px] text-gray-400 stroke-[1.5]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Native Mongolian platform.
+            </li>
+
+            <li className="flex items-center gap-3 text-[15px] text-gray-600">
+              <svg
+                className="w-[18px] h-[18px] text-gray-400 stroke-[1.5]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              100% College Board alignment.
+            </li>
+          </ul>
+
+          {/* Action Button */}
+          <button className="w-full bg-black text-white text-[15px] font-medium rounded-full py-4 transition-transform hover:scale-[1.01] active:scale-100 flex items-center justify-center">
+            Start practicing free
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MoriPrepSections() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -64,42 +164,155 @@ export function MoriPrepSections() {
 
   return (
     <div className="bg-white font-sans text-neutral-900 selection:bg-neutral-200">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-scroll {
+              animation: scroll 30s linear infinite;
+            }
+            .animate-scroll:hover {
+              animation-play-state: paused;
+            }
+          `,
+        }}
+      />
       {/* 1. SCHOOLS SECTION */}
-      <section className="py-12 px-6 bg-white border-b border-neutral-100">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
+      <section className="py-16 px-6 bg-white border-b border-neutral-100">
+        <div className="max-w-6xl mx-auto flex flex-col items-center">
+          {/* Subheading added here */}
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: customEase }}
-            className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 md:gap-x-16"
+            className="text-[11px] font-gochi-hand md:text-xs font-medium tracking-tight text-neutral-400  text-center mb-10"
           >
-            {[
-              { logo: "harvard.png" },
-              { logo: "mit.avif" },
-              { logo: "stanford.png" },
-              { logo: "yale.avif" },
-              { logo: "princeton.png" },
-            ].map((school, index) => (
-              <img
-                key={index}
-                src={`/${school.logo}`}
-                alt="University Logo"
-                className="h-8 md:h-10 w-auto object-contain grayscale opacity-50 hover:opacity-70 transition-opacity duration-300"
+            We've helped our students get into
+          </motion.p>
+
+          {/* Logo Slider Container */}
+          <div className="w-full relative overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, ease: customEase, delay: 0.1 }}
+              className="relative"
+            >
+              {/* Left frosted glass fade */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-24 md:w-40 z-10 pointer-events-none bg-gradient-to-r from-white via-white/80 to-transparent backdrop-blur-[6px]"
+                style={{
+                  WebkitMaskImage:
+                    "linear-gradient(to right, black, transparent)",
+                  maskImage: "linear-gradient(to right, black, transparent)",
+                }}
               />
-            ))}
-          </motion.div>
+              {/* Right frosted glass fade */}
+              <div
+                className="absolute right-0 top-0 bottom-0 w-24 md:w-40 z-10 pointer-events-none bg-gradient-to-l from-white via-white/80 to-transparent backdrop-blur-[6px]"
+                style={{
+                  WebkitMaskImage:
+                    "linear-gradient(to left, black, transparent)",
+                  maskImage: "linear-gradient(to left, black, transparent)",
+                }}
+              />
+
+              {/* Scrolling container */}
+              <div className="flex items-center gap-x-12 md:gap-x-16 animate-scroll">
+                {[
+                  { logo: "harvard.png", url: "https://www.harvard.edu" },
+                  { logo: "mit.avif", url: "https://www.mit.edu" },
+                  { logo: "stanford.png", url: "https://www.stanford.edu" },
+                  { logo: "yale.avif", url: "https://www.yale.edu" },
+                  { logo: "princeton.png", url: "https://www.princeton.edu" },
+                  { logo: "1.png", url: "https://www.columbia.edu" },
+                  { logo: "2.png", url: "https://www.uchicago.edu" },
+                  { logo: "3.png", url: "https://www.duke.edu" },
+                  { logo: "4.png", url: "https://www.upenn.edu" },
+                  { logo: "5.png", url: "https://www.caltech.edu" },
+                  { logo: "6.png", url: "https://www.jhu.edu" },
+                  { logo: "7.png", url: "https://www.northwestern.edu" },
+                  { logo: "8.png", url: "https://www.brown.edu" },
+                  { logo: "9.png", url: "https://www.cornell.edu" },
+                ].map((school, index) => (
+                  <a
+                    key={index}
+                    href={school.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={`/schools/${school.logo}`}
+                      alt="University Logo"
+                      className="h-8 md:h-10 w-auto object-contain grayscale opacity-50 hover:opacity-100 hover:grayscale-0 transition-all duration-300 cursor-pointer"
+                    />
+                  </a>
+                ))}
+                {/* Duplicate for seamless loop */}
+                {[
+                  { logo: "harvard.png", url: "https://www.harvard.edu" },
+                  { logo: "mit.avif", url: "https://www.mit.edu" },
+                  { logo: "stanford.png", url: "https://www.stanford.edu" },
+                  { logo: "yale.avif", url: "https://www.yale.edu" },
+                  { logo: "princeton.png", url: "https://www.princeton.edu" },
+                  { logo: "1.png", url: "https://www.columbia.edu" },
+                  { logo: "2.png", url: "https://www.uchicago.edu" },
+                  { logo: "3.png", url: "https://www.duke.edu" },
+                  { logo: "4.png", url: "https://www.upenn.edu" },
+                  { logo: "5.png", url: "https://www.caltech.edu" },
+                  { logo: "6.png", url: "https://www.jhu.edu" },
+                  { logo: "7.png", url: "https://www.northwestern.edu" },
+                  { logo: "8.png", url: "https://www.brown.edu" },
+                  { logo: "9.png", url: "https://www.cornell.edu" },
+                ].map((school, index) => (
+                  <a
+                    key={`duplicate-${index}`}
+                    href={school.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0"
+                  >
+                    <img
+                      src={`/schools/${school.logo}`}
+                      alt="University Logo"
+                      className="h-8 md:h-10 w-auto object-contain grayscale opacity-50 hover:opacity-100 hover:grayscale-0 transition-all duration-300 cursor-pointer"
+                    />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* 2. IMPACT & SPECS SECTION (Moved up to establish immediate value) */}
+      {/* 2. IMPACT & SPECS SECTION */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, ease: customEase, delay: 0.1 }}
+            className="text-center px-4"
+          >
+            <blockquote className="text-3xl md:text-[40px] font-medium tracking-tight text-neutral-300 leading-[1.2] max-w-4xl mx-auto text-balance">
+              "Your dream university shouldn't be locked behind a{" "}
+              <span className="text-neutral-900">$2,000</span> prep course."
+            </blockquote>
+          </motion.div>
+
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
+            transition={{ delayChildren: 0.3 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-12   py-16 text-center"
           >
             <motion.div
@@ -138,191 +351,16 @@ export function MoriPrepSections() {
               </p>
             </motion.div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: customEase, delay: 0.3 }}
-            className="mt-20 text-center px-4"
-          >
-            <blockquote className="text-3xl md:text-[40px] font-medium tracking-tight text-neutral-300 leading-[1.2] max-w-4xl mx-auto text-balance">
-              "Your dream university shouldn't be locked behind a{" "}
-              <span className="text-neutral-900">$2,000</span> prep course."
-            </blockquote>
-          </motion.div>
         </div>
       </section>
 
-      {/* 3. CORE FEATURES (Deep Dives) */}
+      {/* Glass Features Section */}
+      <GlassFeaturesSection />
 
-      {/* Feature 01: Question Bank */}
-      <section className="py-32 px-6 bg-[#fafafa] overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={scaleIn}
-              className="relative rounded-[2rem] bg-[#f5f5f7] p-6 md:p-8"
-            >
-              <img
-                src="/home/image.png"
-                alt="Question Bank Interface"
-                className="w-full h-auto rounded-xl shadow-sm border border-black/5"
-              />
-            </motion.div>
+      {/* 4. PRICING SECTION */}
+      <PricingSection />
 
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              className="max-w-md"
-            >
-              <motion.span
-                variants={fadeInUp}
-                className="text-2xl font-medium text-neutral-400 mb-4 block"
-              >
-                01.
-              </motion.span>
-              <motion.h2
-                variants={fadeInUp}
-                className="text-4xl md:text-5xl font-medium tracking-tight mb-6 text-balance"
-              >
-                The ultimate question bank.
-              </motion.h2>
-              <motion.p
-                variants={fadeInUp}
-                className="text-lg md:text-xl text-neutral-500 leading-relaxed"
-              >
-                Practice with 4,000+ highly calibrated Digital SAT questions.
-                Cover every Math and Reading & Writing topic, structured exactly
-                like the real exam.
-              </motion.p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature 02: Analytics */}
-      <section className="py-32 px-6 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              className="max-w-md lg:order-1 order-2"
-            >
-              <motion.span
-                variants={fadeInUp}
-                className="text-2xl font-medium text-neutral-400 mb-4 block"
-              >
-                02.
-              </motion.span>
-              <motion.h2
-                variants={fadeInUp}
-                className="text-4xl md:text-5xl font-medium tracking-tight mb-6 text-balance"
-              >
-                Know where you stand.
-              </motion.h2>
-              <motion.p
-                variants={fadeInUp}
-                className="text-lg md:text-xl text-neutral-500 leading-relaxed mb-8"
-              >
-                Eliminate the guesswork. Track your progress dynamically and
-                focus purely on what needs improvement.
-              </motion.p>
-
-              <motion.ul variants={staggerContainer} className="space-y-4">
-                {[
-                  "Track weekly activity trends",
-                  "Analyze accuracy by specific topic",
-                  "Monitor time spent by difficulty level",
-                ].map((item, i) => (
-                  <motion.li
-                    key={i}
-                    variants={fadeInUp}
-                    className="flex items-center gap-4 text-lg text-neutral-600 font-medium"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
-                    {item}
-                  </motion.li>
-                ))}
-              </motion.ul>
-            </motion.div>
-
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={scaleIn}
-              className="relative rounded-[2rem] bg-white p-6 md:p-8 shadow-sm border border-neutral-200/60 lg:order-2 order-1"
-            >
-              <img
-                src="/home/analytics.png"
-                alt="Analytics Interface"
-                className="w-full h-auto rounded-xl shadow-sm"
-              />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature 03: Predicted Tests */}
-      <section className="py-32 px-6 bg-[#fafafa] overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={scaleIn}
-              className="relative rounded-[2rem] bg-[#f5f5f7] p-6 md:p-8"
-            >
-              <img
-                src="/home/predicted-tests.png"
-                alt="Predicted Tests Interface"
-                className="w-full h-auto rounded-xl shadow-sm border border-black/5"
-              />
-            </motion.div>
-
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              className="max-w-md"
-            >
-              <motion.span
-                variants={fadeInUp}
-                className="text-2xl font-medium text-neutral-400 mb-4 block"
-              >
-                03.
-              </motion.span>
-              <motion.h2
-                variants={fadeInUp}
-                className="text-4xl md:text-5xl font-medium tracking-tight mb-6 text-balance"
-              >
-                Test day, everyday.
-              </motion.h2>
-              <motion.p
-                variants={fadeInUp}
-                className="text-lg md:text-xl text-neutral-500 leading-relaxed"
-              >
-                Take full-length practice tests mathematically calibrated to
-                match recent Digital SAT difficulty curves. Build stamina and
-                confidence.
-              </motion.p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. ECOSYSTEM / TOOLS (The 3 Cards) */}
+      {/* 5. ECOSYSTEM / TOOLS */}
       <section className="py-32 px-6 bg-white overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -334,13 +372,13 @@ export function MoriPrepSections() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-[36px] md:text-5xl font-medium tracking-tight mb-4 text-balance"
+              className="text-[28px] md:text-[36px] font-medium tracking-tight mb-4 text-balance"
             >
               Built for a perfect score.
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-neutral-500 text-lg md:text-xl leading-relaxed"
+              className="text-neutral-500 text-base md:text-lg leading-relaxed"
             >
               Everything you need to master the exam, unified in one beautiful
               interface.
@@ -366,7 +404,7 @@ export function MoriPrepSections() {
                   className="w-[70%] h-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-105"
                 />
               </div>
-              <h3 className="text-xl font-medium text-neutral-900">
+              <h3 className="text-lg font-medium text-neutral-900">
                 Smart Planner
               </h3>
               <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
@@ -386,7 +424,7 @@ export function MoriPrepSections() {
                   className="w-[70%] h-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-105"
                 />
               </div>
-              <h3 className="text-xl font-medium text-neutral-900">
+              <h3 className="text-lg font-medium text-neutral-900">
                 Concept Library
               </h3>
               <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
@@ -407,7 +445,7 @@ export function MoriPrepSections() {
                   className="w-[70%] h-auto object-contain drop-shadow-sm transition-transform duration-500 hover:scale-105"
                 />
               </div>
-              <h3 className="text-xl font-medium text-neutral-900">
+              <h3 className="text-lg font-medium text-neutral-900">
                 Exam Simulator
               </h3>
               <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
@@ -430,13 +468,13 @@ export function MoriPrepSections() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="text-[36px] md:text-5xl font-medium tracking-tight text-white mb-6 text-balance"
+              className="text-[28px] md:text-[36px] font-medium tracking-tight text-white mb-6 text-balance"
             >
               Focused on your growth. <br /> Not your data.
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-[#a3a3a3] text-lg md:text-xl leading-relaxed"
+              className="text-[#a3a3a3] text-base md:text-lg leading-relaxed"
             >
               Your learning data is private and secure. We don't sell your
               information. We only use it to power your analytics and help you
@@ -460,7 +498,7 @@ export function MoriPrepSections() {
         </div>
       </section>
 
-      {/* 6. FAQ SECTION (Matching the requested design) */}
+      {/* 6. FAQ SECTION */}
       <section className="py-32 px-6 bg-[#fafafa]">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
@@ -471,8 +509,16 @@ export function MoriPrepSections() {
               transition={{ duration: 0.8, ease: customEase }}
               className="w-full lg:w-[40%]"
             >
-              <h2 className="text-[32px] md:text-[40px] font-medium tracking-tight text-neutral-900 leading-tight">
-                Frequently Asked <br className="hidden lg:block" /> Questions
+              <h2 className="text-[28px] md:text-[36px] font-medium tracking-tight text-neutral-900 leading-tight">
+                Frequently Asked <br className="hidden lg:block" />
+                <span className="relative inline-block z-10 text-[34px] md:text-[43px]">
+                  Questionss
+                  <img
+                    src="/home/sketch.svg"
+                    alt="Underline decoration"
+                    className="absolute left-0 top-[65%] -scale-x-100 -scale-y-80 w-full h-auto pointer-events-none -z-10"
+                  />
+                </span>
               </h2>
             </motion.div>
 

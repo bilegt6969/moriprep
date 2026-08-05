@@ -2,14 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart2,
-  ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
-  Home,
-  Info,
-  Library,
-  User,
+    BarChart2,
+    ChevronDown,
+    CircleDollarSign,
+    ClipboardList,
+    Home,
+    Info,
+    Library,
+    User,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -125,7 +125,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.96 }}
                         transition={iosSpring}
-                        className="absolute left-1/2 top-[44px] w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-slate-200/60 bg-white/80 p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-3xl dark:border-white/10 dark:bg-neutral-900/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                        className="absolute left-1/2 top-[44px] z-[100] w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-slate-200/60 bg-white/80 p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-3xl dark:border-white/10 dark:bg-neutral-900/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
                       >
                         {questionBankItems.map((subItem) => (
                           <Link

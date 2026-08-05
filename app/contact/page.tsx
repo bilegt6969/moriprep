@@ -2,13 +2,18 @@
 
 import Footer from "components/Heading/Footer";
 import Navbar from "components/Heading/Navbar";
+import { useBannerVisible } from "hooks/use-banner-visible";
 import React from "react";
 
 export default function ContactPage() {
+  const isBannerVisible = useBannerVisible();
+
   return (
     <>
-      <Navbar siteName="Byte" categories={[]} />
-      <section className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden py-20">
+      <Navbar siteName="Mori Prep" categories={[]} />
+      <section
+        className={`relative min-h-screen flex items-center justify-center bg-white overflow-hidden ${isBannerVisible ? "pt-24" : "py-20"}`}
+      >
         <div className="w-full max-w-[1200px] px-5 md:px-10 flex flex-col gap-4 animate-fade-in-up">
           {/* ── TOP ROW: Two Cards ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -150,7 +155,7 @@ export default function ContactPage() {
           animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
-      <Footer siteName="Byte" />
+      <Footer siteName="Mori Prep" />
     </>
   );
 }
