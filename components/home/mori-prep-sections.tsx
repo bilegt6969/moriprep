@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import NextImage from "next/image";
 import { useState } from "react";
 import BillowLandingSection from "./billow-landing-section";
@@ -8,30 +8,30 @@ import GlassFeaturesSection from "./glass-features-section";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: customEase },
+    transition: { type: "spring", stiffness: 80, damping: 20 },
   },
 };
 
-const scaleIn = {
+const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 1, ease: customEase },
+    transition: { type: "spring", stiffness: 80, damping: 20 },
   },
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.1,
       delayChildren: 0.1,
     },
   },
@@ -47,7 +47,7 @@ function PricingSection() {
             Completely Free
           </span>
 
-          <h1 className="text-4xl sm:text-5xl md:text-[3.25rem] font-medium tracking-tight leading-[1.1] text-[#111]">
+          <h1 className="text-4xl sm:text-5xl md:text-[3.25rem] font-medium tracking-tight leading-[1.15] text-[#111]">
             Premium prep.
             <br />
             Zero cost. Forever.
@@ -67,7 +67,7 @@ function PricingSection() {
         </div>
 
         {/* Right Content - Pricing Card */}
-        <div className="relative rounded-[2rem] p-6 sm:p-8 md:p-10 bg-gradient-to-br from-[#faf7f2] via-[#f7ebe4] to-[#f3b5b7] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white/40">
+        <div className="relative rounded-[2rem] p-6 sm:p-8 md:p-10 bg-gradient-to-br from-[#faf7f2] via-[#f7ebe4] to-[#f3b5b7] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white/40 hover:shadow-[0_24px_48px_-15px_rgba(0,0,0,0.08)] transition-shadow duration-300">
           <div className="flex justify-between items-center mb-6">
             <span className="font-medium text-[16px] sm:text-[17px] text-gray-800">
               Free Forever
@@ -126,7 +126,7 @@ function PricingSection() {
             </li>
           </ul>
 
-          <button className="w-full bg-black text-white text-[14px] sm:text-[15px] font-medium rounded-full py-3.5 sm:py-4 transition-transform hover:scale-[1.01] active:scale-100 flex items-center justify-center">
+          <button className="w-full bg-black text-white text-[14px] sm:text-[15px] font-medium rounded-full py-3.5 sm:py-4 transition-transform hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center duration-100">
             Start practicing free
           </button>
         </div>
@@ -173,7 +173,7 @@ export function MoriPrepSections() {
             transition={{ duration: 1, ease: customEase }}
             className="text-center px-2"
           >
-            <blockquote className="text-3xl sm:text-4xl md:text-[48px] font-medium tracking-tight text-neutral-300 leading-[.4] max-w-5xl mx-auto text-balance">
+            <blockquote className="text-3xl sm:text-4xl md:text-[48px] font-medium tracking-tight text-neutral-300 leading-[1.15] max-w-5xl mx-auto text-balance">
               We built{" "}
               {/* Inline wrapper strictly for the logo and brand name */}
               <span className="inline-flex items-center align-middle mx-1 -translate-y-[2px]">
@@ -190,7 +190,7 @@ export function MoriPrepSections() {
               </span>{" "}
               <span className="tracking-tighter">Prep</span> because{" "}
               <br className="hidden md:block" /> we are against the{" "}
-              <span className="text-neutral-900">nepo</span> privilege."
+              <span className="text-neutral-900">nepo</span> privilege.
             </blockquote>
           </motion.div>
 
@@ -282,6 +282,10 @@ export function MoriPrepSections() {
             {/* Card 1 */}
             <motion.div
               variants={fadeInUp}
+              whileHover={{
+                y: -4,
+                transition: { type: "spring", stiffness: 300, damping: 20 },
+              }}
               className="bg-white rounded-[2rem] p-6 md:p-8 pb-8 md:pb-10 flex flex-col shadow-sm border border-neutral-200/50 hover:shadow-md transition-shadow"
             >
               <div className="flex-1 w-full flex items-center justify-center mb-6 md:mb-8 pt-4">
@@ -302,6 +306,10 @@ export function MoriPrepSections() {
             {/* Card 2 */}
             <motion.div
               variants={fadeInUp}
+              whileHover={{
+                y: -4,
+                transition: { type: "spring", stiffness: 300, damping: 20 },
+              }}
               className="bg-white rounded-[2rem] p-6 md:p-8 pb-8 md:pb-10 flex flex-col shadow-sm border border-neutral-200/50 hover:shadow-md transition-shadow"
             >
               <div className="flex-1 w-full flex items-center justify-center mb-6 md:mb-8 pt-4">
@@ -323,6 +331,10 @@ export function MoriPrepSections() {
             {/* Card 3 */}
             <motion.div
               variants={fadeInUp}
+              whileHover={{
+                y: -4,
+                transition: { type: "spring", stiffness: 300, damping: 20 },
+              }}
               className="bg-white rounded-[2rem] p-6 md:p-8 pb-8 md:pb-10 flex flex-col shadow-sm border border-neutral-200/50 hover:shadow-md transition-shadow"
             >
               <div className="flex-1 w-full flex items-center justify-center mb-6 md:mb-8 pt-4">
@@ -423,7 +435,7 @@ export function MoriPrepSections() {
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="w-full py-5 md:py-6 flex justify-between items-center text-left hover:opacity-70 transition-opacity"
+                    className="w-full py-5 md:py-6 flex justify-between items-center text-left hover:opacity-70 transition-opacity active:scale-[0.98] duration-100"
                   >
                     <span className="text-[15px] md:text-[18px] font-medium text-neutral-900 pr-6 md:pr-8">
                       {faq.question}
@@ -434,7 +446,7 @@ export function MoriPrepSections() {
                   </button>
 
                   <div
-                    className={`overflow-hidden transition-all duration-400 ease-[0.16,1,0.3,1] ${
+                    className={`overflow-hidden transition-all duration-500 ease-[0.16,1,0.3,1] ${
                       openFaq === index
                         ? "max-h-60 opacity-100 pb-5 md:pb-6"
                         : "max-h-0 opacity-0"

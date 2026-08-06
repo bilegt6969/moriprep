@@ -1,7 +1,7 @@
 "use client";
 
 import WaitlistButton from "@/components/home/waitlist-button";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { auth } from "lib/firebase";
 import { memo, useEffect, useState } from "react";
 import { SlotText } from "slot-text/react";
@@ -9,31 +9,31 @@ import "slot-text/style.css";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
   },
 };
 
-const textVariants = {
+const textVariants: Variants = {
   hidden: { opacity: 0, y: 15, filter: "blur(12px)" },
   visible: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 1.2, ease: customEase },
+    transition: { type: "spring", stiffness: 80, damping: 20 },
   },
 };
 
-const buttonVariants = {
+const buttonVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95, filter: "blur(5px)" },
   visible: {
     opacity: 1,
     scale: 1,
     filter: "blur(0px)",
-    transition: { duration: 1, ease: customEase, delay: 0.3 },
+    transition: { type: "spring", stiffness: 80, damping: 20, delay: 0.1 },
   },
 };
 
@@ -79,7 +79,12 @@ const LogoTicker = memo(() => {
         <motion.p
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: customEase, delay: 0.5 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 15,
+            delay: 0.5,
+          }}
           className="text-[9px] sm:text-[11px] md:text-xs font-medium tracking-tight text-neutral-400 text-center mb-2"
         >
           We've helped our students get into
@@ -99,7 +104,7 @@ const LogoTicker = memo(() => {
                   href={school.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center"
+                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
                   <img
                     src={`/schools/${school.logo}`}
@@ -121,7 +126,7 @@ const LogoTicker = memo(() => {
                   target="_blank"
                   rel="noopener noreferrer"
                   tabIndex={-1}
-                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center"
+                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
                   <img
                     src={`/schools/${school.logo}`}
@@ -215,7 +220,7 @@ export function EducationHero() {
         >
           <motion.h1
             variants={textVariants}
-            className="text-5xl sm:text-6xl md:text-[5rem] font-slim tracking-tighter text-neutral-900 mb-3 sm:mb-5 leading-[1.05] font-eb-garamond"
+            className="text-5xl sm:text-6xl md:text-[5rem] font-slim tracking-tight text-neutral-900 mb-3 sm:mb-5 leading-[1.05] font-eb-garamond"
           >
             at <span>mori</span> Prep
             <br />

@@ -7,11 +7,11 @@ import { useEffect, useState } from "react";
 
 const MockupQuestions = ({ isActive }: { isActive: boolean }) => (
   <div
-    className={`w-[85%] h-[80%] rounded-xl shadow-xl flex flex-col p-4 overflow-hidden backdrop-blur-2xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+    className={`w-[85%] h-[80%] rounded-xl shadow-2xl flex flex-col p-4 overflow-hidden backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/90 border border-gray-200"
-        : "bg-[#2c2c2e]/90 border border-white/10"
+        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
     {/* macOS Traffic Lights */}
@@ -60,11 +60,11 @@ const MockupQuestions = ({ isActive }: { isActive: boolean }) => (
 
 const MockupAnalytics = ({ isActive }: { isActive: boolean }) => (
   <div
-    className={`w-[85%] rounded-xl shadow-xl p-4 backdrop-blur-2xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+    className={`w-[85%] rounded-xl shadow-2xl p-4 backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/90 border border-gray-200"
-        : "bg-[#2c2c2e]/90 border border-white/10"
+        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
     <div className="flex justify-between items-center mb-4">
@@ -115,11 +115,11 @@ const MockupAnalytics = ({ isActive }: { isActive: boolean }) => (
 
 const MockupPractice = ({ isActive }: { isActive: boolean }) => (
   <div
-    className={`w-[90%] h-[85%] rounded-xl shadow-xl flex overflow-hidden backdrop-blur-2xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+    className={`w-[90%] h-[85%] rounded-xl shadow-2xl flex overflow-hidden backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/90 border border-gray-200"
-        : "bg-[#2c2c2e]/90 border border-white/10"
+        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
     {/* iPadOS Sidebar */}
@@ -244,7 +244,7 @@ export default function GlassFeaturesSection() {
     return (
       <span
         onClick={() => setActiveIndex(index)}
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative transform hover:scale-[1.03] active:scale-95 align-middle mx-1
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] relative transform hover:scale-[1.03] active:scale-[0.97] align-middle mx-1
           ${
             isActive
               ? "bg-white/20 border border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.15)]"
@@ -281,7 +281,7 @@ export default function GlassFeaturesSection() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-2 md:p-4 overflow-hidden font-sans selection:bg-[#007aff]/30">
-      <div className="relative z-10 w-full max-w-[95%] mx-auto flex flex-col pt-12 md:pt-24 bg-black rounded-[3rem] p-8 md:p-12 shadow-2xl">
+      <div className="relative z-10 w-full max-w-[95%] mx-auto flex flex-col pt-12 md:pt-24 bg-black/80 backdrop-blur-3xl rounded-[3rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(0,0,0,0.4)] border border-white/5">
         {/* Dynamic Header - Restored Original Sizes */}
         <h2 className="text-[14px] sm:text-[18px] md:text-[22px] font-medium tracking-tight leading-[1.35] mb-20 max-w-4xl select-none text-[#86868b]">
           <div
