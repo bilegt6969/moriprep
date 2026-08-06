@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { CheckCircle2, Sparkles } from "lucide-react";
 
 export default function BillowLandingSection() {
@@ -9,7 +9,7 @@ export default function BillowLandingSection() {
     "https://framerusercontent.com/images/v8vSnAp2uGbpWVPFEf15yk8.png";
 
   // Framer Motion animation variants for smooth, subtle entrances
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -17,7 +17,7 @@ export default function BillowLandingSection() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: {
       opacity: 1,
@@ -27,11 +27,11 @@ export default function BillowLandingSection() {
   };
 
   // Continuous subtle floating for the UI elements
-  const floatingAnimation = {
+  const floatingAnimation: any = {
     y: ["-3%", "3%"],
     transition: {
       repeat: Infinity,
-      repeatType: "mirror" as const,
+      repeatType: "mirror",
       duration: 4,
       ease: "easeInOut",
     },
