@@ -280,7 +280,7 @@ export default function GlassFeaturesSection() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-2 md:p-4 overflow-hidden bg-[#f5f5f7] font-sans selection:bg-[#007aff]/30">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-2 md:p-4 overflow-hidden font-sans selection:bg-[#007aff]/30">
       <div className="relative z-10 w-full max-w-[95%] mx-auto flex flex-col pt-12 md:pt-24 bg-black rounded-[3rem] p-8 md:p-12 shadow-2xl">
         {/* Dynamic Header - Restored Original Sizes */}
         <h2 className="text-[14px] sm:text-[18px] md:text-[22px] font-medium tracking-tight leading-[1.35] mb-20 max-w-4xl select-none text-[#86868b]">

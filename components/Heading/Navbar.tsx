@@ -111,6 +111,19 @@ export default function Navbar({
         }}
       />
 
+      {/* Bottom scroll blur (mobile + desktop) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: smoothEase }}
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] h-24 backdrop-blur-sm"
+        style={{
+          WebkitMaskImage:
+            "linear-gradient(to top, black 20%, transparent 100%)",
+          maskImage: "linear-gradient(to top, black 20%, transparent 100%)",
+        }}
+      />
+
       <AnimatePresence>
         {isVisible && (
           <motion.header
