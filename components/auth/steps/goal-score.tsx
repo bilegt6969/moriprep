@@ -69,9 +69,10 @@ export function GoalScore({
   };
 
   const getBarWidth = (score: number) => {
-    // Calculate position for 25 bars (400 to 1600 in 50-point increments)
+    // Calculate position for 25 bars evenly distributed
+    // 400 is at 0%, 1600 is at 96% (with 4% width each)
     const segmentIndex = (score - MIN_SCORE) / 50;
-    return (segmentIndex / 24) * 100;
+    return (segmentIndex / 25) * 100;
   };
 
   const isSelected = (score: number) => {
