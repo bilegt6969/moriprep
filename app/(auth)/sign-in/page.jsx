@@ -3,15 +3,17 @@
 import { OnboardingFlow } from "components/auth/onboarding-flow";
 import LiteNavbar from "components/LiteNavbar";
 import {
+    getRedirectResult,
     sendPasswordResetEmail,
     signInWithEmailAndPassword,
     signInWithPopup,
+    signInWithRedirect,
 } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, googleProvider } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function AuthNavbar() {
   return (
@@ -101,9 +103,26 @@ function SignInContent({
       setShowOnboarding(true);
     } catch (err) {
       console.error("Google sign-in error:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to sign in with Google.",
-      );
+      // If popup is blocked, try redirect instead
+      if (
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/popup-blocked"
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          console.error("Google redirect sign-in error:", redirectErr);
+          setError(
+            redirectErr instanceof Error
+              ? redirectErr.message
+              : "Failed to sign in with Google.",
+          );
+        }
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Failed to sign in with Google.",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -283,6 +302,24 @@ export default function SignInPage() {
   const [showReset, setShowReset] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
+
+  // Handle redirect result from Google OAuth
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setShowOnboarding(true);
+        }
+      } catch (err) {
+        console.error("Redirect result error:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to complete sign in.",
+        );
+      }
+    };
+    handleRedirectResult();
+  }, []);
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();

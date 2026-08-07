@@ -45,6 +45,21 @@ export function BestSatScoreTotal({
     onNext();
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTotalScore(value);
+    updateData({
+      bestTotalScore: value ? parseInt(value) : undefined,
+    });
+  };
+
+  // Handle Enter key to advance
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleNext();
+    }
+  };
+
   return (
     <motion.div
       variants={fadeInUp}
@@ -73,7 +88,8 @@ export function BestSatScoreTotal({
             max="1600"
             step="10"
             value={totalScore}
-            onChange={(e) => setTotalScore(e.target.value)}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
             placeholder="Enter recent score"
             className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
           />
@@ -87,21 +103,6 @@ export function BestSatScoreTotal({
       >
         I don't have a score yet
       </button>
-
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleNext}
-          className="px-8 py-3.5 rounded-full bg-neutral-900 text-white font-medium hover:bg-black transition-all duration-200 active:scale-[0.98]"
-        >
-          Continue
-        </button>
-      </div>
     </motion.div>
   );
 }

@@ -87,7 +87,7 @@ const LogoTicker = memo(() => {
           }}
           className="text-[9px] sm:text-[11px] md:text-xs font-medium tracking-tight text-neutral-400 text-center mb-2"
         >
-          We've helped our students get into
+          Trusted by students admitted to
         </motion.p>
 
         <div className="w-full relative overflow-hidden flex items-center group">
@@ -104,14 +104,15 @@ const LogoTicker = memo(() => {
                   href={school.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
+                  className="flex-shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
                   <img
                     src={`/schools/${school.logo}`}
                     alt="University Logo"
-                    loading="lazy"
+                    width="150"
+                    height="60"
                     decoding="async"
-                    className="h-5 sm:h-6 md:h-8 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
+                    className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
                   />
                 </a>
               ))}
@@ -126,14 +127,15 @@ const LogoTicker = memo(() => {
                   target="_blank"
                   rel="noopener noreferrer"
                   tabIndex={-1}
-                  className="flex-shrink-0 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
+                  className="flex-shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
                   <img
                     src={`/schools/${school.logo}`}
                     alt="University Logo"
-                    loading="lazy"
+                    width="150"
+                    height="60"
                     decoding="async"
-                    className="h-5 sm:h-6 md:h-8 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
+                    className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
                   />
                 </a>
               ))}
@@ -185,11 +187,7 @@ export function EducationHero() {
     setRotatingWord(words[wordIndex] || "Premium");
   }, [wordIndex]);
 
-  const buttonHref = isLoading
-    ? "/signup"
-    : isAuthenticated
-      ? "/home"
-      : "/sign-in";
+  const buttonHref = "/practice";
 
   return (
     <section className="relative h-[100dvh] min-h-[650px] w-full bg-white overflow-hidden flex flex-col">

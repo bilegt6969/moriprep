@@ -36,6 +36,13 @@ export function SchoolSearch({
     onNext();
   };
 
+  // Call handleNext when Enter is pressed
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && searchTerm) {
+      handleNext();
+    }
+  };
+
   return (
     <motion.div
       variants={fadeInUp}
@@ -50,32 +57,17 @@ export function SchoolSearch({
         This helps us personalize your experience based on your school.
       </p>
 
-      <div className="max-w-md mx-auto mb-8">
+      <div className="max-w-md mx-auto">
         <input
           ref={inputRef}
           autoFocus
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Type your school name..."
           className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
         />
-      </div>
-
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={!searchTerm}
-          className="px-8 py-3.5 rounded-full bg-neutral-900 text-white font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
-        >
-          Continue
-        </button>
       </div>
     </motion.div>
   );

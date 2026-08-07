@@ -104,35 +104,47 @@ export default function PrivacyPolicy() {
               Privacy & Policy
             </h1>
             <p style={{ fontSize: 16, color: "#666", margin: 0 }}>
-              How we handle your data to keep Sainto secure and reliable.
+              How we handle your data to keep Mori Prep secure and reliable.
             </p>
           </motion.div>
 
           <div style={contentStyle}>
             <Section variants={itemVariants} title="1. Information We Collect">
               <p>
-                When you interact with our platform, we collect information that
-                helps us facilitate secure C2C transactions. This includes your
-                contact details (name, email, phone number), delivery
-                coordinates across Ulaanbaatar, and transaction history.
+                When you interact with Mori Prep, we collect information that
+                helps us provide personalized SAT preparation services. This
+                includes your contact details (name, email, phone number),
+                academic information (school, graduation year, test scores), and
+                learning progress data.
               </p>
               <p>
-                We do not store sensitive bank login details on our servers;
-                bank transfers are authenticated using secure, unique
-                transaction codes generated per order.
+                We also collect information about your SAT performance including
+                section scores, test dates, and domain performance metrics to
+                help create personalized study plans and track your improvement
+                over time.
               </p>
             </Section>
 
             <Section variants={itemVariants} title="2. How We Use Your Data">
               <p>Your data is utilized strictly to:</p>
               <ul style={listStyle}>
-                <li>Process and verify your marketplace transactions.</li>
-                <li>Coordinate seamless logistics and dispatch updates.</li>
                 <li>
-                  Prevent fraud and ensure the authenticity of listed apparel
-                  and goods.
+                  Create personalized SAT study plans based on your strengths
+                  and weaknesses.
                 </li>
-                <li>Improve our UI/UX and overall platform stability.</li>
+                <li>
+                  Track your progress and adapt learning materials to your
+                  needs.
+                </li>
+                <li>
+                  Provide targeted practice in areas where you need the most
+                  improvement.
+                </li>
+                <li>
+                  Communicate important updates about your study schedule and
+                  progress.
+                </li>
+                <li>Improve our educational content and platform features.</li>
               </ul>
             </Section>
 
@@ -142,18 +154,19 @@ export default function PrivacyPolicy() {
             >
               <p>
                 We value your privacy. We do not sell your personal data to
-                third parties. Information is only shared with trusted
-                logistical partners necessary to deliver your orders or when
-                legally required to protect our community.
+                third parties. Your academic information is used solely to
+                provide our educational services and is never shared with
+                external parties except when legally required to protect our
+                community or comply with applicable laws.
               </p>
             </Section>
 
             <Section variants={itemVariants} title="4. Your Rights">
               <p>
                 You have the right to access, modify, or delete your personal
-                information at any time. If you wish to wipe your account
-                history or manage your active data footprint, please contact our
-                support team.
+                information at any time. If you wish to review your data, update
+                your academic information, or delete your account, please
+                contact our support team.
               </p>
             </Section>
           </div>
@@ -179,16 +192,16 @@ export default function PrivacyPolicy() {
                 version="v1.2.0"
                 date="May 30, 2026"
                 changes={[
-                  "Updated data handling protocols for direct banking channels.",
-                  "Clarified language regarding unique transaction code generation.",
+                  "Updated data handling protocols for SAT performance tracking.",
+                  "Clarified language regarding domain performance metrics collection.",
                 ]}
               />
               <ChangelogItem
                 version="v1.1.0"
                 date="February 15, 2025"
                 changes={[
-                  "Revised terms to reflect the transition to a full C2C fashion marketplace structure.",
-                  "Added clauses for peer-to-peer authenticated retail disputes.",
+                  "Revised terms to reflect comprehensive SAT preparation services.",
+                  "Added clauses for personalized learning data processing.",
                 ]}
               />
               <ChangelogItem

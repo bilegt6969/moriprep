@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { OnboardingData } from "../onboarding-flow";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
@@ -21,15 +22,7 @@ interface GraduationYearProps {
   onBack: () => void;
 }
 
-const years = [
-  "Class of 2026",
-  "Class of 2027",
-  "Class of 2028",
-  "Class of 2029",
-  "Class of 2030",
-  "Class of 2031",
-  "I've graduated",
-];
+const years = ["2026", "2027", "2028", "2029", "2030", "2031"];
 
 export function GraduationYear({
   data,
@@ -37,9 +30,23 @@ export function GraduationYear({
   onNext,
   onBack,
 }: GraduationYearProps) {
+  const [showYearInput, setShowYearInput] = useState(false);
+  const [gradYear, setGradYear] = useState("");
+
   const handleSelect = (year: string) => {
     updateData({ graduationYear: year });
-    onNext();
+    setShowYearInput(false);
+    setGradYear("");
+  };
+
+  const handleGraduatedSelect = () => {
+    setShowYearInput(true);
+    updateData({ graduationYear: "I've graduated" });
+  };
+
+  const handleYearChange = (year: string) => {
+    setGradYear(year);
+    updateData({ graduationYear: `I've graduated - ${year}` });
   };
 
   return (
@@ -53,28 +60,68 @@ export function GraduationYear({
         What year are you graduating?
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-xl mx-auto mb-6">
         {years.map((year) => (
           <button
             key={year}
             onClick={() => handleSelect(year)}
-            className="p-4 rounded-xl border border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-200 text-left group"
+            className={`p-4 rounded-xl border transition-all duration-200 text-left group ${
+              data.graduationYear === year
+                ? "border-neutral-900 bg-neutral-50"
+                : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"
+            }`}
           >
-            <span className="text-base font-medium text-neutral-900 group-hover:text-neutral-700">
+            <span
+              className={`text-base font-medium underline ${
+                data.graduationYear === year
+                  ? "text-neutral-900"
+                  : "text-neutral-900 group-hover:text-neutral-700"
+              }`}
+            >
               {year}
             </span>
           </button>
         ))}
-      </div>
-
-      <div className="mt-8">
         <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
+          onClick={handleGraduatedSelect}
+          className={`p-4 rounded-xl border transition-all duration-200 text-left group ${
+            data.graduationYear?.startsWith("I've graduated")
+              ? "border-neutral-900 bg-neutral-50"
+              : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"
+          }`}
         >
-          Back
+          <span
+            className={`text-base font-medium underline ${
+              data.graduationYear?.startsWith("I've graduated")
+                ? "text-neutral-900"
+                : "text-neutral-900 group-hover:text-neutral-700"
+            }`}
+          >
+            I've graduated
+          </span>
         </button>
       </div>
+
+      {showYearInput && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-xs mx-auto"
+        >
+          <label className="block text-sm font-medium text-neutral-700 mb-2 text-left">
+            What year did you graduate?
+          </label>
+          <input
+            type="number"
+            min="2000"
+            max="2030"
+            value={gradYear}
+            onChange={(e) => handleYearChange(e.target.value)}
+            placeholder="e.g., 2024"
+            className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
+          />
+        </motion.div>
+      )}
     </motion.div>
   );
 }

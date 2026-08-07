@@ -39,7 +39,7 @@ export function SchoolSatStudents({
 }: SchoolSatStudentsProps) {
   const handleSelect = (option: string) => {
     updateData({ schoolSatStudents: option });
-    onNext();
+    // Don't auto-advance, let user click Next button
   };
 
   return (
@@ -58,22 +58,23 @@ export function SchoolSatStudents({
           <button
             key={option}
             onClick={() => handleSelect(option)}
-            className="p-4 rounded-xl border border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 transition-all duration-200 text-left group"
+            className={`p-4 rounded-xl border transition-all duration-200 text-left group ${
+              data.schoolSatStudents === option
+                ? "border-neutral-900 bg-neutral-50"
+                : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"
+            }`}
           >
-            <span className="text-base font-medium text-neutral-900 group-hover:text-neutral-700">
+            <span
+              className={`text-base font-medium underline ${
+                data.schoolSatStudents === option
+                  ? "text-neutral-900"
+                  : "text-neutral-900 group-hover:text-neutral-700"
+              }`}
+            >
               {option}
             </span>
           </button>
         ))}
-      </div>
-
-      <div className="mt-8">
-        <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
       </div>
     </motion.div>
   );

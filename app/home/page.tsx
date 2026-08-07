@@ -75,10 +75,11 @@ export default function HomePage() {
       return;
     }
     const unsubscribe = auth.onAuthStateChanged((user: any) => {
-      if (!user) {
-        router.replace("/sign-in?next=/home");
-        return;
-      }
+      // Temporarily disabled auth check
+      // if (!user) {
+      //   router.replace("/sign-in?next=/home");
+      //   return;
+      // }
       setIsAuthenticated(!!user);
       setIsLoading(false);
     });
@@ -168,12 +169,12 @@ export default function HomePage() {
     );
   }
 
-  const userName = userData?.name || userData?.email?.split("@")[0] || "User";
+  const userName = userData?.name || userData?.email?.split("@")[0] || "Guest";
   const currentScore =
     userData?.bestTotalScore ||
     (userData?.bestRwScore && userData?.bestMathScore
       ? userData.bestRwScore + userData.bestMathScore
-      : userData?.bestRwScore || "-");
+      : "-");
 
   return (
     <section className="min-h-screen bg-white font-sans pt-24 pb-20 px-6 md:px-12 lg:px-24">
@@ -240,7 +241,7 @@ export default function HomePage() {
               <CalendarIcon />
               <div className="flex-1 overflow-hidden">
                 <AnimatePresence mode="wait">
-                  {isEditingExamDate ? (
+                  {isAuthenticated && isEditingExamDate ? (
                     <motion.div
                       key="edit-date"
                       initial={{ opacity: 0, y: -5 }}
@@ -267,12 +268,16 @@ export default function HomePage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      onClick={() => setIsEditingExamDate(true)}
-                      className="text-[20px] md:text-[22px] font-medium tracking-tight cursor-pointer hover:text-[#2c2c2e] transition-colors block"
+                      onClick={() =>
+                        isAuthenticated && setIsEditingExamDate(true)
+                      }
+                      className={`text-[20px] md:text-[22px] font-medium tracking-tight transition-colors block ${isAuthenticated ? "cursor-pointer hover:text-[#2c2c2e]" : "cursor-default"}`}
                     >
                       {timeToExam
                         ? `${timeToExam.days} Days until Exam`
-                        : "Set Exam Date"}
+                        : isAuthenticated
+                          ? "Set Exam Date"
+                          : "Sign in to set exam date"}
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -284,7 +289,7 @@ export default function HomePage() {
               <TrophyIcon />
               <div className="flex-1 overflow-hidden">
                 <AnimatePresence mode="wait">
-                  {isEditingScore ? (
+                  {isAuthenticated && isEditingScore ? (
                     <motion.div
                       key="edit-score"
                       initial={{ opacity: 0, y: -5 }}
@@ -313,12 +318,14 @@ export default function HomePage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      onClick={() => setIsEditingScore(true)}
-                      className="text-[20px] md:text-[22px] font-medium tracking-tight cursor-pointer hover:text-[#2c2c2e] transition-colors block"
+                      onClick={() => isAuthenticated && setIsEditingScore(true)}
+                      className={`text-[20px] md:text-[22px] font-medium tracking-tight transition-colors block ${isAuthenticated ? "cursor-pointer hover:text-[#2c2c2e]" : "cursor-default"}`}
                     >
                       {currentScore !== "-"
                         ? `${currentScore} Current Score`
-                        : "Add Current Score"}
+                        : isAuthenticated
+                          ? "Add Current Score"
+                          : "Sign in to track score"}
                     </motion.span>
                   )}
                 </AnimatePresence>

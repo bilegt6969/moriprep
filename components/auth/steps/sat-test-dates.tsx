@@ -47,18 +47,24 @@ export function SatTestDates({
   const customDateRef = useRef<HTMLInputElement>(null);
 
   const toggleDate = (date: string) => {
-    setSelectedDates((prev) =>
-      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
-    );
+    const newDates = selectedDates.includes(date)
+      ? selectedDates.filter((d) => d !== date)
+      : [...selectedDates, date];
+    setSelectedDates(newDates);
+    updateData({ satTestDates: newDates });
+    // Don't auto-advance, let user click Next button
   };
 
-  const handleNext = () => {
-    const allDates = [...selectedDates];
-    if (customDate) {
-      allDates.push(customDate);
+  const handleCustomDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCustomDate = e.target.value;
+    setCustomDate(newCustomDate);
+    // Only add custom date if it has a value
+    if (newCustomDate) {
+      const allDates = [...selectedDates, newCustomDate];
+      updateData({ satTestDates: allDates });
+    } else {
+      updateData({ satTestDates: selectedDates });
     }
-    updateData({ satTestDates: allDates });
-    onNext();
   };
 
   return (
@@ -86,7 +92,7 @@ export function SatTestDates({
                 : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"
             }`}
           >
-            <span className="text-base font-medium text-neutral-900 group-hover:text-neutral-700">
+            <span className="text-base font-medium text-neutral-900 group-hover:text-neutral-700 underline">
               {date}
             </span>
           </button>
@@ -107,27 +113,11 @@ export function SatTestDates({
             autoFocus
             type="date"
             value={customDate}
-            onChange={(e) => setCustomDate(e.target.value)}
+            onChange={handleCustomDateChange}
             className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors"
           />
         </div>
       )}
-
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={selectedDates.length === 0 && !customDate}
-          className="px-8 py-3.5 rounded-full bg-neutral-900 text-white font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
-        >
-          Continue
-        </button>
-      </div>
     </motion.div>
   );
 }

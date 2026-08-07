@@ -10,7 +10,7 @@ const MockupQuestions = ({ isActive }: { isActive: boolean }) => (
     className={`w-[85%] h-[80%] rounded-xl shadow-2xl flex flex-col p-4 overflow-hidden backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        ? "bg-[#1d1d1f]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
         : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
@@ -24,17 +24,17 @@ const MockupQuestions = ({ isActive }: { isActive: boolean }) => (
     <div className="space-y-3 mb-5">
       <div
         className={`h-2 rounded-full w-full ${
-          isActive ? "bg-gray-200" : "bg-gray-600"
+          isActive ? "bg-gray-600" : "bg-gray-600"
         }`}
       />
       <div
         className={`h-2 rounded-full w-4/5 ${
-          isActive ? "bg-gray-200" : "bg-gray-600"
+          isActive ? "bg-gray-600" : "bg-gray-600"
         }`}
       />
       <div
         className={`h-2 rounded-full w-2/3 ${
-          isActive ? "bg-gray-200" : "bg-gray-600"
+          isActive ? "bg-gray-600" : "bg-gray-600"
         }`}
       />
     </div>
@@ -45,12 +45,12 @@ const MockupQuestions = ({ isActive }: { isActive: boolean }) => (
       </div>
       <div
         className={`flex-1 h-8 rounded-lg flex items-center justify-center ${
-          isActive ? "bg-gray-100" : "bg-gray-700"
+          isActive ? "bg-gray-700" : "bg-gray-700"
         }`}
       >
         <div
           className={`w-3 h-1 rounded-full ${
-            isActive ? "bg-gray-300" : "bg-gray-500"
+            isActive ? "bg-gray-500" : "bg-gray-500"
           }`}
         />
       </div>
@@ -63,14 +63,14 @@ const MockupAnalytics = ({ isActive }: { isActive: boolean }) => (
     className={`w-[85%] rounded-xl shadow-2xl p-4 backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        ? "bg-[#1d1d1f]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
         : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
     <div className="flex justify-between items-center mb-4">
       <span
         className={`text-[10px] font-semibold ${
-          isActive ? "text-gray-500" : "text-gray-400"
+          isActive ? "text-gray-400" : "text-gray-400"
         }`}
       >
         Performance
@@ -90,16 +90,16 @@ const MockupAnalytics = ({ isActive }: { isActive: boolean }) => (
       ].map((item) => (
         <div key={item.label}>
           <div className="flex justify-between text-[9px] font-medium mb-1">
-            <span className={isActive ? "text-gray-600" : "text-gray-300"}>
+            <span className={isActive ? "text-gray-300" : "text-gray-300"}>
               {item.label}
             </span>
-            <span className={isActive ? "text-gray-900" : "text-white"}>
+            <span className={isActive ? "text-white" : "text-white"}>
               {item.pct}
             </span>
           </div>
           <div
             className={`w-full h-1.5 rounded-full ${
-              isActive ? "bg-gray-100" : "bg-gray-700"
+              isActive ? "bg-gray-700" : "bg-gray-700"
             }`}
           >
             <div
@@ -118,7 +118,7 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
     className={`w-[90%] h-[85%] rounded-xl shadow-2xl flex overflow-hidden backdrop-blur-3xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
     ${
       isActive
-        ? "bg-white/95 border border-gray-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        ? "bg-[#1d1d1f]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
         : "bg-[#2c2c2e]/95 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
     }`}
   >
@@ -127,7 +127,7 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
       className={`w-12 border-r flex flex-col items-center py-3 gap-2 transition-colors duration-700
       ${
         isActive
-          ? "bg-gray-50/50 border-gray-200"
+          ? "bg-[#1c1c1e]/50 border-white/10"
           : "bg-[#1c1c1e]/50 border-white/10"
       }`}
     >
@@ -136,12 +136,12 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
       </div>
       <div
         className={`w-7 h-7 rounded-full ${
-          isActive ? "bg-gray-200" : "bg-gray-700"
+          isActive ? "bg-gray-700" : "bg-gray-700"
         }`}
       />
       <div
         className={`w-7 h-7 rounded-full ${
-          isActive ? "bg-gray-200" : "bg-gray-700"
+          isActive ? "bg-gray-700" : "bg-gray-700"
         }`}
       />
     </div>
@@ -149,7 +149,7 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
     <div className="flex-1 p-4 flex flex-col">
       <div
         className={`text-[10px] font-semibold mb-4 ${
-          isActive ? "text-gray-800" : "text-gray-200"
+          isActive ? "text-gray-200" : "text-gray-200"
         }`}
       >
         Practice Test 1
@@ -157,24 +157,24 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
       <div className="space-y-2 mb-4">
         <div
           className={`h-2 rounded-full w-full ${
-            isActive ? "bg-gray-200" : "bg-gray-600"
+            isActive ? "bg-gray-600" : "bg-gray-600"
           }`}
         />
         <div
           className={`h-2 rounded-full w-5/6 ${
-            isActive ? "bg-gray-200" : "bg-gray-600"
+            isActive ? "bg-gray-600" : "bg-gray-600"
           }`}
         />
         <div
           className={`h-2 rounded-full w-4/6 ${
-            isActive ? "bg-gray-200" : "bg-gray-600"
+            isActive ? "bg-gray-600" : "bg-gray-600"
           }`}
         />
       </div>
       <div className="mt-auto flex justify-between items-center">
         <div
           className={`text-[8px] font-medium px-2 py-1 rounded-full ${
-            isActive ? "bg-gray-100 text-gray-600" : "bg-gray-700 text-gray-300"
+            isActive ? "bg-gray-700 text-gray-300" : "bg-gray-700 text-gray-300"
           }`}
         >
           12:45 remaining
@@ -281,7 +281,7 @@ export default function GlassFeaturesSection() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-2 md:p-4 overflow-hidden font-sans selection:bg-[#007aff]/30">
-      <div className="relative z-10 w-full max-w-[95%] mx-auto flex flex-col pt-12 md:pt-24 bg-black/80 backdrop-blur-3xl rounded-[3rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(0,0,0,0.4)] border border-white/5">
+      <div className="relative z-10 w-full max-w-[95%] mx-auto flex flex-col pt-12 md:pt-24 bg-black backdrop-blur-3xl rounded-[3rem] p-8 md:p-12 shadow-[0_32px_64px_rgba(0,0,0,0.4)] border border-white/5">
         {/* Dynamic Header - Restored Original Sizes */}
         <h2 className="text-[14px] sm:text-[18px] md:text-[22px] font-medium tracking-tight leading-[1.35] mb-20 max-w-4xl select-none text-[#86868b]">
           <div
@@ -330,7 +330,7 @@ export default function GlassFeaturesSection() {
                 className={`relative flex flex-col p-6 rounded-[2rem] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer group
                   ${
                     isActive
-                      ? "bg-white shadow-[0_20px_40px_rgba(0,0,0,0.2)] z-10"
+                      ? "bg-black border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] z-10"
                       : "bg-[#1d1d1f] border border-white/5 hover:bg-[#2c2c2e] z-0"
                   }
                 `}
@@ -363,13 +363,13 @@ export default function GlassFeaturesSection() {
                   </div>
                   <h3
                     className={`text-[14px] font-semibold mb-3 tracking-tight transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
-                    ${isActive ? "text-slate-900" : "text-white"}`}
+                    ${isActive ? "text-white" : "text-white"}`}
                   >
                     {feature.title}
                   </h3>
                   <p
                     className={`text-[11px] leading-relaxed font-medium transition-colors duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
-                    ${isActive ? "text-slate-700" : "text-gray-400"}`}
+                    ${isActive ? "text-gray-300" : "text-gray-400"}`}
                   >
                     {feature.description}
                   </p>

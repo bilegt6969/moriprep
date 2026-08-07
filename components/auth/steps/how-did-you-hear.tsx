@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { OnboardingData } from "../onboarding-flow";
 
 const springTransition = {
@@ -176,17 +175,9 @@ export function HowDidYouHear({
   onNext,
   onBack,
 }: HowDidYouHearProps) {
-  const [selectedSource, setSelectedSource] = useState(
-    data.howDidYouHear || "",
-  );
-
   const handleSelect = (sourceName: string) => {
-    setSelectedSource(sourceName);
-  };
-
-  const handleNext = () => {
-    updateData({ howDidYouHear: selectedSource });
-    onNext();
+    updateData({ howDidYouHear: sourceName });
+    // Don't auto-advance, let user click Next button
   };
 
   return (
@@ -210,7 +201,7 @@ export function HowDidYouHear({
         className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl mx-auto"
       >
         {sources.map((source) => {
-          const isSelected = selectedSource === source.name;
+          const isSelected = data.howDidYouHear === source.name;
 
           return (
             <motion.button
@@ -238,7 +229,7 @@ export function HowDidYouHear({
                     {source.icon}
                   </div>
                 </div>
-                <span className="text-[16px] font-medium tracking-tight">
+                <span className="text-[16px] font-medium tracking-tight underline">
                   {source.name}
                 </span>
               </div>
@@ -271,29 +262,6 @@ export function HowDidYouHear({
             </motion.button>
           );
         })}
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        className="flex gap-4 justify-center mt-12"
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-600 font-medium hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!selectedSource}
-          className="px-10 py-3.5 rounded-full bg-neutral-900 text-white font-medium hover:bg-black disabled:opacity-30 disabled:hover:bg-neutral-900 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.98] shadow-lg shadow-black/5"
-        >
-          Continue
-        </button>
       </motion.div>
     </motion.div>
   );

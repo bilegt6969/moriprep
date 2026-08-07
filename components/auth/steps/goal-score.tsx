@@ -44,6 +44,15 @@ export function GoalScore({
 
   const handleBarClick = (score: number) => {
     setGoalScore(score.toString());
+    updateData({ goalScore: score });
+    // Don't auto-advance, let user click Next button
+  };
+
+  // Handle Enter key to advance
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && goalScore) {
+      handleNext();
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,11 +64,14 @@ export function GoalScore({
     const num = parseInt(value);
     if (num >= MIN_SCORE && num <= MAX_SCORE && num % 10 === 0) {
       setGoalScore(value);
+      updateData({ goalScore: num });
     }
   };
 
   const getBarWidth = (score: number) => {
-    return ((score - MIN_SCORE) / (MAX_SCORE - MIN_SCORE)) * 100;
+    // Calculate position for 25 bars (400 to 1600 in 50-point increments)
+    const segmentIndex = (score - MIN_SCORE) / 50;
+    return (segmentIndex / 24) * 100;
   };
 
   const isSelected = (score: number) => {
@@ -71,6 +83,8 @@ export function GoalScore({
     { length: 25 },
     (_, i) => MIN_SCORE + i * 50,
   );
+
+  const numBars = scoreIncrements.length; // 25 bars (400, 450, ..., 1600)
 
   return (
     <motion.div
@@ -103,7 +117,7 @@ export function GoalScore({
               }`}
               style={{
                 left: `${getBarWidth(score)}%`,
-                width: `${100 / 24}%`,
+                width: `${100 / 25}%`,
               }}
             />
           ))}
@@ -131,24 +145,9 @@ export function GoalScore({
           max={MAX_SCORE}
           value={goalScore}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors text-center text-2xl font-medium"
         />
-      </div>
-
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={onBack}
-          className="px-8 py-3.5 rounded-full border border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98]"
-        >
-          Back
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={!goalScore}
-          className="px-8 py-3.5 rounded-full bg-neutral-900 text-white font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
-        >
-          Continue
-        </button>
       </div>
     </motion.div>
   );

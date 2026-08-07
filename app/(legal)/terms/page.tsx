@@ -105,14 +105,14 @@ export default function TermsOfService() {
               Terms of Service
             </h1>
             <p style={{ fontSize: 16, color: "#666", margin: 0 }}>
-              The rules and guidelines that govern your use of Sainto.
+              The rules and guidelines that govern your use of Mori Prep.
             </p>
           </motion.div>
 
           <div style={contentStyle}>
             <Section variants={itemVariants} title="1. Acceptance of Terms">
               <p>
-                By accessing and using Sainto, you agree to be bound by these
+                By accessing and using Mori Prep, you agree to be bound by these
                 Terms of Service. If you do not agree to these terms, please do
                 not use our platform. These terms may be updated periodically,
                 and your continued use constitutes acceptance of any changes.
@@ -120,62 +120,67 @@ export default function TermsOfService() {
             </Section>
 
             <Section variants={itemVariants} title="2. User Responsibilities">
-              <p>As a user of Sainto, you agree to:</p>
+              <p>As a user of Mori Prep, you agree to:</p>
               <ul style={listStyle}>
                 <li>
                   Provide accurate and truthful information when creating your
-                  account and listing items.
+                  account and entering your academic details.
                 </li>
                 <li>
-                  Only list items that you legally own and have the right to
-                  sell.
-                </li>
-                <li>
-                  Conduct all transactions in good faith and honor your
-                  commitments to buyers and sellers.
+                  Use the platform solely for SAT preparation and educational
+                  purposes.
                 </li>
                 <li>
                   Maintain the security of your account and notify us
                   immediately of any unauthorized access.
                 </li>
+                <li>
+                  Respect the intellectual property rights of our educational
+                  content.
+                </li>
               </ul>
             </Section>
 
-            <Section variants={itemVariants} title="3. Transaction Guidelines">
+            <Section variants={itemVariants} title="3. Service Guidelines">
               <p>
-                Sainto facilitates C2C transactions between users. All payments
-                are processed through secure bank transfers using unique
-                transaction codes. By using our platform, you acknowledge that:
+                Mori Prep provides personalized SAT preparation services. By
+                using our platform, you acknowledge that:
               </p>
               <ul style={listStyle}>
                 <li>
-                  Sainto acts as an intermediary and is not responsible for the
-                  quality or condition of items sold.
+                  Our study plans and recommendations are based on the
+                  information you provide.
                 </li>
                 <li>
-                  Delivery logistics are coordinated through trusted partners,
-                  and delivery times may vary.
+                  Your progress tracking depends on regular engagement with the
+                  platform.
                 </li>
                 <li>
-                  Disputes between buyers and sellers should be resolved through
-                  our support channel following our dispute resolution process.
+                  Educational content is provided for personal study purposes
+                  only.
+                </li>
+                <li>
+                  Results may vary based on individual effort and aptitude.
                 </li>
               </ul>
             </Section>
 
             <Section variants={itemVariants} title="4. Prohibited Activities">
-              <p>You may not use Sainto to:</p>
+              <p>You may not use Mori Prep to:</p>
               <ul style={listStyle}>
-                <li>List counterfeit, stolen, or illegal items.</li>
-                <li>Engage in fraudulent transactions or scams.</li>
-                <li>Harass, abuse, or harm other users.</li>
-                <li>Use the platform for any illegal purpose.</li>
+                <li>Share account credentials with others.</li>
+                <li>Copy or redistribute our educational content.</li>
+                <li>
+                  Use the platform for any illegal or unauthorized purpose.
+                </li>
+                <li>Attempt to circumvent our payment or access systems.</li>
+                <li>Harass, abuse, or harm other users or staff.</li>
               </ul>
             </Section>
 
             <Section variants={itemVariants} title="5. Limitation of Liability">
               <p>
-                Sainto is provided "as is" without warranties of any kind. We
+                Mori Prep is provided "as is" without warranties of any kind. We
                 are not liable for any indirect, incidental, or consequential
                 damages arising from your use of the platform. Our total
                 liability is limited to the amount you paid for the service, if
@@ -214,15 +219,15 @@ export default function TermsOfService() {
                 version="v1.2.0"
                 date="May 30, 2026"
                 changes={[
-                  "Updated transaction guidelines to reflect direct banking integration.",
-                  "Added clarity on dispute resolution process.",
+                  "Updated service guidelines for personalized SAT preparation.",
+                  "Added clarity on educational content usage rights.",
                 ]}
               />
               <ChangelogItem
                 version="v1.1.0"
                 date="February 15, 2025"
                 changes={[
-                  "Revised terms for C2C marketplace model.",
+                  "Revised terms for comprehensive SAT preparation services.",
                   "Added user responsibilities section.",
                 ]}
               />

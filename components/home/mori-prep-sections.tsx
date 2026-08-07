@@ -2,6 +2,7 @@
 
 import { motion, Variants } from "framer-motion";
 import NextImage from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import BillowLandingSection from "./billow-landing-section";
 import GlassFeaturesSection from "./glass-features-section";
@@ -126,9 +127,12 @@ function PricingSection() {
             </li>
           </ul>
 
-          <button className="w-full bg-black text-white text-[14px] sm:text-[15px] font-medium rounded-full py-3.5 sm:py-4 transition-transform hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center duration-100">
+          <Link
+            href="/practice"
+            className="w-full bg-black text-white text-[14px] sm:text-[15px] font-medium rounded-full py-3.5 sm:py-4 transition-transform hover:scale-[1.01] active:scale-[0.97] flex items-center justify-center duration-100"
+          >
             Start practicing free
-          </button>
+          </Link>
         </div>
       </div>
     </div>
@@ -164,7 +168,7 @@ export function MoriPrepSections() {
   return (
     <div className="bg-white font-sans text-neutral-900 selection:bg-neutral-200">
       {/* 1. IMPACT & SPECS SECTION */}
-      <section className="py-20 md:py-32 px-4 sm:px-6 bg-white overflow-hidden">
+      <section className="py-16 md:py-24 px-4 sm:px-6 bg-white overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -173,24 +177,28 @@ export function MoriPrepSections() {
             transition={{ duration: 1, ease: customEase }}
             className="text-center px-2"
           >
-            <blockquote className="text-3xl sm:text-4xl md:text-[48px] font-medium tracking-tight text-neutral-300 leading-[1.15] max-w-5xl mx-auto text-balance">
+            <p className="font-gochi-hand text-lg md:text-xl text-neutral-400 mb-4 tracking-wide">
+              our mission
+            </p>
+            <blockquote className="text-3xl sm:text-4xl md:text-[48px] font-medium tracking-tight text-neutral-600 leading-[1.2] max-w-5xl mx-auto text-balance">
               We built{" "}
-              {/* Inline wrapper strictly for the logo and brand name */}
-              <span className="inline-flex items-center align-middle mx-1 -translate-y-[2px]">
-                <NextImage
-                  src="/home/horse.png"
-                  alt="Horse"
-                  width={100}
-                  height={100}
-                  className="h-[2.4em] w-auto object-contain mr-2"
-                />
-                <span className="font-eb-garamond font-light text-[1.4em] tracking-tighter text-[#007AFF]">
-                  mori
-                </span>
+              <NextImage
+                src="/home/horse.png"
+                alt="Horse"
+                width={539}
+                height={463}
+                className="inline-block h-[1.2em] w-auto object-contain align-middle mx-1"
+              />
+              <span className="font-eb-garamond font-light text-[1.4em] tracking-tighter text-[#0061c9]">
+                mori
               </span>{" "}
               <span className="tracking-tighter">Prep</span> because{" "}
-              <br className="hidden md:block" /> we are against the{" "}
-              <span className="text-neutral-900">nepo</span> privilege.
+              <br className="hidden md:block" />
+              we are against the{" "}
+              <span className="inline-block bg-neutral-100/40 backdrop-blur-md border border-neutral-200/60 shadow-sm rounded-xl px-4 md:px-5 py-1 md:py-1.5 whitespace-nowrap text-neutral-700 mx-1">
+                <span className="text-neutral-400">nepo</span> privilege
+              </span>
+              .
             </blockquote>
           </motion.div>
 
@@ -199,13 +207,13 @@ export function MoriPrepSections() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-10 md:gap-12 py-16 md:py-24 text-center"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10 py-12 md:py-16 text-center"
           >
             <motion.div
               variants={fadeInUp}
               className="flex flex-col items-center"
             >
-              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-1 md:mb-2">
+              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-0.5 md:mb-1">
                 0₮
               </div>
               <p className="text-neutral-500 text-base md:text-lg font-medium">
@@ -216,7 +224,7 @@ export function MoriPrepSections() {
               variants={fadeInUp}
               className="flex flex-col items-center"
             >
-              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-1 md:mb-2">
+              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-0.5 md:mb-1">
                 1st
               </div>
               <p className="text-neutral-500 text-base md:text-lg font-medium">
@@ -227,7 +235,7 @@ export function MoriPrepSections() {
               variants={fadeInUp}
               className="flex flex-col items-center"
             >
-              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-1 md:mb-2">
+              <div className="text-[48px] sm:text-[56px] md:text-7xl font-medium tracking-tight text-neutral-900 mb-0.5 md:mb-1">
                 100%
               </div>
               <p className="text-neutral-500 text-base md:text-lg font-medium">

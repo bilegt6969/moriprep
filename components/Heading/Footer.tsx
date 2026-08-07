@@ -20,8 +20,8 @@ const footerLinks = [
 const footerLinks2 = [
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
-  { label: "Privacy Policy", href: "/info/privacy-policy" },
-  { label: "Terms of Usage", href: "/info/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
   { label: "Cookie Policy", href: "/info/cookie-policy" },
 ];
 
