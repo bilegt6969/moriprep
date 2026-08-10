@@ -8,9 +8,11 @@ import { MoriPrepSections } from "components/home/mori-prep-sections";
 export default function HomePage() {
   return (
     <>
-      <Navbar siteName="Mori Prep" categories={[]} />
-      <EducationHero />
-      <MoriPrepSections />
+      <Navbar siteName="Mori Prep" categories={[]} showBanner={true} />
+      <div className="pt-0">
+        <EducationHero />
+        <MoriPrepSections />
+      </div>
       <Footer siteName="Mori Prep" />
     </>
   );

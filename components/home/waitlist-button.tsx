@@ -52,7 +52,9 @@ export default function GlassyWaitlistButton({
         </div>
 
         {/* Text */}
-        <span className="relative z-10 drop-shadow-sm">Start practicing</span>
+        <span className="relative z-10 drop-shadow-sm">
+          Start Learning Today
+        </span>
 
         {/* 
           Chevron Icon 

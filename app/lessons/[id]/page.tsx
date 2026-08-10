@@ -1,6 +1,8 @@
 "use client";
 
 import clsx from "clsx";
+import LessonNavbar from "components/Heading/lesson-navbar";
+import { BounceSidebar } from "components/ui/bounce-sidebar";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRightLeft,
@@ -13,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 // --- Utilities ---
@@ -30,7 +32,7 @@ const fadeUp = {
   },
 };
 
-// --- Lesson 01: Sentence Surgery ---
+// --- Lesson Data ---
 type Chunk = {
   id: string;
   text: string;
@@ -44,6 +46,8 @@ const sentenceChunks: Chunk[] = [
   { id: "obj", text: "their findings", label: "Object", isEssential: false },
   { id: "mod", text: "yesterday.", label: "Modifier", isEssential: false },
 ];
+
+// --- Interactive Components ---
 
 function SentenceSurgery() {
   const [activeChunks, setActiveChunks] = useState<string[]>(
@@ -62,7 +66,7 @@ function SentenceSurgery() {
   const isComplete = hasSubject && hasVerb;
 
   return (
-    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] overflow-hidden shadow-sm my-10">
+    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] overflow-hidden shadow-sm my-10 not-prose">
       <div className="p-8 md:p-10 relative">
         <div className="flex items-center justify-between mb-8">
           <p className="text-[14px] font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-2">
@@ -155,7 +159,7 @@ function SentenceSurgery() {
           <div>
             <h3
               className={cn(
-                "text-[16px] font-semibold transition-colors",
+                "text-[16px] font-semibold transition-colors m-0",
                 isComplete ? "text-[#1B5E20]" : "text-[#B71C1C]",
               )}
             >
@@ -163,7 +167,7 @@ function SentenceSurgery() {
             </h3>
             <p
               className={cn(
-                "text-[14px] transition-colors",
+                "text-[14px] transition-colors m-0 mt-1",
                 isComplete ? "text-[#2E7D32]/80" : "text-[#C62828]/80",
               )}
             >
@@ -178,12 +182,11 @@ function SentenceSurgery() {
   );
 }
 
-// --- Lesson 02: Can It Stand? ---
 function StandAloneQuiz() {
   const [answered, setAnswered] = useState(false);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative overflow-hidden">
+    <div className="bg-white border border-neutral-200 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative overflow-hidden not-prose">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500">
           <MousePointer2 className="w-4 h-4" />
@@ -227,7 +230,7 @@ function StandAloneQuiz() {
           <h3 className="text-[18px] font-semibold text-[#B71C1C] mb-2">
             Incomplete. It leaves you waiting.
           </h3>
-          <p className="text-[15px] text-[#C62828]/80 max-w-md mx-auto">
+          <p className="text-[15px] text-[#C62828]/80 max-w-md mx-auto m-0">
             "Because" makes it a Dependent Clause. It promises a result that
             never shows up.
           </p>
@@ -243,18 +246,17 @@ function StandAloneQuiz() {
   );
 }
 
-// --- Lesson 03: The Semicolon ---
 function SemicolonWall() {
   const [hasSemicolon, setHasSemicolon] = useState(false);
 
   return (
-    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative text-center">
+    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative text-center not-prose">
       <p className="text-[14px] font-medium text-neutral-500 uppercase tracking-wider mb-8 text-left flex items-center gap-2">
         <MousePointer2 className="w-4 h-4" /> Tap the gap to build the wall
       </p>
 
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-xl md:text-2xl font-medium tracking-tight">
-        <div className="bg-white px-6 py-4 rounded-2xl border border-neutral-200 shadow-sm relative">
+        <div className="bg-white px-6 py-4 rounded-2xl border border-neutral-200 shadow-sm relative w-full md:w-auto">
           The experiment was successful
           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-[#34C759] font-bold tracking-widest uppercase">
             Complete
@@ -264,7 +266,7 @@ function SemicolonWall() {
         <button
           onClick={() => setHasSemicolon(!hasSemicolon)}
           className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center text-4xl pb-2 transition-all duration-300",
+            "w-14 h-14 rounded-2xl flex items-center justify-center text-4xl pb-2 transition-all duration-300 shrink-0 my-4 md:my-0",
             hasSemicolon
               ? "bg-neutral-900 text-white shadow-md scale-100"
               : "bg-neutral-200/50 text-transparent hover:bg-neutral-200 border-2 border-dashed border-neutral-300 scale-95",
@@ -273,7 +275,7 @@ function SemicolonWall() {
           {hasSemicolon ? ";" : "+"}
         </button>
 
-        <div className="bg-white px-6 py-4 rounded-2xl border border-neutral-200 shadow-sm relative mt-6 md:mt-0">
+        <div className="bg-white px-6 py-4 rounded-2xl border border-neutral-200 shadow-sm relative w-full md:w-auto">
           the researchers published the results
           <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-[#34C759] font-bold tracking-widest uppercase">
             Complete
@@ -281,28 +283,29 @@ function SemicolonWall() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {hasSemicolon && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-14 inline-block bg-[#F2FBF5] border border-[#D6F0E0] text-[#1B5E20] px-6 py-3 rounded-full text-[14px] font-medium"
-          >
-            Correct! Complete ; Complete
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="mt-14 h-12">
+        <AnimatePresence>
+          {hasSemicolon && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="inline-block bg-[#F2FBF5] border border-[#D6F0E0] text-[#1B5E20] px-6 py-3 rounded-full text-[14px] font-medium"
+            >
+              Correct! Complete ; Complete
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-// --- Lesson 04: Period vs Semicolon ---
 function PunctuationToggle() {
   const [isSemicolon, setIsSemicolon] = useState(false);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative text-center">
+    <div className="bg-white border border-neutral-200 rounded-[32px] p-8 md:p-10 my-10 shadow-sm relative text-center not-prose">
       <p className="text-[14px] font-medium text-neutral-500 uppercase tracking-wider mb-8 text-left flex items-center gap-2">
         <ArrowRightLeft className="w-4 h-4" /> Tap the punctuation to swap
       </p>
@@ -344,18 +347,17 @@ function PunctuationToggle() {
   );
 }
 
-// --- Lesson 05: Comma + FANBOYS ---
 function FanboysBuilder() {
   const [fixed, setFixed] = useState(false);
 
   return (
-    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] overflow-hidden shadow-sm my-10">
-      <div className="p-8 md:p-10 relative">
-        <p className="text-[14px] font-medium text-neutral-500 uppercase tracking-wider mb-8 flex items-center gap-2">
+    <div className="bg-neutral-50 border border-neutral-200/60 rounded-[32px] overflow-hidden shadow-sm my-10 not-prose">
+      <div className="p-8 md:p-10 relative text-center md:text-left">
+        <p className="text-[14px] font-medium text-neutral-500 uppercase tracking-wider mb-8 flex items-center justify-center md:justify-start gap-2">
           <MousePointer2 className="w-4 h-4" /> Fix the Comma Splice
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 text-xl md:text-2xl font-medium tracking-tight">
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xl md:text-2xl font-medium tracking-tight">
           <div className="bg-white px-5 py-3 rounded-2xl border border-neutral-200 shadow-sm">
             The experiment was successful
           </div>
@@ -398,7 +400,7 @@ function FanboysBuilder() {
       <motion.div
         layout
         className={cn(
-          "px-8 py-6 flex items-center justify-between border-t transition-colors duration-500",
+          "px-8 py-6 flex flex-col md:flex-row items-center justify-between border-t transition-colors duration-500",
           fixed
             ? "bg-[#F2FBF5] border-[#D6F0E0]"
             : "bg-[#FFF4F4] border-[#FCE4E4]",
@@ -407,16 +409,16 @@ function FanboysBuilder() {
         <div className="flex items-center gap-4">
           <div
             className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors",
+              "w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors shrink-0",
               fixed ? "bg-[#34C759] text-white" : "bg-[#FF3B30] text-white",
             )}
           >
             {fixed ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </div>
-          <div>
+          <div className="text-center md:text-left">
             <h3
               className={cn(
-                "text-[16px] font-semibold transition-colors",
+                "text-[16px] font-semibold transition-colors m-0",
                 fixed ? "text-[#1B5E20]" : "text-[#B71C1C]",
               )}
             >
@@ -424,7 +426,7 @@ function FanboysBuilder() {
             </h3>
             <p
               className={cn(
-                "text-[14px] transition-colors",
+                "text-[14px] transition-colors m-0 mt-1",
                 fixed ? "text-[#2E7D32]/80" : "text-[#C62828]/80",
               )}
             >
@@ -439,7 +441,6 @@ function FanboysBuilder() {
   );
 }
 
-// --- AI Prompt Component ---
 function AIPromptBox() {
   const [copied, setCopied] = useState(false);
   const promptText = `I am studying for the SAT Digital Standard English Conventions section using the "Sentence Surgery" method. I want to practice recognizing independent vs. dependent clauses and sentence boundaries (semicolons, FANBOYS, colons). 
@@ -458,8 +459,7 @@ Do not give me the answers upfront. Guide me to discover the rule myself by remo
   };
 
   return (
-    <div className="bg-neutral-900 rounded-[32px] p-8 md:p-10 my-16 text-white shadow-xl relative overflow-hidden">
-      {/* Background decoration */}
+    <div className="bg-neutral-900 rounded-[32px] p-8 md:p-10 my-16 text-white shadow-xl relative overflow-hidden not-prose">
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 relative z-10">
@@ -468,9 +468,9 @@ Do not give me the answers upfront. Guide me to discover the rule myself by remo
             <Sparkles className="w-5 h-5 text-neutral-300" />
           </div>
           <div>
-            <h3 className="text-xl font-medium">Continue with AI</h3>
-            <p className="text-[14px] text-neutral-400">
-              Paste this prompt into ChatGPT or Claude to practice.
+            <h3 className="text-xl font-medium m-0">Continue with AI</h3>
+            <p className="text-[14px] text-neutral-400 m-0 mt-1">
+              Paste this prompt into ChatGPT to practice.
             </p>
           </div>
         </div>
@@ -488,7 +488,7 @@ Do not give me the answers upfront. Guide me to discover the rule myself by remo
       </div>
 
       <div className="bg-black/50 border border-white/10 rounded-2xl p-6 relative z-10">
-        <p className="font-mono text-[13px] leading-relaxed text-neutral-300 whitespace-pre-wrap">
+        <p className="font-mono text-[13px] leading-relaxed text-neutral-300 whitespace-pre-wrap m-0">
           {promptText}
         </p>
       </div>
@@ -496,213 +496,263 @@ Do not give me the answers upfront. Guide me to discover the rule myself by remo
   );
 }
 
-// --- Main Layout ---
-export default function InteractiveGrammarLesson() {
+// --- Main Blog Layout ---
+
+export default function LaunchBlogLayout() {
+  const [activeSection, setActiveSection] = useState(0);
+
+  const sections = [
+    { label: "Meet the Sentence", id: "lesson-01" },
+    { label: "Complete vs. Incomplete", id: "lesson-02" },
+    { label: "The Semicolon Wall", id: "lesson-03" },
+    { label: "Period vs. Semicolon", id: "lesson-04" },
+    { label: "Fixing Comma Splices", id: "lesson-05" },
+  ];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200;
+
+      sections.forEach((section, index) => {
+        const element = document.getElementById(section.id);
+        if (element) {
+          const top = element.offsetTop;
+          const height = element.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            setActiveSection(index);
+          }
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white text-neutral-900 font-sans selection:bg-neutral-200/60 pt-24 pb-32">
-      <div className="max-w-[1200px] mx-auto px-6 flex flex-col lg:flex-row gap-16 xl:gap-24">
-        {/* Sidebar Navigation */}
-        <aside className="hidden lg:block w-64 shrink-0 sticky top-32 h-fit">
-          <Link
-            href="/lessons"
-            className="flex items-center gap-2 text-neutral-500 hover:text-neutral-900 transition-colors text-[14px] mb-12 font-medium"
-          >
-            <CornerUpLeft className="w-4 h-4" /> Back to Curriculum
-          </Link>
+    <>
+      <LessonNavbar />
+      <div className="min-h-screen bg-white text-[#0D0D0D] font-sans selection:bg-neutral-200/60 pb-32">
+        {/* Header Section */}
+        <header className="max-w-[1000px] mx-auto px-6 pt-24 text-center">
+          <p className="text-[14px] font-medium text-neutral-500 mb-6 flex items-center justify-center gap-4">
+            <span>August 8, 2026</span>{" "}
+            <span className="text-neutral-300">|</span> <span>Product</span>
+          </p>
+          <h1 className="text-4xl md:text-5xl lg:text-[56px] font-medium tracking-tight mb-6 leading-[1.1] max-w-4xl mx-auto">
+            Interactive Grammar:
+            <br className="hidden md:block" /> It's Something You Can See
+          </h1>
+          <p className="text-[17px] text-neutral-600 max-w-2xl mx-auto leading-relaxed">
+            Rolling out to U.S. students, you can visually break down sentences
+            to master grammar rules, understand clauses, and improve your
+            writing.
+          </p>
+        </header>
 
-          <nav className="flex flex-col gap-1 text-[14px]">
-            <span className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase mb-3 ml-3">
-              Standard English
-            </span>
-            <a
-              href="#lesson-01"
-              className="px-3 py-2 rounded-lg hover:bg-neutral-50 text-neutral-600 transition-colors"
-            >
-              01. Meet the Sentence
-            </a>
-            <a
-              href="#lesson-02"
-              className="px-3 py-2 rounded-lg hover:bg-neutral-50 text-neutral-600 transition-colors"
-            >
-              02. Complete or Not?
-            </a>
-            <a
-              href="#lesson-03"
-              className="px-3 py-2 rounded-lg hover:bg-neutral-50 text-neutral-600 transition-colors"
-            >
-              03. The Semicolon
-            </a>
-            <a
-              href="#lesson-04"
-              className="px-3 py-2 rounded-lg hover:bg-neutral-50 text-neutral-600 transition-colors"
-            >
-              04. Period vs. Semicolon
-            </a>
-            <a
-              href="#lesson-05"
-              className="px-3 py-2 rounded-lg hover:bg-neutral-50 text-neutral-600 transition-colors"
-            >
-              05. Comma + FANBOYS
-            </a>
-          </nav>
-        </aside>
+        {/* Hero Image Block */}
+        <div className="max-w-[1200px] mx-auto px-6 mt-16 mb-20">
+          <div className="w-full aspect-[16/9] md:aspect-[21/9] bg-neutral-100 rounded-[24px] overflow-hidden relative shadow-sm border border-neutral-200/60">
+            <img
+              src="/api/placeholder/1200/500"
+              alt="Interactive Grammar App Preview"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
 
-        {/* Main Content Area */}
-        <motion.main
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-            },
-          }}
-          className="flex-1 max-w-[720px]"
-        >
-          {/* Header */}
-          <motion.header variants={fadeUp} className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-4">
-              Grammar isn't something you memorize.{" "}
-              <br className="hidden md:block" />
-              <span className="text-neutral-400">
-                It's something you can see.
-              </span>
-            </h1>
-            <p className="text-[17px] leading-relaxed text-neutral-500 max-w-xl">
-              The SAT's grammar questions become much easier when you stop
-              asking "Which answer sounds right?" and start asking "What is
-              happening inside this sentence?"
-            </p>
-          </motion.header>
+        {/* Main Content & Sidebar */}
+        <main className="max-w-[1000px] mx-auto px-6 flex flex-col lg:flex-row gap-16 lg:gap-24 relative">
+          {/* Sticky Sidebar Nav */}
+          <aside className="hidden lg:block w-[220px] shrink-0">
+            <div className="sticky top-24">
+              <Link
+                href="/lessons"
+                className="flex items-center gap-2 text-neutral-400 hover:text-neutral-900 transition-colors text-[13px] mb-10 font-medium"
+              >
+                <CornerUpLeft className="w-4 h-4" /> Back to Curriculum
+              </Link>
 
-          <motion.hr variants={fadeUp} className="border-neutral-100 mb-16" />
-
-          {/* Lesson 01 */}
-          <motion.section
-            variants={fadeUp}
-            id="lesson-01"
-            className="mb-24 scroll-mt-32"
-          >
-            <div className="mb-6">
-              <span className="text-[13px] font-bold text-neutral-400 tracking-widest uppercase">
-                Lesson 01
-              </span>
-              <h2 className="text-2xl font-semibold mt-2">Meet the Sentence</h2>
+              <BounceSidebar
+                value={activeSection}
+                items={[
+                  { label: "Meet the Sentence", href: "#lesson-01" },
+                  { label: "Complete vs. Incomplete", href: "#lesson-02" },
+                  { label: "The Semicolon Wall", href: "#lesson-03" },
+                  { label: "Period vs. Semicolon", href: "#lesson-04" },
+                  { label: "Fixing Comma Splices", href: "#lesson-05" },
+                ]}
+                dotColor="#0084FF"
+              />
             </div>
-            <p className="text-[16px] leading-relaxed text-neutral-600 mb-8">
-              A sentence is made of pieces. Tap each piece below to remove it.
-              You'll notice that some pieces destroy the sentence when removed,
-              while others just remove details.
-            </p>
-            <SentenceSurgery />
-            <div className="bg-neutral-50 rounded-2xl p-6 border border-neutral-100">
-              <h4 className="text-[15px] font-semibold mb-2">The Big Idea</h4>
-              <p className="text-[15px] text-neutral-600 leading-relaxed">
-                The SAT tests whether you can recognize which pieces are{" "}
-                <strong className="text-neutral-900 font-medium">
-                  essential
-                </strong>{" "}
-                and which pieces are{" "}
-                <strong className="text-neutral-900 font-medium">extra</strong>.
+          </aside>
+
+          {/* Article Body with Embedded Components */}
+          <div className="flex-1 max-w-[640px]">
+            {/* Audio Player Bar */}
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-6 mb-10">
+              <button className="flex items-center gap-4 text-[15px] font-medium text-neutral-900 hover:opacity-70 transition-opacity">
+                <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 ml-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                Listen to article
+                <span className="text-neutral-500 font-normal ml-2">9:43</span>
+              </button>
+              <button className="flex items-center gap-2 text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                Share
+              </button>
+            </div>
+
+            <article className="prose prose-neutral prose-lg max-w-none prose-p:leading-[1.7] prose-p:text-[#333] prose-headings:font-medium prose-headings:tracking-tight">
+              <p>
+                Interactive Grammar in ChatGPT is launching to U.S. students.
+                You can choose to visually dismantle sentences so ChatGPT can
+                help you understand your grammatical gaps in context, keep track
+                of tricky SAT rules, and have more informed, personalized study
+                sessions.
               </p>
-            </div>
-          </motion.section>
 
-          {/* Lesson 02 */}
-          <motion.section
-            variants={fadeUp}
-            id="lesson-02"
-            className="mb-24 scroll-mt-32"
-          >
-            <div className="mb-6">
-              <span className="text-[13px] font-bold text-neutral-400 tracking-widest uppercase">
-                Lesson 02
-              </span>
-              <h2 className="text-2xl font-semibold mt-2">Complete or Not?</h2>
-            </div>
-            <p className="text-[16px] leading-relaxed text-neutral-600 mb-8">
-              If a clause can stand alone, it's an Independent Clause. If it
-              leaves you hanging, it's a Dependent Clause.
-            </p>
-            <StandAloneQuiz />
-          </motion.section>
+              <p>
+                Every week, millions of students turn to ChatGPT with grammar
+                and writing questions—from understanding dependent clauses and
+                preparing for the SAT to making sense of comma splices. But the
+                context behind those rules is often lost in text blocks. Grammar
+                isn't something you memorize. It's something you can see.
+              </p>
 
-          {/* Lesson 03 */}
-          <motion.section
-            variants={fadeUp}
-            id="lesson-03"
-            className="mb-24 scroll-mt-32"
-          >
-            <div className="mb-6">
-              <span className="text-[13px] font-bold text-neutral-400 tracking-widest uppercase">
-                Lesson 03
-              </span>
-              <h2 className="text-2xl font-semibold mt-2">The Semicolon</h2>
-            </div>
-            <p className="text-[16px] leading-relaxed text-neutral-600 mb-8">
-              Think of{" "}
-              <code className="bg-neutral-100 px-2 py-1 rounded text-sm mx-1">
-                ;
-              </code>{" "}
-              as a wall. It can only be placed between two entirely complete
-              thoughts.
-            </p>
-            <SemicolonWall />
-          </motion.section>
+              <section id="lesson-01" className="scroll-mt-32 pt-10">
+                <h3 className="text-2xl mb-4">Meet the Sentence</h3>
+                <p>
+                  A sentence is made of pieces. Tap each piece below to remove
+                  it. You'll notice that some pieces destroy the sentence when
+                  removed, while others just remove details. The SAT tests
+                  whether you can recognize which pieces are essential and which
+                  are extra.
+                </p>
+                <SentenceSurgery />
+              </section>
 
-          {/* Lesson 04 */}
-          <motion.section
-            variants={fadeUp}
-            id="lesson-04"
-            className="mb-24 scroll-mt-32"
-          >
-            <div className="mb-6">
-              <span className="text-[13px] font-bold text-neutral-400 tracking-widest uppercase">
-                Lesson 04
-              </span>
-              <h2 className="text-2xl font-semibold mt-2">
-                Period vs. Semicolon
-              </h2>
-            </div>
-            <p className="text-[16px] leading-relaxed text-neutral-600 mb-8">
-              They are structurally identical. If two multiple choice answers
-              are exactly the same except one uses a period and one uses a
-              semicolon, neither is the answer.
-            </p>
-            <PunctuationToggle />
-          </motion.section>
+              <section id="lesson-02" className="scroll-mt-32 pt-10">
+                <h3 className="text-2xl mb-4">Complete or Not?</h3>
+                <p>
+                  If a clause can stand alone, it's an Independent Clause. If it
+                  leaves you hanging, it's a Dependent Clause.
+                </p>
+                <StandAloneQuiz />
+              </section>
 
-          {/* Lesson 05 */}
-          <motion.section
-            variants={fadeUp}
-            id="lesson-05"
-            className="mb-12 scroll-mt-32"
-          >
-            <div className="mb-6">
-              <span className="text-[13px] font-bold text-neutral-400 tracking-widest uppercase">
-                Lesson 05
-              </span>
-              <h2 className="text-2xl font-semibold mt-2">Comma + FANBOYS</h2>
-            </div>
-            <p className="text-[16px] leading-relaxed text-neutral-600 mb-8">
-              Two complete sentences want to become one. A comma alone is not
-              strong enough—that creates a{" "}
-              <strong className="text-neutral-900 font-medium">
-                comma splice
-              </strong>
-              . You need a comma plus a FANBOYS word (For, And, Nor, But, Or,
-              Yet, So).
-            </p>
-            <FanboysBuilder />
-          </motion.section>
+              <section id="lesson-03" className="scroll-mt-32 pt-10">
+                <h3 className="text-2xl mb-4">The Semicolon</h3>
+                <p>
+                  Punctuation acts as the architecture of your sentence. Think
+                  of a semicolon as a structural wall. It can only be placed
+                  between two entirely complete thoughts. Try building the wall
+                  below.
+                </p>
+                <SemicolonWall />
+              </section>
 
-          {/* AI Prompt Extension */}
-          <motion.section variants={fadeUp}>
-            <AIPromptBox />
-          </motion.section>
-        </motion.main>
+              <section id="lesson-04" className="scroll-mt-32 pt-10">
+                <h3 className="text-2xl mb-4">Period vs. Semicolon</h3>
+                <p>
+                  They are structurally identical. If two multiple-choice
+                  answers on the SAT are exactly the same except one uses a
+                  period and one uses a semicolon, neither is the answer. They
+                  create the exact same boundaries.
+                </p>
+                <PunctuationToggle />
+              </section>
+
+              <section id="lesson-05" className="scroll-mt-32 pt-10">
+                <h3 className="text-2xl mb-4">Comma + FANBOYS</h3>
+                <p>
+                  Two complete sentences want to become one. A comma alone is
+                  not strong enough—that creates a comma splice. You need a
+                  comma plus a FANBOYS word (For, And, Nor, But, Or, Yet, So).
+                </p>
+                <FanboysBuilder />
+              </section>
+
+              <div className="mt-16 mb-6">
+                <h3 className="text-2xl mb-6">What early users are saying</h3>
+
+                <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2 -mx-6 px-6 lg:mx-0 lg:px-0 not-prose">
+                  {[
+                    "SAT Student",
+                    "High School Junior",
+                    "Grammar Geek",
+                    "College Freshman",
+                    "Parent",
+                  ].map((tag, i) => (
+                    <span
+                      key={tag}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-[14px] transition-colors cursor-pointer whitespace-nowrap",
+                        i === 0
+                          ? "bg-neutral-100 text-neutral-900 font-medium"
+                          : "text-neutral-500 hover:text-neutral-900 font-medium border border-transparent hover:border-neutral-200",
+                      )}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="bg-neutral-50 rounded-[24px] p-8 md:p-10 mb-12 border border-neutral-100 not-prose">
+                  <p className="text-[17px] leading-[1.6] text-neutral-800 m-0">
+                    "The visual breakdown of the sentence structure, like
+                    Sentence Surgery, helped me see exactly where my grammar
+                    gaps were. I finally understand dependent clauses and stop
+                    relying on what 'sounds right' on the SAT."
+                  </p>
+                </div>
+              </div>
+
+              <AIPromptBox />
+            </article>
+
+            {/* Footer Tags Box */}
+            <div className="mt-16 bg-neutral-50 rounded-[24px] p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border border-neutral-100">
+              <div className="flex flex-wrap gap-2">
+                <span className="px-4 py-2 bg-neutral-200/60 hover:bg-neutral-200 rounded-full text-[13px] font-medium text-neutral-700 cursor-pointer transition-colors">
+                  ChatGPT
+                </span>
+                <span className="px-4 py-2 bg-neutral-200/60 hover:bg-neutral-200 rounded-full text-[13px] font-medium text-neutral-700 cursor-pointer transition-colors">
+                  2026
+                </span>
+                <span className="px-4 py-2 bg-neutral-200/60 hover:bg-neutral-200 rounded-full text-[13px] font-medium text-neutral-700 cursor-pointer transition-colors">
+                  Grammar Lesson
+                </span>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="text-[13px] text-neutral-500 mb-1">Author</p>
+                <p className="text-[14px] font-medium text-neutral-900">
+                  OpenAI
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
+    </>
   );
 }

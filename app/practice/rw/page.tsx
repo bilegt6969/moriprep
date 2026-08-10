@@ -6,29 +6,29 @@ import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertCircle,
-  BellOff,
-  Bookmark,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Command,
-  Copy,
-  Flag,
-  Highlighter,
-  History,
-  Info,
-  List,
-  Maximize2,
-  Moon,
-  MoreVertical,
-  Pause,
-  Play,
-  Shuffle,
-  Trash2,
-  Underline as UnderlineIcon,
-  X,
+    AlertCircle,
+    BellOff,
+    Bookmark,
+    CheckCircle2,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Command,
+    Copy,
+    Flag,
+    Highlighter,
+    History,
+    Info,
+    List,
+    Maximize2,
+    Moon,
+    MoreVertical,
+    Pause,
+    Play,
+    Shuffle,
+    Trash2,
+    Underline as UnderlineIcon,
+    X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -329,7 +329,6 @@ function RWPracticePageContent() {
   useEffect(() => {
     if (
       !isReturningToSelection &&
-      (domainsParam || difficultiesParam || difficultyParam || domainParam) &&
       filteredQuestions.length > 0 &&
       !selectedQuestion
     ) {
@@ -1158,21 +1157,13 @@ function RWPracticePageContent() {
                   <button className="flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors">
                     <Flag size={16} strokeWidth={2} /> Report
                   </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center relative shadow-sm transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "bg-black text-white hover:bg-gray-800"}`}
-                    >
-                      <span className="font-sans font-bold text-xs">S</span>
-                      <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
-                    </button>
-                    {isCrossOutMode && (
-                      <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-50">
-                        Cross out answer choices you think are wrong
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => setIsCrossOutMode(!isCrossOutMode)}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center relative shadow-sm transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "bg-black text-white hover:bg-gray-800"}`}
+                  >
+                    <span className="font-sans font-bold text-xs">S</span>
+                    <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
+                  </button>
                 </div>
               </div>
 
@@ -1620,234 +1611,22 @@ function RWPracticePageContent() {
           </footer>
         </div>
       ) : (
-        /* Standard Pre-Selection Setup / Dashboard */
-        <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden">
-          <div className="flex flex-1 flex-col min-h-[calc(100vh-4rem)] relative overflow-hidden">
-            <div className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-12 z-10">
-              <div className="w-full bg-white p-10 flex flex-col gap-10 font-sans">
-                {/* Difficulty Filter */}
-                <div className="flex flex-col gap-3.5">
-                  <div className="flex justify-between items-center w-full max-w-2xl">
-                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                      Difficulty
-                    </label>
-                    {selectedDifficulties.length > 0 && (
-                      <button
-                        onClick={() => setSelectedDifficulties([])}
-                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                      >
-                        Clear all
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {[
-                      { label: "Easy", value: "Easy" },
-                      { label: "Medium", value: "Medium" },
-                      { label: "Hard", value: "Hard" },
-                    ].map((item) => {
-                      const isSelected = selectedDifficulties.includes(
-                        item.value,
-                      );
-                      return (
-                        <button
-                          key={item.value}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedDifficulties(
-                                selectedDifficulties.filter(
-                                  (d) => d !== item.value,
-                                ),
-                              );
-                            } else {
-                              setSelectedDifficulties([
-                                ...selectedDifficulties,
-                                item.value,
-                              ]);
-                            }
-                          }}
-                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                            isSelected
-                              ? "bg-zinc-900 text-white shadow-md"
-                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Domain Filter */}
-                <div className="flex flex-col gap-3.5">
-                  <div className="flex justify-between items-center w-full max-w-2xl">
-                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                      Domain
-                    </label>
-                    {selectedDomains.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setSelectedDomains([]);
-                          setSelectedSkills([]);
-                        }}
-                        className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                      >
-                        Clear all
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 pb-1">
-                    {domains.map((d) => {
-                      const isSelected = selectedDomains.includes(d);
-                      return (
-                        <button
-                          key={d}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedDomains(
-                                selectedDomains.filter(
-                                  (domain) => domain !== d,
-                                ),
-                              );
-                              setSelectedSkills([]);
-                            } else {
-                              setSelectedDomains([...selectedDomains, d]);
-                            }
-                          }}
-                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                            isSelected
-                              ? "bg-zinc-900 text-white shadow-md"
-                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                          }`}
-                        >
-                          {d}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Skills Filter */}
-                {selectedDomains.length > 0 && (
-                  <div className="flex flex-col gap-3.5">
-                    <div className="flex justify-between items-center w-full max-w-2xl">
-                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                        Skills
-                      </label>
-                      {selectedSkills.length > 0 && (
-                        <button
-                          onClick={() => setSelectedSkills([])}
-                          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 pb-1">
-                      {availableSkills.map((skill) => {
-                        const isSelected = selectedSkills.includes(skill);
-                        return (
-                          <button
-                            key={skill}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedSkills(
-                                  selectedSkills.filter((s) => s !== skill),
-                                );
-                              } else {
-                                setSelectedSkills([...selectedSkills, skill]);
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                              isSelected
-                                ? "bg-zinc-900 text-white shadow-md"
-                                : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                            }`}
-                          >
-                            {skill}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Performance Filter */}
-                <div className="flex flex-col gap-3.5">
-                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                    Performance
-                  </label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {[
-                      { label: "All Questions", value: "all" },
-                      { label: "Correct Only", value: "correct" },
-                      { label: "Incorrect Only", value: "incorrect" },
-                    ].map((item) => (
-                      <button
-                        key={item.value}
-                        onClick={() => setStatusFilter(item.value)}
-                        className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                          statusFilter === item.value
-                            ? "bg-zinc-900 text-white shadow-md"
-                            : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Attempt Filter */}
-                <div className="flex flex-col gap-3.5">
-                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                    Attempt Status
-                  </label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {[
-                      { label: "All Questions", value: "all" },
-                      { label: "Tried Only", value: "tried" },
-                      { label: "Not Tried Only", value: "not-tried" },
-                    ].map((item) => (
-                      <button
-                        key={item.value}
-                        onClick={() => setAttemptFilter(item.value)}
-                        className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                          attemptFilter === item.value
-                            ? "bg-zinc-900 text-white shadow-md"
-                            : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Footer / Action Area */}
-                <div className="mt-8 pt-8 border-t border-zinc-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
-                  <p className="text-[13px] font-medium text-zinc-500 transition-all duration-300">
-                    Showing{" "}
-                    <span className="text-zinc-900 font-semibold bg-zinc-100 px-2 py-0.5 rounded-md mx-1">
-                      {filteredQuestions.length}
-                    </span>{" "}
-                    matching questions
-                  </p>
-                  <button
-                    onClick={() => {
-                      if (filteredQuestions.length > 0) {
-                        setSelectedQuestion(filteredQuestions[0] || null);
-                      }
-                    }}
-                    disabled={filteredQuestions.length === 0}
-                    className="px-8 py-3 bg-zinc-900 text-white text-[13px] rounded-full font-medium shadow-md hover:bg-black transition-all duration-300 ease-out active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
-                  >
-                    Start Practice
-                  </button>
-                </div>
-              </div>
-            </div>
+        /* Redirect to practice page if no configuration */
+        <div className="flex flex-col h-screen bg-white font-sans text-gray-900 items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">
+              Configure Your Practice
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please configure your practice session from the main practice
+              page.
+            </p>
+            <button
+              onClick={() => router.push("/practice")}
+              className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
+            >
+              Go to Practice
+            </button>
           </div>
         </div>
       )}

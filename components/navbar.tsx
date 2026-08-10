@@ -2,14 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    BarChart2,
-    ChevronDown,
-    CircleDollarSign,
-    ClipboardList,
-    Home,
-    Info,
-    Library,
-    User,
+  BarChart2,
+  ChevronDown,
+  CircleDollarSign,
+  ClipboardList,
+  Home,
+  Info,
+  Library,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";

@@ -5,6 +5,7 @@ import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { cn } from "lib/cn";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useCallback } from "react";
 
 interface NavLink {
   label: string;
@@ -29,7 +30,7 @@ interface CompanyLink {
 
 const companyLinks: CompanyLink[] = [
   {
-    label: "Our Story",
+    label: "Our Mission",
     href: "/story",
     description:
       "Learn about our mission to build Mongolia's education ecosystem.",
@@ -58,9 +59,20 @@ export default function Menu({
   categories: NavLink[];
   handleMenuOpenChangeAction?: (open: boolean) => void;
 }) {
+  const handleValueChange = useCallback(
+    (value: string) => {
+      const isOpen = value !== "";
+      // Only call the action if the value actually changed to prevent unnecessary re-renders
+      if (handleMenuOpenChangeAction) {
+        handleMenuOpenChangeAction(isOpen);
+      }
+    },
+    [handleMenuOpenChangeAction],
+  );
+
   return (
     <NavigationMenu.Root
-      onValueChange={(value) => handleMenuOpenChangeAction?.(value !== "")}
+      onValueChange={handleValueChange}
       className="relative hidden lg:block"
       delayDuration={0}
     >

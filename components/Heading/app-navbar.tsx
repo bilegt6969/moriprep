@@ -24,9 +24,11 @@ const smoothEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 export default function Navbar({
   siteName,
   categories,
+  showBanner = false,
 }: {
   siteName: string;
   categories: NavLink[];
+  showBanner?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
@@ -125,9 +127,11 @@ export default function Navbar({
           </div>
         </div>
 
-        <div className="mt-1 relative z-0">
-          <AnnouncementBanner />
-        </div>
+        {showBanner && (
+          <div className="mt-1 relative z-0">
+            <AnnouncementBanner />
+          </div>
+        )}
 
         {!isLargeScreen && (
           <MobileMenu

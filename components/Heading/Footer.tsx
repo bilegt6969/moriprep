@@ -12,10 +12,10 @@ interface FooterProps {
 const SITE_NAME_DEFAULT = "Mori Prep";
 
 const footerLinks = [
-  { label: "Our Story", href: "/info/story" },
+  { label: "Our Mission", href: "/info/story" },
   { label: "Community", href: "/community" },
   { label: "Contribute", href: "/info/contribute" },
-];
+] as const;
 
 const footerLinks2 = [
   { label: "Blog", href: "/blog" },
@@ -23,7 +23,7 @@ const footerLinks2 = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Cookie Policy", href: "/info/cookie-policy" },
-];
+] as const;
 
 const socialLinks = [
   {
@@ -202,8 +202,8 @@ function HomeFooter({
           />
         </div>
 
-        <div className="absolute bottom-4 left-0 w-full flex justify-center z-20 px-4 pointer-events-auto">
-          <div className="px-5 py-2 ">
+        <div className="absolute bottom-8 left-0 w-full flex justify-center z-20 px-4 pointer-events-auto">
+          <div className="px-5 py-2">
             <p className="text-xs sm:text-sm font-medium text-neutral-600">
               © {year} {SITE_NAME}. All rights reserved.
             </p>

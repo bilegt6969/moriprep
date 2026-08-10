@@ -2,15 +2,12 @@
 
 import Footer from "components/Heading/Footer";
 import Navbar from "components/Heading/Navbar";
-import { useBannerVisible } from "hooks/use-banner-visible";
 
 export default function BlogLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const isBannerVisible = useBannerVisible();
-
   return (
     <>
       <Navbar
@@ -21,8 +18,9 @@ export default function BlogLayout({
           { label: "Lessons", href: "/lessons" },
           { label: "Analytics", href: "/analytics" },
         ]}
+        showBanner={false}
       />
-      <div className={isBannerVisible ? "pt-24" : ""}>{children}</div>
+      {children}
       <Footer siteName="Mori Prep" />
     </>
   );

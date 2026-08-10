@@ -1,5 +1,6 @@
 "use client";
 
+import ShowInMapsBadge from "@/components/home/show-in-maps-badge";
 import WaitlistButton from "@/components/home/waitlist-button";
 import { motion, Variants } from "framer-motion";
 import { auth } from "lib/firebase";
@@ -161,8 +162,10 @@ export function EducationHero() {
   const [rotatingWord, setRotatingWord] = useState("Premium");
   const words = ["Free", "Super", "Open"];
   const [wordIndex, setWordIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (!auth) {
       setIsLoading(false);
       return;
@@ -190,7 +193,12 @@ export function EducationHero() {
   const buttonHref = "/practice";
 
   return (
-    <section className="relative h-[100dvh] min-h-[650px] w-full bg-white overflow-hidden flex flex-col">
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isMounted ? 1 : 0 }}
+      transition={{ duration: 0.8, ease: customEase }}
+      className="relative h-[100dvh] min-h-[650px] w-full bg-white overflow-hidden flex flex-col"
+    >
       {/* Ambient Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
@@ -216,6 +224,9 @@ export function EducationHero() {
           animate="visible"
           className="pointer-events-auto flex flex-col items-center justify-center max-w-5xl mx-auto w-full text-center"
         >
+          <motion.div variants={textVariants} className="mb-4">
+            <ShowInMapsBadge />
+          </motion.div>
           <motion.h1
             variants={textVariants}
             className="text-5xl sm:text-6xl md:text-[5rem] font-slim tracking-tight text-neutral-900 mb-3 sm:mb-5 leading-[1.05] font-eb-garamond"
@@ -259,6 +270,6 @@ export function EducationHero() {
 
       {/* RENDER ISOLATED TICKER */}
       <LogoTicker />
-    </section>
+    </motion.section>
   );
 }

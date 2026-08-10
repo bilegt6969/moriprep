@@ -21,13 +21,18 @@ export async function GET(request: NextRequest) {
     let filtered = questionsData;
 
     if (domain) {
-      filtered = filtered.filter((q: any) => q.domain === domain);
+      const domains = domain.split(",").map((d) => d.trim());
+      filtered = filtered.filter((q: any) => domains.includes(q.domain));
     }
     if (difficulty) {
-      filtered = filtered.filter((q: any) => q.difficulty === difficulty);
+      const difficulties = difficulty.split(",").map((d) => d.trim());
+      filtered = filtered.filter((q: any) =>
+        difficulties.includes(q.difficulty),
+      );
     }
     if (skill) {
-      filtered = filtered.filter((q: any) => q.skill === skill);
+      const skills = skill.split(",").map((s) => s.trim());
+      filtered = filtered.filter((q: any) => skills.includes(q.skill));
     }
     if (limit) {
       filtered = filtered.slice(0, parseInt(limit));

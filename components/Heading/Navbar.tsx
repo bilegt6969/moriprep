@@ -11,7 +11,7 @@ import { BorderBeam } from "border-beam";
 import AnnouncementBanner from "components/announcement-banner";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Menu from "./menu";
 import MobileMenu from "./mobile-menu";
 import { SignInButton } from "./sign-in-button";
@@ -27,9 +27,13 @@ const smoothEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
 export default function Navbar({
   siteName,
   categories,
+  showBanner = false,
+  transparent = false,
 }: {
   siteName: string;
   categories: NavLink[];
+  showBanner?: boolean;
+  transparent?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
@@ -38,6 +42,10 @@ export default function Navbar({
 
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
   const isMobile = !isLargeScreen;
+
+  const handleMenuOpenChange = useCallback((open: boolean) => {
+    setIsDesktopMenuOpen(open);
+  }, []);
 
   // Mount timer
   useEffect(() => {
@@ -86,24 +94,28 @@ export default function Navbar({
 
   return (
     <div className="relative w-full">
-      {/* The Global Backdrop Blur 
-        Softened the background tint and increased the blur slightly for a smoother effect 
+      {/* The Global Backdrop Blur
+        Softened the background tint and increased the blur slightly for a smoother effect
       */}
       <div
         className={cn(
-          "pointer-events-none fixed inset-0 z-[40] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "pointer-events-none fixed inset-0 z-40 backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          transparent ? "bg-transparent" : "bg-black/[0.02]",
           isDesktopMenuOpen ? "opacity-100" : "opacity-0",
         )}
       />
 
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[99] h-[88px]" />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-99 h-[88px]" />
 
       {/* Top scroll blur (mobile + desktop) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: smoothEase }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-[40] h-32 bg-white/20 backdrop-blur-md"
+        className={cn(
+          "pointer-events-none fixed inset-x-0 top-0 z-40 h-32 backdrop-blur-md",
+          transparent ? "bg-transparent" : "bg-white/20",
+        )}
         style={{
           WebkitMaskImage:
             "linear-gradient(to bottom, black 20%, transparent 100%)",
@@ -116,7 +128,7 @@ export default function Navbar({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: smoothEase }}
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[40] h-24 backdrop-blur-sm"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-24 backdrop-blur-sm"
         style={{
           WebkitMaskImage:
             "linear-gradient(to top, black 20%, transparent 100%)",
@@ -131,7 +143,7 @@ export default function Navbar({
             initial="hidden"
             animate="show"
             exit="hidden"
-            className="fixed inset-x-0 top-3 z-[100] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
+            className="fixed inset-x-0 top-3 z-50 flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
           >
             <Wrapper
               className={cn(
@@ -160,7 +172,7 @@ export default function Navbar({
                 </Link>
                 <Menu
                   categories={categories}
-                  handleMenuOpenChangeAction={setIsDesktopMenuOpen}
+                  handleMenuOpenChangeAction={handleMenuOpenChange}
                 />
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
@@ -198,9 +210,11 @@ export default function Navbar({
                 />
               )}
             </Wrapper>
-            <div className="mt-1 relative">
-              <AnnouncementBanner />
-            </div>
+            {showBanner && (
+              <div className="mt-1 relative">
+                <AnnouncementBanner />
+              </div>
+            )}
           </motion.header>
         )}
       </AnimatePresence>

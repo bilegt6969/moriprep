@@ -75,8 +75,8 @@ export default function AppMenu({
                   }}
                   transition={{
                     type: "spring",
-                    stiffness: 450,
-                    damping: 35,
+                    stiffness: 600,
+                    damping: 30,
                   }}
                 />
               )}

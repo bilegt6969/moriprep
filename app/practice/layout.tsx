@@ -32,8 +32,9 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
           { label: "Lessons", href: "/lessons" },
           { label: "Analytics", href: "/analytics" },
         ]}
+        showBanner={false}
       />
-      <div className={isBannerVisible ? "pt-24" : ""}>{children}</div>
+      {children}
     </>
   );
 }

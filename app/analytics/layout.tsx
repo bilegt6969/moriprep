@@ -15,6 +15,7 @@ export default function AnalyticsLayout({
           { label: "Lessons", href: "/lessons" },
           { label: "Analytics", href: "/analytics" },
         ]}
+        showBanner={false}
       />
       {children}
     </>

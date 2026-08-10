@@ -48,6 +48,11 @@ export function GoalScore({
     // Don't auto-advance, let user click Next button
   };
 
+  const handleScoreChange = (newScore: number) => {
+    setGoalScore(newScore.toString());
+    updateData({ goalScore: newScore });
+  };
+
   // Handle Enter key to advance
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && goalScore) {
@@ -76,7 +81,14 @@ export function GoalScore({
   };
 
   const isSelected = (score: number) => {
-    return parseInt(goalScore) === score;
+    const currentScore = parseInt(goalScore) || DEFAULT_SCORE;
+    // Find the closest increment to the current score
+    const closestScore = scoreIncrements.reduce((prev, curr) => {
+      return Math.abs(curr - currentScore) < Math.abs(prev - currentScore)
+        ? curr
+        : prev;
+    });
+    return score === closestScore;
   };
 
   // Generate 50-point increments from 400 to 1600
@@ -138,17 +150,39 @@ export function GoalScore({
         <label className="block text-sm font-medium text-neutral-700 mb-2">
           Your goal
         </label>
-        <input
-          ref={inputRef}
-          autoFocus
-          type="number"
-          min={MIN_SCORE}
-          max={MAX_SCORE}
-          value={goalScore}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors text-center text-2xl font-medium"
-        />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const current = parseInt(goalScore) || DEFAULT_SCORE;
+              const newScore = Math.max(MIN_SCORE, current - 10);
+              handleScoreChange(newScore);
+            }}
+            className="w-12 h-12 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 hover:border-neutral-300 transition-colors flex items-center justify-center text-2xl font-medium text-neutral-700"
+          >
+            -
+          </button>
+          <input
+            ref={inputRef}
+            autoFocus
+            type="number"
+            min={MIN_SCORE}
+            max={MAX_SCORE}
+            value={goalScore}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:border-neutral-400 focus:outline-none transition-colors text-center text-2xl font-medium"
+          />
+          <button
+            onClick={() => {
+              const current = parseInt(goalScore) || DEFAULT_SCORE;
+              const newScore = Math.min(MAX_SCORE, current + 10);
+              handleScoreChange(newScore);
+            }}
+            className="w-12 h-12 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 hover:border-neutral-300 transition-colors flex items-center justify-center text-2xl font-medium text-neutral-700"
+          >
+            +
+          </button>
+        </div>
       </div>
     </motion.div>
   );

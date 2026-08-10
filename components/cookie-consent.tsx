@@ -1,22 +1,22 @@
 "use client";
 
-import {
-  CONSENT_COOKIE,
-  getClientConsent,
-  hasAnalyticsConsent,
-  setClientConsent,
-  type CookieConsentValue,
-} from "lib/cookies/consent";
 import { cn } from "lib/cn";
+import {
+    CONSENT_COOKIE,
+    getClientConsent,
+    hasAnalyticsConsent,
+    setClientConsent,
+    type CookieConsentValue,
+} from "lib/cookies/consent";
 import Link from "next/link";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
 } from "react";
 
 const ENTER_MS = 550;
@@ -37,7 +37,9 @@ const CookieConsentContext = createContext<CookieConsentContextValue | null>(
 export function useCookieConsent() {
   const context = useContext(CookieConsentContext);
   if (!context) {
-    throw new Error("useCookieConsent must be used within CookieConsentProvider");
+    throw new Error(
+      "useCookieConsent must be used within CookieConsentProvider",
+    );
   }
   return context;
 }
@@ -144,11 +146,12 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    // Removed body overflow hidden to prevent blocking page scrolling
+    // const prev = document.body.style.overflow;
+    // document.body.style.overflow = "hidden";
+    // return () => {
+    //   document.body.style.overflow = prev;
+    // };
   }, [mounted]);
 
   const resolveConsent = useCallback((value: CookieConsentValue) => {
@@ -161,8 +164,14 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     }, EXIT_MS);
   }, []);
 
-  const accept = useCallback(() => resolveConsent("accepted"), [resolveConsent]);
-  const reject = useCallback(() => resolveConsent("rejected"), [resolveConsent]);
+  const accept = useCallback(
+    () => resolveConsent("accepted"),
+    [resolveConsent],
+  );
+  const reject = useCallback(
+    () => resolveConsent("rejected"),
+    [resolveConsent],
+  );
 
   const value = useMemo(
     () => ({

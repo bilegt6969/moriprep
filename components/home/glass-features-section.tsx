@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // --- Sub-components for Mockups ---
 
@@ -186,33 +186,41 @@ const MockupPractice = ({ isActive }: { isActive: boolean }) => (
 
 // --- Content Data ---
 
-const features = [
+interface Feature {
+  id: string;
+  pillText: string;
+  title: string;
+  description: string;
+  renderMockup: (isActive: boolean) => React.ReactElement;
+}
+
+const features: Feature[] = [
   {
     id: "01",
-    pillText: "questions",
-    title: "Practice with 4,000+ calibrated questions",
+    pillText: "practice",
+    title: "Practice Sessions",
     description:
-      "Master every Math and Reading & Writing topic with our extensive question bank, structured exactly like the real Digital SAT exam.",
+      "Fully customizable learning paths and practice tests built to maximize understanding.",
     renderMockup: (isActive: boolean) => (
       <MockupQuestions isActive={isActive} />
     ),
   },
   {
     id: "02",
-    pillText: "analytics",
-    title: "Track your progress in real-time",
+    pillText: "insights",
+    title: "Insights",
     description:
-      "Eliminate guesswork with detailed analytics. Monitor accuracy by topic, track weekly trends, and focus on what needs improvement.",
+      "Track your performance and make smarter, data-driven learning decisions.",
     renderMockup: (isActive: boolean) => (
       <MockupAnalytics isActive={isActive} />
     ),
   },
   {
     id: "03",
-    pillText: "practice",
-    title: "Take full-length practice tests",
+    pillText: "hub",
+    title: "Learning Hub",
     description:
-      "Build stamina and confidence with mathematically calibrated practice tests that match recent Digital SAT difficulty curves.",
+      "Start a modern, effective learning journey and master subjects in minutes.",
     renderMockup: (isActive: boolean) => <MockupPractice isActive={isActive} />,
   },
 ];
