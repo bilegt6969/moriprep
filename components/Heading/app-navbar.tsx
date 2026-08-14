@@ -1,146 +1,466 @@
 "use client";
 
-import { useMediaQuery } from "hooks/use-media-query";
-import { cn } from "lib/cn";
-import { Menu as MenuIcon, X } from "lucide-react";
-// @ts-ignore - border-beam types may not resolve correctly
-import { BorderBeam } from "border-beam";
-import AnnouncementBanner from "components/announcement-banner";
+import {
+    AnimatedSidebar,
+    AnimatedSidebarClose,
+    AnimatedSidebarContent,
+    AnimatedSidebarFooter,
+    AnimatedSidebarGroup,
+    AnimatedSidebarGroupContent,
+    AnimatedSidebarGroupLabel,
+    AnimatedSidebarHeader,
+    AnimatedSidebarInset,
+    AnimatedSidebarMenu,
+    AnimatedSidebarMenuButton,
+    AnimatedSidebarMenuItem,
+    AnimatedSidebarMenuSub,
+    AnimatedSidebarMenuSubButton,
+    AnimatedSidebarMenuSubItem,
+    AnimatedSidebarProvider,
+    AnimatedSidebarRail,
+    AnimatedSidebarTrigger,
+    useAnimatedSidebar,
+} from "components/motion/animated-sidebar";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useReducedMotion } from "hooks/use-reduced-motion";
+import { EASE_OUT, SPRING_PRESS } from "lib/ease";
+import { auth as firebaseAuth } from "lib/firebase.js";
+import {
+    BarChart3,
+    BookOpen,
+    ChevronsUpDown,
+    FileText,
+    History,
+    LayoutGrid,
+    LogOut,
+    PanelLeft,
+    Settings,
+    Trophy,
+    X,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import Menu from "./app-menu";
-import MobileMenu from "./app-mobile-menu";
-import { SignInButton } from "./sign-in-button";
+import { usePathname } from "next/navigation";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-interface NavLink {
+const HomeIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 256 256"
+    fill="currentColor"
+  >
+    <path
+      d="M48 105
+         C48 96 51 88 58 81
+         L119 37
+         C124 33 132 33 137 37
+         L198 81
+         C205 88 208 96 208 105
+         V184
+         C208 201 198 211 181 211
+         H75
+         C58 211 48 201 48 184
+         Z"
+    />
+    <rect x="91" y="157" width="74" height="19" rx="5" fill="#FFFFFF" />
+  </svg>
+);
+
+const navigationItems = [
+  {
+    label: "Home",
+    href: "/home",
+    icon: HomeIcon,
+  },
+  {
+    label: "Test",
+    href: "/practice",
+    icon: LayoutGrid,
+  },
+  {
+    label: "Lessons",
+    icon: BookOpen,
+    hasSubmenu: true,
+    subItems: [
+      { label: "Math", href: "/resources/math" },
+      { label: "Reading & Writing", href: "/resources/rw" },
+    ],
+  },
+  {
+    label: "Resources",
+    href: "/resources",
+    icon: FileText,
+  },
+  {
+    label: "History",
+    href: "/history",
+    icon: History,
+  },
+  {
+    label: "Leaderboard",
+    href: "/leaderboard",
+    icon: Trophy,
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+  },
+] satisfies {
+  label: string;
+  href?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  hasSubmenu?: boolean;
+  subItems?: { label: string; href: string }[];
+}[];
+
+// Shown under the "Settings" group label at the bottom of the sidebar.
+const settingsItems = [
+  {
+    label: "General settings",
+    href: "/settings",
+    icon: Settings,
+  },
+] satisfies {
   label: string;
   href: string;
-  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}[];
+
+function isPathActive(pathname: string, href?: string) {
+  if (!href) return false;
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-const smoothEase: [number, number, number, number] = [0.4, 0, 0.2, 1];
+export function AppNavbar({ children }: { children: React.ReactNode }) {
+  const reduce = useReducedMotion();
+  const pathname = usePathname();
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(() => {
+    const parent = navigationItems.find((item) =>
+      item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
+    );
+    return parent?.label ?? null;
+  });
+  const [user, setUser] = useState<any>(null);
 
-export default function Navbar({
-  siteName,
-  categories,
-  showBanner = false,
-}: {
-  siteName: string;
-  categories: NavLink[];
-  showBanner?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
-
-  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
-  const isMobile = !isLargeScreen;
+  // Keep the parent submenu open when the active route lives inside it,
+  // e.g. landing on /resources/math directly from a bookmark or refresh.
+  useEffect(() => {
+    const parent = navigationItems.find((item) =>
+      item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
+    );
+    if (parent) setOpenSubmenu(parent.label);
+  }, [pathname]);
 
   useEffect(() => {
-    if (isLargeScreen && isOpen) setIsOpen(false);
-  }, [isLargeScreen, isOpen]);
+    if (!firebaseAuth) return;
 
-  useEffect(() => {
-    const isMobileMenuOpen = isOpen && isMobile;
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen, isMobile]);
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignOut = () => {
+    if (firebaseAuth) {
+      signOut(firebaseAuth);
+    }
+  };
+
+  // Derive the page title (shown in the top bar) from the current route
+  // instead of tracking it by hand in click handlers, so it stays correct
+  // on direct links, refreshes, and browser back/forward.
+  const activeLabel = useMemo(() => {
+    for (const item of navigationItems) {
+      if (item.subItems) {
+        const activeSub = item.subItems.find((sub) =>
+          isPathActive(pathname, sub.href),
+        );
+        if (activeSub) return activeSub.label;
+      }
+      if (isPathActive(pathname, item.href)) return item.label;
+    }
+    const activeSetting = settingsItems.find((item) =>
+      isPathActive(pathname, item.href),
+    );
+    if (activeSetting) return activeSetting.label;
+    return "Home";
+  }, [pathname]);
 
   return (
-    <div className="relative w-full">
-      {/* Top scroll blur (mobile + desktop) */}
-      <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-[10] h-32 bg-white/20 backdrop-blur-md"
-        style={{
-          WebkitMaskImage:
-            "linear-gradient(to bottom, black 20%, transparent 100%)",
-          maskImage: "linear-gradient(to bottom, black 20%, transparent 100%)",
-        }}
-      />
-
-      {/* Global Backdrop Blur - only for desktop menu */}
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-0 z-[20] bg-black/[0.02] backdrop-blur-[8px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          isDesktopMenuOpen ? "opacity-100" : "opacity-0",
-        )}
-      />
-
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[30] h-[88px]" />
-
-      <header className="fixed inset-x-0 top-3 z-[50] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4">
-        {/* Reduced gap to match the tight spacing in the screenshot */}
-        <div className="relative flex items-center justify-between w-full">
-          {/* Logo - Far Left */}
-          <div className="flex h-12 shrink-0 items-center justify-center px-2">
-            <Link
-              href="/"
-              prefetch
-              className="flex h-8 shrink-0 items-center justify-center rounded-full  px-4 transition-opacity hover:opacity-80"
-              aria-label={siteName}
-            >
-              <Image
-                src="/morin.svg"
-                alt={siteName}
-                width={1666}
-                height={360}
-                className="h-[1.2rem] w-auto max-w-[6.6rem] object-contain opacity-100 sm:h-[1.35rem] sm:max-w-[7.2rem]"
-                priority
-              />
-            </Link>
-          </div>
-
-          {/* Navigation Items - Middle - Absolutely centered */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 island-surface flex h-12 items-center justify-center rounded-full px-2">
-            <Menu categories={categories} onOpenChange={setIsDesktopMenuOpen} />
-          </div>
-
-          {/* Account Section - Far Right */}
-          <div className="flex h-12 shrink-0 items-center justify-center px-2">
-            <div className="flex items-center">
-              <div className="relative flex items-center">
-                <BorderBeam
-                  size="line"
-                  colorVariant="mono"
-                  className="hidden rounded-full lg:inline-flex"
-                >
-                  <SignInButton />
-                </BorderBeam>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsOpen((prev) => !prev)}
-                className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-neutral-600 transition-colors hover:bg-black/5 lg:hidden"
-                aria-label={isOpen ? "Close menu" : "Open menu"}
-                aria-expanded={isOpen}
-              >
-                {isOpen ? (
-                  <X className="h-4 w-4" />
-                ) : (
-                  <MenuIcon className="h-4 w-4" />
-                )}
-              </button>
+    <AnimatedSidebarProvider defaultOpen={true}>
+      <AnimatedSidebar
+        ariaLabel="Mori Prep navigation"
+        collapsible="icon"
+        variant="sidebar"
+        className="bg-white border-gray-200"
+      >
+        <AnimatedSidebarHeader className="gap-3 bg-white p-3 pb-2">
+          <div className="flex min-h-9 items-center gap-2.5 overflow-hidden px-1">
+            <div className="grid size-12 shrink-0 place-items-center">
+              <Image src="/morin.svg" alt="" width={48} height={48} />
             </div>
+            <AnimatedSidebarClose className="ml-auto text-muted-foreground hover:bg-neutral-100 md:hidden">
+              <X aria-hidden="true" className="size-4" />
+            </AnimatedSidebarClose>
           </div>
+        </AnimatedSidebarHeader>
+
+        <AnimatedSidebarContent className="px-2 pt-1">
+          <AnimatedSidebarGroup className="pb-2">
+            <AnimatedSidebarGroupContent>
+              <AnimatedSidebarMenu>
+                {navigationItems.map((item) => {
+                  const isActive = item.hasSubmenu
+                    ? item.subItems?.some((sub) =>
+                        isPathActive(pathname, sub.href),
+                      )
+                    : isPathActive(pathname, item.href);
+
+                  return (
+                    <AnimatedSidebarMenuItem key={item.label}>
+                      {item.hasSubmenu ? (
+                        <>
+                          <AnimatedSidebarMenuButton
+                            isActive={isActive}
+                            ariaExpanded={openSubmenu === item.label}
+                            icon={
+                              item.icon && typeof item.icon === "function" ? (
+                                <item.icon className="size-4" />
+                              ) : undefined
+                            }
+                            onSelect={() =>
+                              setOpenSubmenu(
+                                openSubmenu === item.label ? null : item.label,
+                              )
+                            }
+                          >
+                            {item.label}
+                          </AnimatedSidebarMenuButton>
+                          <AnimatedSidebarMenuSub
+                            open={openSubmenu === item.label}
+                          >
+                            {item.subItems?.map((subItem) => (
+                              <AnimatedSidebarMenuSubItem key={subItem.label}>
+                                <AnimatedSidebarMenuSubButton
+                                  isActive={isPathActive(
+                                    pathname,
+                                    subItem.href,
+                                  )}
+                                  href={subItem.href}
+                                >
+                                  {subItem.label}
+                                </AnimatedSidebarMenuSubButton>
+                              </AnimatedSidebarMenuSubItem>
+                            ))}
+                          </AnimatedSidebarMenuSub>
+                        </>
+                      ) : (
+                        <AnimatedSidebarMenuButton
+                          isActive={isActive}
+                          icon={
+                            item.icon ? (
+                              <item.icon className="size-4" />
+                            ) : undefined
+                          }
+                          href={item.href}
+                        >
+                          {item.label}
+                        </AnimatedSidebarMenuButton>
+                      )}
+                    </AnimatedSidebarMenuItem>
+                  );
+                })}
+              </AnimatedSidebarMenu>
+            </AnimatedSidebarGroupContent>
+          </AnimatedSidebarGroup>
+
+          <AnimatedSidebarGroup className="mt-auto">
+            <AnimatedSidebarGroupLabel>Settings</AnimatedSidebarGroupLabel>
+            <AnimatedSidebarGroupContent>
+              <AnimatedSidebarMenu>
+                {settingsItems.map((item) => (
+                  <AnimatedSidebarMenuItem key={item.label}>
+                    <AnimatedSidebarMenuButton
+                      isActive={isPathActive(pathname, item.href)}
+                      icon={<item.icon className="size-4" />}
+                      href={item.href}
+                    >
+                      {item.label}
+                    </AnimatedSidebarMenuButton>
+                  </AnimatedSidebarMenuItem>
+                ))}
+              </AnimatedSidebarMenu>
+            </AnimatedSidebarGroupContent>
+          </AnimatedSidebarGroup>
+        </AnimatedSidebarContent>
+
+        <AnimatedSidebarFooter className="border-none p-3">
+          <ProfileMenu user={user} onSignOut={handleSignOut} />
+        </AnimatedSidebarFooter>
+
+        <AnimatedSidebarRail />
+      </AnimatedSidebar>
+
+      <AnimatedSidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-3 border-gray-200 border-b bg-white px-4">
+          <AnimatedSidebarTrigger className="text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <PanelLeft aria-hidden="true" className="size-4" />
+          </AnimatedSidebarTrigger>
+          <div className="h-5 w-px bg-gray-200" />
+          <p className="text-sm font-medium text-foreground">{activeLabel}</p>
+        </header>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-neutral-50">
+          {children}
         </div>
+      </AnimatedSidebarInset>
+    </AnimatedSidebarProvider>
+  );
+}
 
-        {showBanner && (
-          <div className="mt-1 relative z-0">
-            <AnnouncementBanner />
+// Small helper so this file doesn't need to import `cn` from the design
+// system just for one conditional class list — replace with your own
+// `cn`/`clsx` util if you already have one in scope.
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function ProfileMenu({
+  user,
+  onSignOut,
+}: {
+  user: any;
+  onSignOut: () => void;
+}) {
+  const { open, isMobile } = useAnimatedSidebar();
+  const reduce = useReducedMotion();
+  const collapsed = !isMobile && !open;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (collapsed) setMenuOpen(false);
+  }, [collapsed]);
+
+  if (!user) {
+    return (
+      <a
+        href="/sign-in"
+        className="flex items-center gap-3 rounded-xl px-1.5 py-1.5 transition-colors hover:bg-neutral-50"
+      >
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gray-200 text-gray-500 text-xs font-semibold">
+          ?
+        </div>
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-foreground">
+              Not signed in
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              Sign in to access features
+            </span>
           </div>
         )}
+      </a>
+    );
+  }
 
-        {!isLargeScreen && (
-          <MobileMenu
-            isOpen={isOpen}
-            setIsOpen={setIsOpen}
-            categories={categories}
-          />
+  const initial = (user.email?.[0] ?? "U").toUpperCase();
+  const photoURL = user.photoURL;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <AnimatePresence>
+        {menuOpen && !collapsed && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+            transition={{ duration: 0.16, ease: EASE_OUT }}
+            className="absolute bottom-full left-0 mb-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-lg"
+          >
+            <a
+              href="/settings"
+              className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-gray-700 transition-colors hover:bg-neutral-50"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Settings className="size-4" aria-hidden="true" />
+              Settings
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onSignOut();
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+            >
+              <LogOut className="size-4" aria-hidden="true" />
+              Sign out
+            </button>
+          </motion.div>
         )}
-      </header>
+      </AnimatePresence>
+
+      <motion.button
+        type="button"
+        onClick={() => setMenuOpen((value) => !value)}
+        whileTap={reduce ? undefined : { scale: 0.98 }}
+        transition={SPRING_PRESS}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        className="flex w-full items-center gap-3 rounded-xl px-1.5 py-1.5 text-left transition-colors hover:bg-neutral-50"
+      >
+        {photoURL ? (
+          <img
+            src={photoURL}
+            alt="Profile"
+            className="size-8 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#FC4C01] text-white text-xs font-semibold">
+            {initial}
+          </div>
+        )}
+        {!collapsed && (
+          <>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-foreground">
+                {user.displayName || "User"}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {user.email || "user@moriprep.xyz"}
+              </span>
+            </div>
+            <ChevronsUpDown
+              aria-hidden="true"
+              className="size-4 shrink-0 text-muted-foreground"
+            />
+          </>
+        )}
+      </motion.button>
     </div>
   );
 }

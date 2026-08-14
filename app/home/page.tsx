@@ -1,8 +1,16 @@
 "use client";
 
-import { HelpPopover } from "@/components/ui/help-popover";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { motion } from "framer-motion";
+import { useReducedMotion } from "hooks/use-reduced-motion";
 import { auth, db } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -72,6 +80,7 @@ const TrophyIcon = () => (
 
 export default function HomePage() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
@@ -82,6 +91,15 @@ export default function HomePage() {
   const [newExamDate, setNewExamDate] = useState<string>("");
   const [isEditingScore, setIsEditingScore] = useState(false);
   const [newScore, setNewScore] = useState<string>("");
+
+  // New states for enhanced features
+  const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [practiceStreak, setPracticeStreak] = useState<number>(0);
+  const [totalQuestions, setTotalQuestions] = useState<number>(0);
+  const [totalTimeSpent, setTotalTimeSpent] = useState<number>(0);
+  const [weeklyQuestions, setWeeklyQuestions] = useState<number>(0);
+  const [dailyGoal, setDailyGoal] = useState<number>(10);
+  const [achievements, setAchievements] = useState<any[]>([]);
 
   useEffect(() => {
     if (!auth) {
@@ -131,13 +149,302 @@ export default function HomePage() {
               setTimeToExam({ days, examDate: nextExamDate });
             }
           }
+
+          // Set daily goal from user data or default
+          setDailyGoal(data.dailyGoal || 10);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
-    if (isAuthenticated) fetchUserData();
+
+    // Fetch user answers for real-time stats
+    const fetchUserAnswers = () => {
+      if (!auth?.currentUser) return;
+
+      const q = query(
+        collection(db, "userAnswers"),
+        where("userId", "==", auth.currentUser.uid),
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot: any) => {
+          const answers = querySnapshot.docs.map((doc: any) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          setUserAnswers(answers);
+
+          // Calculate stats
+          const total = answers.length;
+          setTotalQuestions(total);
+
+          // Calculate practice streak
+          const streak = calculatePracticeStreak(answers);
+          setPracticeStreak(streak);
+
+          // Calculate weekly questions
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          const weekly = answers.filter((a: any) => {
+            const answerDate = a.timestamp ? new Date(a.timestamp) : new Date();
+            return answerDate >= oneWeekAgo;
+          }).length;
+          setWeeklyQuestions(weekly);
+
+          // Calculate achievements
+          const newAchievements = calculateAchievements(answers, streak);
+          setAchievements(newAchievements);
+        },
+        (error: any) => {
+          console.error("Error fetching user answers:", error);
+        },
+      );
+
+      return unsubscribe;
+    };
+
+    if (isAuthenticated) {
+      fetchUserData();
+      const unsubscribe = fetchUserAnswers();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
+    }
   }, [isAuthenticated]);
+
+  const calculatePracticeStreak = (answers: any[]) => {
+    if (answers.length === 0) return 0;
+
+    const dates = answers
+      .map((a) => (a.timestamp ? new Date(a.timestamp).toDateString() : null))
+      .filter((d) => d !== null)
+      .reverse();
+
+    const uniqueDates = [...new Set(dates)];
+    let streak = 0;
+    let currentDate = new Date();
+
+    for (const date of uniqueDates) {
+      const answerDate = new Date(date);
+      const diffDays = Math.floor(
+        (currentDate.getTime() - answerDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      if (diffDays === streak) {
+        streak++;
+        currentDate = new Date(answerDate);
+      } else if (diffDays === streak + 1) {
+        // Allow for one day gap
+        streak++;
+        currentDate = new Date(answerDate);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const calculateAchievements = (answers: any[], streak: number) => {
+    const achievements = [];
+
+    if (answers.length >= 10)
+      achievements.push({
+        id: "first_10",
+        name: "First Steps",
+        icon: "🎯",
+        description: "Answered 10 questions",
+      });
+    if (answers.length >= 50)
+      achievements.push({
+        id: "half_century",
+        name: "Half Century",
+        icon: "🏆",
+        description: "Answered 50 questions",
+      });
+    if (answers.length >= 100)
+      achievements.push({
+        id: "century",
+        name: "Century",
+        icon: "💯",
+        description: "Answered 100 questions",
+      });
+    if (streak >= 3)
+      achievements.push({
+        id: "streak_3",
+        name: "3-Day Streak",
+        icon: "🔥",
+        description: "Practiced 3 days in a row",
+      });
+    if (streak >= 7)
+      achievements.push({
+        id: "streak_7",
+        name: "Week Warrior",
+        icon: "⚡",
+        description: "Practiced 7 days in a row",
+      });
+    if (streak >= 30)
+      achievements.push({
+        id: "streak_30",
+        name: "Monthly Master",
+        icon: "👑",
+        description: "Practiced 30 days in a row",
+      });
+
+    const correctAnswers = answers.filter((a) => a.isCorrect).length;
+    if (correctAnswers >= 20 && correctAnswers / answers.length >= 0.8) {
+      achievements.push({
+        id: "accuracy_master",
+        name: "Accuracy Master",
+        icon: "🎯",
+        description: "80%+ accuracy with 20+ questions",
+      });
+    }
+
+    return achievements;
+  };
+
+  const getWeakAreas = () => {
+    if (!userAnswers.length) return [];
+
+    const domainStats: any = {};
+    userAnswers.forEach((answer) => {
+      const domain = answer.domain || "General";
+      if (!domainStats[domain]) {
+        domainStats[domain] = { correct: 0, total: 0 };
+      }
+      domainStats[domain].total++;
+      if (answer.isCorrect) {
+        domainStats[domain].correct++;
+      }
+    });
+
+    const weakAreas = Object.entries(domainStats)
+      .map(([domain, stats]: [string, any]) => ({
+        domain,
+        accuracy: (stats.correct / stats.total) * 100,
+        total: stats.total,
+      }))
+      .filter((item) => item.total >= 3)
+      .sort((a, b) => a.accuracy - b.accuracy)
+      .slice(0, 3);
+
+    return weakAreas;
+  };
+
+  const getSuggestedFocus = () => {
+    const weakAreas = getWeakAreas();
+    if (weakAreas.length === 0)
+      return "Start practicing to get personalized recommendations";
+
+    const weakest = weakAreas[0];
+    return `Focus on ${weakest.domain} (${Math.round(weakest.accuracy)}% accuracy)`;
+  };
+
+  const getMotivationalMessage = () => {
+    if (practiceStreak >= 7) return "You're on fire! 🔥";
+    if (practiceStreak >= 3) return "Amazing consistency!";
+    if (totalQuestions >= 100) return "Century club member!";
+    if (totalQuestions >= 50) return "Building great habits!";
+    if (totalQuestions >= 10) return "Great start!";
+    return "Your journey begins now!";
+  };
+
+  const getMotivationalSubtext = () => {
+    if (practiceStreak >= 7)
+      return `${practiceStreak} day streak - keep the momentum going!`;
+    if (practiceStreak >= 3)
+      return `${practiceStreak} days in a row - you're building a strong foundation!`;
+    if (totalQuestions >= 100)
+      return `${totalQuestions} questions answered - dedication pays off!`;
+    if (totalQuestions >= 50)
+      return `${totalQuestions} questions down - you're making real progress!`;
+    if (totalQuestions >= 10)
+      return `${totalQuestions} questions completed - every question counts!`;
+    return "Start your SAT prep journey today!";
+  };
+
+  const getStudyPlan = () => {
+    const hour = new Date().getHours();
+    const weakAreas = getWeakAreas();
+    const focusArea =
+      weakAreas.length > 0 ? weakAreas[0]?.domain : "Reading & Writing";
+
+    let plan = [];
+
+    if (hour < 12) {
+      // Morning plan
+      plan = [
+        {
+          title: `Practice ${focusArea}`,
+          duration: "15 minutes",
+          type: "Practice",
+          completed: false,
+        },
+        {
+          title: "Review mistakes",
+          duration: "10 minutes",
+          type: "Review",
+          completed: false,
+        },
+        {
+          title: "Quick vocab drill",
+          duration: "5 minutes",
+          type: "Drill",
+          completed: false,
+        },
+      ];
+    } else if (hour < 18) {
+      // Afternoon plan
+      plan = [
+        {
+          title: "Full practice session",
+          duration: "30 minutes",
+          type: "Practice",
+          completed: false,
+        },
+        {
+          title: "Analyze weak areas",
+          duration: "15 minutes",
+          type: "Analysis",
+          completed: false,
+        },
+        {
+          title: "Take a short break",
+          duration: "5 minutes",
+          type: "Break",
+          completed: false,
+        },
+      ];
+    } else {
+      // Evening plan
+      plan = [
+        {
+          title: "Light review session",
+          duration: "20 minutes",
+          type: "Review",
+          completed: false,
+        },
+        {
+          title: "Study flashcards",
+          duration: "10 minutes",
+          type: "Study",
+          completed: false,
+        },
+        {
+          title: "Plan tomorrow's goals",
+          duration: "5 minutes",
+          type: "Planning",
+          completed: false,
+        },
+      ];
+    }
+
+    return plan;
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -185,13 +492,31 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-8 h-8 border-[3px] border-[#E5E5EA] border-t-[#0071E3] rounded-full"
-        />
-      </div>
+      <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-16">
+        <div className="max-w-[1000px] mx-auto w-full">
+          {/* Skeleton loading matching the redesigned layout */}
+          <div className="mb-16 md:mb-20">
+            <div
+              className={`h-12 md:h-16 bg-[#f5f5f5] rounded w-3/4 ${reduce ? "" : "animate-pulse"}`}
+            />
+          </div>
+          <div
+            className={`w-full min-h-[280px] md:min-h-[320px] bg-[#f5f5f5] rounded-lg mb-16 md:mb-20 ${reduce ? "" : "animate-pulse"}`}
+          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-16 md:mb-20">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i}>
+                <div
+                  className={`h-4 bg-[#f5f5f5] rounded w-1/2 mb-2 ${reduce ? "" : "animate-pulse"}`}
+                />
+                <div
+                  className={`h-10 bg-[#f5f5f5] rounded w-3/4 ${reduce ? "" : "animate-pulse"}`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -203,226 +528,487 @@ export default function HomePage() {
       : "-");
 
   return (
-    <section className="min-h-screen bg-white font-sans pt-0 pb-20 px-6 md:px-12 lg:px-24">
-      <div className="max-w-[1200px] mx-auto w-full">
-        {/* Header */}
+    <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-16">
+      <div className="max-w-[1000px] mx-auto w-full">
+        {/* Greeting - Editorial typography with generous whitespace */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-14"
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.6 }}
+          className="mb-12 md:mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-[#1D1D1F] mb-3 leading-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-[#1D1D1F] leading-[1.1]">
             {getGreeting()}, {userName}.
           </h1>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Main Action Card */}
-          <Link href="/practice" className="block group outline-none h-full">
-            <motion.div
-              whileHover={{ scale: 0.985 }}
-              whileTap={{ scale: 0.97 }}
-              transition={spring}
-              className="w-full h-full min-h-[300px] rounded-[36px] bg-[#1c1c1e] p-8 md:p-10 flex flex-col justify-between overflow-hidden relative shadow-lg"
-            >
-              <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-white/10 transition-colors duration-700" />
-              <div className="relative z-10">
-                <span className="text-white/50 font-semibold text-[13px] tracking-[0.2em] uppercase mb-3 block">
-                  Next Session
-                </span>
-                <h2 className="text-4xl md:text-5xl font-semibold text-white tracking-tight leading-[1.1] max-w-[85%]">
-                  Resume your practice.
-                </h2>
+        {/* Primary Study Area - Large editorial surface */}
+        <Link
+          href="/practice"
+          className="block group outline-none mb-12 md:mb-16"
+        >
+          <motion.div
+            whileHover={reduce ? undefined : { scale: 0.99 }}
+            whileTap={reduce ? undefined : { scale: 0.98 }}
+            transition={reduce ? { duration: 0 } : spring}
+            className="w-full min-h-[280px] md:min-h-[320px] bg-[#1c1c1e] p-8 md:p-12 flex flex-col justify-between relative"
+          >
+            <div>
+              <span className="text-white/40 font-medium text-xs tracking-[0.2em] uppercase mb-4 block">
+                Practice
+              </span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight leading-[1.1]">
+                Resume your practice
+              </h2>
+            </div>
+            <div className="flex justify-end">
+              <div
+                className={`w-12 h-12 md:w-14 md:h-14 bg-white text-[#1D1D1F] rounded-full flex items-center justify-center ${reduce ? "" : "group-hover:scale-105"} transition-transform duration-300`}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="translate-x-0.5"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
               </div>
-              <div className="relative z-10 flex justify-end">
-                <div className="w-16 h-16 bg-white text-[#1D1D1F] rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
+            </div>
+          </motion.div>
+        </Link>
+
+        {/* Secondary Metrics - Typography-based row */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.1 }}
+          className="mb-12 md:mb-16"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            <div>
+              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
+                Streak
+              </p>
+              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
+                {practiceStreak}
+                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
+                  days
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
+                Questions
+              </p>
+              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
+                {totalQuestions}
+                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
+                  answered
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
+                This Week
+              </p>
+              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
+                {weeklyQuestions}
+                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
+                  questions
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
+                Daily Goal
+              </p>
+              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
+                {dailyGoal}
+                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
+                  questions
+                </span>
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Quick Start + Performance/Focus - Two column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
+          {/* Quick Start - Minimal editorial list */}
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.2 }
+            }
+          >
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+              Quick Start
+            </p>
+            <div className="space-y-1">
+              <Link href="/practice/rw" className="group block">
+                <div
+                  className={`flex items-center justify-between py-4 border-b border-[#e5e5ea] ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
+                >
+                  <span className="text-[17px] font-medium text-[#1D1D1F]">
+                    5-Minute Warmup
+                  </span>
                   <svg
-                    width="24"
-                    height="24"
+                    width="16"
+                    height="16"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="translate-x-0.5"
+                    strokeWidth="2"
+                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
                   >
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </div>
-              </div>
-            </motion.div>
-          </Link>
+              </Link>
+              <Link href="/practice/rw" className="group block">
+                <div
+                  className={`flex items-center justify-between py-4 border-b border-[#e5e5ea] ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
+                >
+                  <span className="text-[17px] font-medium text-[#1D1D1F]">
+                    Full Session
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+              <Link href="/history" className="group block">
+                <div
+                  className={`flex items-center justify-between py-4 ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
+                >
+                  <span className="text-[17px] font-medium text-[#1D1D1F]">
+                    Review History
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            </div>
+          </motion.div>
 
-          {/* Minimalist Stats List Card (Matching Account Page Design) */}
+          {/* Performance/Focus - Combined quieter section */}
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="bg-[#f5f5f5] rounded-[32px] p-6 sm:p-8 flex flex-col gap-8 shadow-sm relative"
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.3 }
+            }
           >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-[13px] font-bold text-[#8e8e93] uppercase tracking-wider">
-                Profile Details
-              </h3>
-              <HelpPopover
-                title="Profile Details"
-                content="View and manage your exam date, target score, and other personal information."
-                position="left"
-              />
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
-              {/* Exam Countdown */}
-              <StatRow
-                label="Exam Date"
-                icon={<CalendarIcon />}
-                text={
-                  timeToExam
-                    ? `${timeToExam.days} Days until Exam`
-                    : isAuthenticated
-                      ? "Set Exam Date"
-                      : "Sign in to set exam date"
-                }
-              />
-
-              {/* Current Score */}
-              <StatRow
-                label="Current Score"
-                icon={<TrophyIcon />}
-                text={
-                  currentScore !== "-"
-                    ? String(currentScore)
-                    : isAuthenticated
-                      ? "Add Score"
-                      : "Sign in to track score"
-                }
-              />
-
-              {/* Target Score */}
-              {userData?.goalScore && (
-                <StatRow
-                  label="Target Score"
-                  icon={<TargetIcon />}
-                  text={userData.goalScore}
-                />
-              )}
-
-              {/* School */}
-              {userData?.school && (
-                <StatRow
-                  label="Institution"
-                  icon={
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M11.7 2.805a.75.75 0 01.6 0A60.65 60.65 0 0122.83 8.72a.75.75 0 01-.231 1.337 49.949 49.949 0 00-9.902 3.912l-.003.002c-.874.494-1.99.494-2.864 0a49.949 49.949 0 00-9.902-3.912.75.75 0 01-.231-1.337A60.65 60.65 0 0111.7 2.805z" />
-                      <path d="M13.06 15.473a4.84 4.84 0 01-2.12 0 49.031 49.031 0 01-8.323-2.428v3.315c0 1.954 1.488 3.731 3.518 4.159 1.84.389 3.82.593 5.865.593 2.046 0 4.025-.204 5.865-.593 2.03-.428 3.518-2.205 3.518-4.159V13.045a49.031 49.031 0 01-8.323 2.428zM19.128 10.457a49.19 49.19 0 01-7.128 2.308v4.992c0 .356.248.665.595.733.912.18 1.848.291 2.805.321V10.457z" />
-                    </svg>
-                  }
-                  text={userData.school}
-                />
-              )}
-
-              {/* Graduation Year */}
-              {userData?.graduationYear && (
-                <StatRow
-                  label="Graduation"
-                  icon={
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" />
-                      <path
-                        fillRule="evenodd"
-                        d="M22.5 9.75h-21v7.5a3 3 0 003 3h15a3 3 0 003-3v-7.5zm-18 3.75a.75.75 0 01.75-.75h6a.75.75 0 010 1.5h-6a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  }
-                  text={`Class of ${userData.graduationYear}`}
-                />
-              )}
-            </div>
-
-            {/* Score Breakdown */}
-            {isAuthenticated &&
-              (userData?.bestRwScore || userData?.bestMathScore) && (
-                <div className="pt-6 border-t border-black/5">
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+              Focus
+            </p>
+            <div className="border border-[#e5e5ea] rounded-lg p-6 md:p-8">
+              <div className="mb-6">
+                <p className="text-[17px] font-medium text-[#1D1D1F] mb-2">
+                  {getSuggestedFocus()}
+                </p>
+                <p className="text-sm text-[#8e8e93]">
+                  Based on your performance
+                </p>
+              </div>
+              {getWeakAreas().length > 0 && (
+                <div className="pt-6 border-t border-[#e5e5ea]">
+                  <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
+                    Areas to improve
+                  </p>
                   <div className="space-y-3">
-                    {userData?.bestRwScore && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-[15px] text-[#909094]">
-                          Reading & Writing
+                    {getWeakAreas().map((area, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-sm text-[#1D1D1F]">
+                          {area.domain}
                         </span>
-                        <span className="text-[15px] font-medium text-[#1D1D1F]">
-                          {userData.bestRwScore}
-                        </span>
-                      </div>
-                    )}
-                    {userData?.bestMathScore && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-[15px] text-[#909094]">Math</span>
-                        <span className="text-[15px] font-medium text-[#1D1D1F]">
-                          {userData.bestMathScore}
+                        <span className="text-sm font-medium text-[#8e8e93]">
+                          {Math.round(area.accuracy)}%
                         </span>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
+            </div>
+          </motion.div>
+        </div>
 
-            {/* Progress to Goal */}
-            {isAuthenticated && userData?.goalScore && currentScore !== "-" && (
-              <div className="pt-6 border-t border-black/5">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[15px] text-[#909094]">
-                    Progress to Goal
-                  </span>
-                  <span className="text-[15px] font-medium text-[#1D1D1F]">
+        {/* Performance Note + Score - Two column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
+          {/* Performance Note - Short editorial */}
+          {userAnswers.length > 0 && (
+            <motion.div
+              initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+              animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+              transition={
+                reduce ? { duration: 0 } : { duration: 0.6, delay: 0.4 }
+              }
+            >
+              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
+                Personal Note
+              </p>
+              <div className="text-[15px] text-[#1D1D1F] leading-relaxed">
+                <p className="mb-2">
+                  Your accuracy is{" "}
+                  <span className="font-semibold">
                     {Math.round(
-                      (parseInt(currentScore) / userData.goalScore) * 100,
+                      (userAnswers.filter((a) => a.isCorrect).length /
+                        userAnswers.length) *
+                        100,
                     )}
                     %
                   </span>
-                </div>
-                <div className="w-full bg-[#e5e5e5] rounded-full h-1.5">
-                  <div
-                    className="bg-[#0071E3] h-1.5 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, (parseInt(currentScore) / userData.goalScore) * 100)}%`,
-                    }}
-                  />
-                </div>
+                  .
+                </p>
+                <p>
+                  Focus next on{" "}
+                  <span className="font-semibold">
+                    {getWeakAreas().length > 0
+                      ? getWeakAreas()[0]?.domain
+                      : "all domains"}
+                  </span>
+                  , where your accuracy is currently{" "}
+                  <span className="font-semibold">
+                    {getWeakAreas().length > 0
+                      ? Math.round(getWeakAreas()[0]?.accuracy)
+                      : 0}
+                    %
+                  </span>
+                  .
+                </p>
+                <Link
+                  href="/practice/rw"
+                  className={`inline-block mt-4 text-sm font-medium text-[#0071E3] ${reduce ? "" : "hover:text-[#0077ED]"} transition-colors`}
+                >
+                  Continue practicing →
+                </Link>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Domain Performance Summary */}
-            {isAuthenticated && userData?.domainPerformance && (
-              <div className="pt-6 border-t border-black/5">
-                <div className="text-[15px] text-[#909094] mb-3">
-                  Domain Performance
+          {/* Score - Editorial typography presentation */}
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.5 }
+            }
+          >
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+              Score
+            </p>
+            <div className="space-y-6">
+              <div className="flex items-baseline justify-between pb-4 border-b border-[#e5e5ea]">
+                <span className="text-[15px] text-[#8e8e93]">
+                  Reading & Writing
+                </span>
+                <span className="text-2xl md:text-3xl font-semibold text-[#1D1D1F]">
+                  {userData?.bestRwScore || "-"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pb-4 border-b border-[#e5e5ea]">
+                <span className="text-[15px] text-[#8e8e93]">Math</span>
+                <span className="text-2xl md:text-3xl font-semibold text-[#1D1D1F]">
+                  {userData?.bestMathScore || "-"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-2">
+                <span className="text-[15px] font-medium text-[#1D1D1F]">
+                  Total
+                </span>
+                <span className="text-4xl md:text-5xl font-semibold text-[#1D1D1F]">
+                  {currentScore}
+                  <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-2">
+                    / 1600
+                  </span>
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Achievements - Compact secondary section */}
+        {achievements.length > 0 && (
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.55 }
+            }
+            className="mb-12 md:mb-16"
+          >
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
+              Achievements
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="flex-shrink-0 border border-[#e5e5ea] rounded-lg p-3 min-w-[120px]"
+                >
+                  <div className="text-lg mb-1">{achievement.icon}</div>
+                  <div className="text-xs font-medium text-[#1D1D1F]">
+                    {achievement.name}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(userData.domainPerformance)
-                    .slice(0, 4)
-                    .map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="bg-white rounded-lg p-2 border border-black/5"
-                      >
-                        <div className="text-[13px] text-[#909094] capitalize">
-                          {key.replace(/([A-Z])/g, " $1").trim()}
-                        </div>
-                        <div className="text-[16px] font-medium text-[#1D1D1F]">
-                          {String(value)}/7
-                        </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Study Plan + Recent Activity - Two column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
+          {/* Study Plan - Editorial checklist */}
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.65 }
+            }
+          >
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+              Today's Plan
+            </p>
+            <div className="space-y-0">
+              {getStudyPlan().map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-4 py-4 border-b border-[#e5e5ea] last:border-0"
+                >
+                  <span className="text-xs font-medium text-[#8e8e93] w-6">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-[15px] font-medium text-[#1D1D1F]">
+                      {item.title}
+                    </p>
+                    <p className="text-sm text-[#8e8e93]">{item.duration}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Recent Activity - Simplified timeline */}
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.7 }
+            }
+          >
+            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+              Recent Activity
+            </p>
+            {userAnswers.length > 0 ? (
+              <div className="space-y-0">
+                {userAnswers.slice(0, 5).map((answer, index) => (
+                  <div
+                    key={answer.id}
+                    className="flex items-start gap-4 py-4 border-b border-[#e5e5ea] last:border-0"
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                        answer.isCorrect ? "bg-[#34c759]" : "bg-[#ff3b30]"
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[15px] font-medium text-[#1D1D1F] truncate">
+                          {answer.category}
+                        </span>
+                        <span className="text-xs text-[#8e8e93] flex-shrink-0 ml-2">
+                          {answer.timestamp
+                            ? new Date(answer.timestamp).toLocaleDateString()
+                            : "Recently"}
+                        </span>
                       </div>
-                    ))}
-                </div>
+                      <p className="text-sm text-[#8e8e93] line-clamp-1">
+                        {answer.question}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-[#8e8e93]">No recent activity yet</p>
+                <Link
+                  href="/practice"
+                  className="text-sm font-medium text-[#0071E3] hover:text-[#0077ED] transition-colors"
+                >
+                  Start practicing
+                </Link>
               </div>
             )}
           </motion.div>
         </div>
+
+        {/* Quick Actions - Compact navigation */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.75 }}
+          className="mb-8 md:mb-12"
+        >
+          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+            Quick Actions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/resources"
+              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
+            >
+              Resources
+            </Link>
+            <Link
+              href="/history"
+              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
+            >
+              History
+            </Link>
+            <Link
+              href="/practice/analytics"
+              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
+            >
+              Analytics
+            </Link>
+            <Link
+              href="/settings"
+              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
+            >
+              Settings
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
