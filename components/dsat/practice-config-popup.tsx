@@ -135,27 +135,13 @@ export function PracticeConfigPopup({
           params.append("skill", selectedSkills.join(","));
         }
 
-        // Fetch with high limit to get count
-        params.append("limit", "10000");
+        // Use count_only to get just the count instead of all questions
+        params.append("count_only", "true");
 
         const response = await fetch(`/api/questions?${params.toString()}`);
         if (response.ok) {
-          const questions = await response.json();
-          let filtered = questions;
-
-          // Apply status filter (correct/incorrect)
-          if (statusFilter !== "all") {
-            // This would require user progress data - for now just count all
-            // In a real implementation, you'd filter based on user's attempts
-          }
-
-          // Apply attempt filter (tried/not-tried)
-          if (attemptFilter !== "all") {
-            // This would require user progress data - for now just count all
-            // In a real implementation, you'd filter based on user's attempts
-          }
-
-          setFilteredCount(filtered.length);
+          const data = await response.json();
+          setFilteredCount(data.count || 0);
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);

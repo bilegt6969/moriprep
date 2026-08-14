@@ -51,7 +51,11 @@ export function RecentActivityPopup({
       const fetchQuestions = async () => {
         setLoading(true);
         try {
-          const response = await fetch("/api/questions?limit=10000");
+          // Fetch only the questions that are in the progress history
+          const questionIds = progress.map((p) => p.questionId).join(",");
+          const response = await fetch(
+            `/api/questions?question_ids=${questionIds}`,
+          );
           if (response.ok) {
             const allQuestions: DSATQuestion[] = await response.json();
             const questionMap: Record<string, DSATQuestion> = {};

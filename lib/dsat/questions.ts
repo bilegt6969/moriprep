@@ -35,16 +35,12 @@ export async function getQuestions(filters?: {
 export async function getQuestionById(
   questionId: string,
 ): Promise<DSATQuestion | null> {
-  const response = await fetch(`/api/questions`);
+  const response = await fetch(`/api/questions?question_id=${questionId}`);
   if (!response.ok) {
-    throw new Error("Failed to fetch questions");
+    throw new Error("Failed to fetch question");
   }
   const questions = await response.json();
-  return (
-    questions.find(
-      (q: any) => q.id === questionId || q.question_id === questionId,
-    ) || null
-  );
+  return questions[0] || null;
 }
 
 export async function saveUserProgress(
@@ -159,11 +155,17 @@ export async function updateUserStats(
 }
 
 export async function getQuestionDomains(): Promise<string[]> {
-  const questions = await getQuestions({ limit: 1000 });
-  return Array.from(new Set(questions.map((q: any) => q.domain)));
+  const response = await fetch(`/api/questions?domains_only=true`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch domains");
+  }
+  return response.json();
 }
 
 export async function getQuestionSkills(): Promise<string[]> {
-  const questions = await getQuestions({ limit: 1000 });
-  return Array.from(new Set(questions.map((q: any) => q.skill)));
+  const response = await fetch(`/api/questions?skills_only=true`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch skills");
+  }
+  return response.json();
 }

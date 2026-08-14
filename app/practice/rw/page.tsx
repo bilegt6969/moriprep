@@ -219,6 +219,7 @@ function RWPracticePageContent() {
 
   const [leftPaneWidth, setLeftPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
+  const [hasSavedConfig, setHasSavedConfig] = useState(false);
 
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
@@ -237,6 +238,10 @@ function RWPracticePageContent() {
     const savedDomains = localStorage.getItem("dsat_domains");
     const savedSkill = localStorage.getItem("dsat_skill");
 
+    // Also check for practiceConfig from the config popup
+    const savedPracticeConfig = localStorage.getItem("practiceConfig");
+    setHasSavedConfig(!!savedPracticeConfig);
+
     if (
       savedDifficulty &&
       !domainsParam &&
@@ -248,6 +253,30 @@ function RWPracticePageContent() {
       setSelectedDomains(JSON.parse(savedDomains));
     if (savedSkill && !domainsParam && !difficultyParam && !difficultiesParam)
       setSkill(savedSkill);
+
+    // If no URL params but have saved practice config, use that
+    if (
+      !domainsParam &&
+      !difficultyParam &&
+      !difficultiesParam &&
+      !domainParam &&
+      savedPracticeConfig
+    ) {
+      try {
+        const config = JSON.parse(savedPracticeConfig);
+        if (config.difficulties && config.difficulties.length > 0) {
+          setSelectedDifficulties(config.difficulties);
+        }
+        if (config.domains && config.domains.length > 0) {
+          setSelectedDomains(config.domains);
+        }
+        if (config.skills && config.skills.length > 0) {
+          setSelectedSkills(config.skills);
+        }
+      } catch (e) {
+        console.error("Error parsing saved practice config:", e);
+      }
+    }
 
     fetchQuestions();
   }, [domainParam, domainsParam, difficultyParam, difficultiesParam]);
@@ -1621,12 +1650,47 @@ function RWPracticePageContent() {
               Please configure your practice session from the main practice
               page.
             </p>
-            <button
-              onClick={() => router.push("/practice")}
-              className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
-            >
-              Go to Practice
-            </button>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => router.push("/practice")}
+                className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
+              >
+                Go to Practice
+              </button>
+              {/* Try to use saved configuration if available */}
+              {hasSavedConfig && (
+                <button
+                  onClick={() => {
+                    const savedConfig = localStorage.getItem("practiceConfig");
+                    if (savedConfig) {
+                      try {
+                        const config = JSON.parse(savedConfig);
+                        const params = new URLSearchParams();
+                        if (config.difficulties?.length > 0) {
+                          params.set(
+                            "difficulties",
+                            config.difficulties.join(","),
+                          );
+                        }
+                        if (config.domains?.length > 0) {
+                          params.set("domains", config.domains.join(","));
+                        }
+                        if (config.skills?.length > 0) {
+                          params.set("skills", config.skills.join(","));
+                        }
+                        router.push(`/practice/rw?${params.toString()}`);
+                      } catch (e) {
+                        console.error("Error parsing saved config:", e);
+                        router.push("/practice");
+                      }
+                    }
+                  }}
+                  className="px-6 py-3 bg-white text-zinc-900 border border-zinc-900 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Use Saved Config
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

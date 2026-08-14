@@ -227,10 +227,7 @@ export function Hero() {
             variants={itemVariants}
           >
             at{" "}
-            <span
-              className="text-[1.35em] tracking-tighter font-light"
-              style={{ fontFamily: "EB Garamond, Georgia, serif" }}
-            >
+            <span className="text-[1.35em] font-eb-garamond tracking-tighter font-light">
               mori
             </span>{" "}
             Prep

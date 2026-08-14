@@ -4,15 +4,8 @@ import { CookieConsentProvider } from "components/cookie-consent";
 import { Providers } from "components/providers/tooltip-provider";
 import { baseUrl } from "lib/utils";
 import type { Metadata } from "next";
-import { EB_Garamond } from "next/font/google";
 import { ReactNode } from "react";
 import "./globals.css";
-
-const ebGaramond = EB_Garamond({
-  subsets: ["latin"],
-  variable: "--font-eb-garamond",
-  display: "swap",
-});
 
 const { SITE_NAME } = process.env;
 
@@ -64,7 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>{/* Fonts are loaded via next/font/google */}</head>
       <body
-        className={`${ebGaramond.className} bg-background text-primary antialiased selection:bg-green-500 selection:text-white`}
+        className="bg-background text-primary antialiased selection:bg-green-500 selection:text-white"
         style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
       >
         <Providers>

@@ -27,7 +27,7 @@ import {
     Play,
     Trash2,
     Underline as UnderlineIcon,
-    X
+    X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Suspense, use, useEffect, useRef, useState } from "react";
@@ -92,10 +92,10 @@ function QuestionDetailPageContent({
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        const response = await fetch("/api/questions?limit=10000");
+        const response = await fetch(`/api/questions?question_id=${id}`);
         if (response.ok) {
-          const allQuestions: DSATQuestion[] = await response.json();
-          const foundQuestion = allQuestions.find((q) => q.question_id === id);
+          const questions: DSATQuestion[] = await response.json();
+          const foundQuestion = questions[0];
           setQuestion(foundQuestion || null);
           setLoading(false);
         }

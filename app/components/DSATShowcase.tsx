@@ -159,15 +159,22 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
 
             {/* Embedded Screen Video */}
             <div className="absolute top-[3%] z-0 h-[94%] w-[88%] overflow-hidden rounded-[2.5rem]">
-              <video
-                src={videoSrc}
-                poster={posterSrc}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="h-full w-full object-cover"
-              />
+              {videoSrc ? (
+                <video
+                  src={videoSrc}
+                  poster={posterSrc}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div
+                  className="h-full w-full bg-cover bg-center"
+                  style={{ backgroundImage: `url(${posterSrc})` }}
+                />
+              )}
             </div>
           </div>
         </div>
