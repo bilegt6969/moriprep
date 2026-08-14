@@ -1,8 +1,6 @@
 "use client";
 
-import sendAnimation from "@/lottie/send.json";
 import { motion } from "framer-motion";
-import Lottie from "lottie-react";
 import {
     ArrowDownToLine,
     Check,
@@ -200,12 +198,19 @@ export function Explore() {
             <div className="flex flex-col gap-2">
               <ActionRow
                 icon={
-                  <Lottie
-                    animationData={sendAnimation}
-                    loop
-                    autoplay
-                    style={{ width: 40, height: 40 }}
-                  />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    className="h-4 w-4 text-white"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 12h14M12 5l7 7-7 7"
+                    />
+                  </svg>
                 }
                 color={COLORS.blue}
                 title="Practice Bank"
