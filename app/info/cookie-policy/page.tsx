@@ -42,11 +42,9 @@ export default function CookiePolicy() {
   return (
     <div
       style={{
-        height: "100vh",
-        width: "100vw",
+        minHeight: "100dvh",
+        width: "100%",
         background: "#ffffff",
-        fontFamily:
-          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: "#111",
         display: "flex",
         flexDirection: "column",

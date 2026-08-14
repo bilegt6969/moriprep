@@ -1,5 +1,14 @@
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200],
@@ -15,6 +24,9 @@ const nextConfig = {
         hostname: "picsum.photos",
       },
     ],
+  },
+  experimental: {
+    optimizePackageImports: ["lottie-react"],
   },
 
   async headers() {

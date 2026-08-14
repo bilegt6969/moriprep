@@ -155,7 +155,7 @@ function SignUpContent() {
       </form>
 
       <div className="relative mt-8 flex items-center justify-center">
-        <span className="absolute bg-[#f4f4f6] px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+        <span className="absolute bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
           OR
         </span>
         <div className="w-full border-t border-neutral-200"></div>

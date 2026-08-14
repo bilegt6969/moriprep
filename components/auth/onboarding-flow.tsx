@@ -85,6 +85,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
   const [direction, setDirection] = useState(0);
   const [data, setData] = useState<OnboardingData>({});
   const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState(false);
 
   // Fetch user data from Firebase on mount
   useEffect(() => {
@@ -102,6 +103,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
             name: userData.name || "",
             email: userData.email || currentUser.email || "",
           }));
+
+          // If user has already completed onboarding, skip it
+          if (userData.onboardingCompleted && onComplete) {
+            onComplete();
+          }
         } else {
           // If no user doc exists, create one with basic info
           await setDoc(doc(db, "users", currentUser.uid), {
@@ -121,7 +127,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
     };
 
     fetchUserData();
-  }, []);
+  }, [onComplete]);
 
   // Save onboarding data to Firebase
   const saveToFirebase = async () => {
@@ -167,6 +173,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
   };
 
   const handleComplete = async () => {
+    setCompleting(true);
     await saveToFirebase();
     if (onComplete) {
       onComplete();
@@ -508,10 +515,38 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
             </button>
             <button
               onClick={isLastStep() ? handleComplete : handleNext}
-              disabled={!canGoNext()}
-              className="px-6 py-2.5 rounded-full bg-neutral-900 text-white font-medium transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-neutral-900"
+              disabled={!canGoNext() || completing}
+              className="px-6 py-2.5 rounded-full bg-neutral-900 text-white font-medium transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-neutral-900 flex items-center gap-2"
             >
-              {isLastStep() ? "Complete" : "Next"}
+              {completing ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : isLastStep() ? (
+                "Complete"
+              ) : (
+                "Next"
+              )}
             </button>
           </div>
         )}

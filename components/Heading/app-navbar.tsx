@@ -20,10 +20,9 @@ import {
     AnimatedSidebarRail,
     AnimatedSidebarTrigger,
     useAnimatedSidebar,
-} from "components/motion/animated-sidebar";
+} from "@/components/motion/animated-sidebar";
+import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useReducedMotion } from "hooks/use-reduced-motion";
-import { EASE_OUT, SPRING_PRESS } from "lib/ease";
 import { auth as firebaseAuth } from "lib/firebase.js";
 import {
     BarChart3,
@@ -38,7 +37,7 @@ import {
     Trophy,
     X,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";

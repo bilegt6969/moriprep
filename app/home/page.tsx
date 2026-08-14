@@ -1,16 +1,15 @@
 "use client";
 
 import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  query,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    getDoc,
+    onSnapshot,
+    query,
+    updateDoc,
+    where,
 } from "firebase/firestore";
-import { motion } from "framer-motion";
-import { useReducedMotion } from "hooks/use-reduced-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { auth, db } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -444,6 +443,74 @@ export default function HomePage() {
     }
 
     return plan;
+  };
+
+  const getScoreTrend = () => {
+    if (userAnswers.length === 0) return [];
+
+    // Group answers by date and calculate daily accuracy
+    const dailyScores: any = {};
+    userAnswers.forEach((answer) => {
+      const date = answer.timestamp
+        ? new Date(answer.timestamp).toLocaleDateString()
+        : "Today";
+      if (!dailyScores[date]) {
+        dailyScores[date] = { correct: 0, total: 0 };
+      }
+      dailyScores[date].total++;
+      if (answer.isCorrect) {
+        dailyScores[date].correct++;
+      }
+    });
+
+    const trend = Object.entries(dailyScores)
+      .slice(-7)
+      .map(([date, stats]: [string, any]) => ({
+        label: date === new Date().toLocaleDateString() ? "Today" : date,
+        score: Math.round((stats.correct / stats.total) * 100),
+        percentage: (stats.correct / stats.total) * 100,
+      }));
+
+    return trend;
+  };
+
+  const getScoreImprovement = () => {
+    const trend = getScoreTrend();
+    if (trend.length < 2) return 0;
+    const latest = trend[trend.length - 1].score;
+    const previous = trend[0].score;
+    return latest - previous;
+  };
+
+  const getAverageScore = () => {
+    const trend = getScoreTrend();
+    if (trend.length === 0) return 0;
+    const sum = trend.reduce((acc, point) => acc + point.score, 0);
+    return Math.round(sum / trend.length);
+  };
+
+  const getLeaderboardPosition = () => {
+    // Simulated leaderboard position based on total questions and accuracy
+    const accuracy =
+      userAnswers.length > 0
+        ? (userAnswers.filter((a) => a.isCorrect).length / userAnswers.length) *
+          100
+        : 0;
+    const score = totalQuestions * accuracy;
+    const simulatedRank = Math.max(1, Math.floor(1000 - score / 10));
+    return simulatedRank;
+  };
+
+  const getLeaderboardPercentile = () => {
+    const rank = getLeaderboardPosition();
+    const percentile = Math.max(1, Math.round((1 - rank / 1000) * 100));
+    return percentile;
+  };
+
+  const getPointsToNextRank = () => {
+    const currentRank = getLeaderboardPosition();
+    const pointsNeeded = Math.max(0, (currentRank - 1) * 10);
+    return pointsNeeded;
   };
 
   const getGreeting = () => {
@@ -1007,6 +1074,118 @@ export default function HomePage() {
             >
               Settings
             </Link>
+          </div>
+        </motion.div>
+
+        {/* Score Trend */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.8 }}
+          className="mb-8 md:mb-12"
+        >
+          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+            Score Trend
+          </p>
+          {userAnswers.length > 0 ? (
+            <div className="bg-[#f5f5f5] rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[15px] font-medium text-[#1D1D1F]">
+                  Performance Over Time
+                </span>
+                <span className="text-xs text-[#8e8e93]">Last 7 days</span>
+              </div>
+              <div className="h-24 flex items-end gap-1 mb-4">
+                {getScoreTrend().map((point, index) => (
+                  <div
+                    key={index}
+                    className="flex-1 flex flex-col items-center gap-1"
+                  >
+                    <div
+                      className="w-full bg-[#0071E3] rounded-t-sm transition-all duration-300"
+                      style={{ height: `${Math.max(point.percentage, 10)}%` }}
+                    />
+                    <span className="text-xs text-[#8e8e93]">
+                      {point.score}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-around pt-4 border-t border-[#e5e5ea]">
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-[#1D1D1F]">
+                    {getScoreTrend()[getScoreTrend().length - 1]?.score || 0}%
+                  </div>
+                  <div className="text-xs text-[#8e8e93]">Latest</div>
+                </div>
+                <div className="text-center">
+                  <div
+                    className={`text-lg font-semibold ${getScoreImprovement() >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}
+                  >
+                    {getScoreImprovement() > 0 ? "+" : ""}
+                    {getScoreImprovement()}%
+                  </div>
+                  <div className="text-xs text-[#8e8e93]">Change</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-[#0071E3]">
+                    {getAverageScore()}%
+                  </div>
+                  <div className="text-xs text-[#8e8e93]">Average</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-[#f5f5f5] rounded-2xl">
+              <p className="text-[#8e8e93]">
+                Practice more to see your score trend
+              </p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Leaderboard Position */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.85 }}
+          className="mb-8 md:mb-12"
+        >
+          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+            Leaderboard
+          </p>
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-6 border border-amber-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">🏆</span>
+                </div>
+                <div>
+                  <div className="text-[15px] font-medium text-[#1D1D1F]">
+                    Your Rank
+                  </div>
+                  <div className="text-xs text-[#8e8e93]">
+                    Global Leaderboard
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-amber-600">
+                  #{getLeaderboardPosition()}
+                </div>
+                <div className="text-xs text-[#8e8e93]">
+                  {getLeaderboardPercentile()}th percentile
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-amber-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#8e8e93]">Points needed to advance</span>
+                <span className="font-medium text-[#1D1D1F]">
+                  {getPointsToNextRank()}
+                </span>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

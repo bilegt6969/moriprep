@@ -19,8 +19,8 @@ import {
     type ReactNode,
 } from "react";
 
-const ENTER_MS = 550;
-const EXIT_MS = 650;
+const ENTER_MS = 350;
+const EXIT_MS = 250;
 
 type CookieConsentContextValue = {
   consent: CookieConsentValue | null;
@@ -59,7 +59,7 @@ function CookieConsentOverlay({
         aria-hidden
         className={cn(
           "fixed inset-0 z-[105]",
-          "transition-[opacity,backdrop-filter,background-color] ease-in-out",
+          "transition-[opacity,backdrop-filter,background-color] ease-out",
           entered
             ? "bg-white/30 opacity-100 backdrop-blur-md"
             : "bg-white/0 opacity-0 backdrop-blur-none",
@@ -72,7 +72,7 @@ function CookieConsentOverlay({
         aria-describedby="cookie-consent-desc"
         className={cn(
           "pointer-events-none fixed inset-x-4 bottom-4 z-[110] mx-auto max-w-lg sm:inset-x-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2",
-          "transition-[opacity,transform] ease-in-out",
+          "transition-[opacity,transform] ease-out",
           entered ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
         )}
         style={{ transitionDuration: `${entered ? ENTER_MS : EXIT_MS}ms` }}

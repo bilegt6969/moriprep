@@ -110,7 +110,7 @@ export function DomainPerformance({
                     : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"
                 }`}
               >
-                <div className="text-lg mb-1 leading-none">
+                <div className="text-xs mb-1 leading-none tracking-tight">
                   {"●".repeat(option.value)}
                   {"○".repeat(7 - option.value)}
                 </div>

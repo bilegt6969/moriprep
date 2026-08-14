@@ -152,7 +152,16 @@
 
   html {
     color-scheme: light;
-    font-family: var(--font-geist), sans-serif;
+    font-family:
+      "Geist Sans",
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
     @apply font-sans;
   }
   * {
@@ -257,8 +266,27 @@ button {
 }
 
 @keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
   100% {
-    transform: translateX(100%);
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background: #f0f0f0;
+  }
+  .pulse-reduced-motion {
+    animation: none !important;
   }
 }
 
@@ -487,12 +515,35 @@ button {
   .t-digit-group .t-digit {
     animation: none !important;
   }
+  /* Hero animations */
+  .animate-hero-fade {
+    animation: none !important;
+    opacity: 1;
+    transform: none !important;
+  }
+  /* Logo ticker - continuous scroll should stop under reduced motion */
+  .animate-infinite-scroll {
+    animation: none !important;
+  }
+  /* Shimmer effect */
+  .animate-shimmer {
+    animation: none !important;
+  }
+  .shimmer {
+    animation: none !important;
+    background: #f0f0f0 !important;
+  }
+  /* Button press feedback - remove scale under reduced motion */
+  /* Only target the new scale-[0.97] added to base Button component */
+  button[data-slot="button"]:active {
+    transform: translateY(1px) !important;
+  }
 }
 
 @theme inline {
   --font-heading: var(--font-geist);
   --font-sans: var(--font-geist);
-  --font-eb-garamond: var(--font-eb-garamond);
+  --font-eb-garamond: "EB Garamond", Georgia, serif;
   --font-sf-pro-rounded:
     "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;

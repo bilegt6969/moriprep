@@ -82,7 +82,7 @@ export default function MissionPage() {
             </motion.p>
             <motion.p
               variants={textVariants}
-              className="text-4xl font-eb-garamond font-slim italic tracking-tight text-neutral-1000"
+              className="text-4xl font-slim italic tracking-tight text-neutral-1000"
             >
               "A student's potential should never depend on their ability to
               pay."
@@ -119,7 +119,7 @@ export default function MissionPage() {
             </motion.p>
             <motion.p
               variants={textVariants}
-              className="text-3xl  font-eb-garamond font-slim italic tracking-tight  text-neutral-900"
+              className="text-3xl  font-slim italic tracking-tight  text-neutral-900"
             >
               Built by students, for students.
             </motion.p>
@@ -132,7 +132,7 @@ export default function MissionPage() {
             </motion.p>
             <motion.p
               variants={textVariants}
-              className="text-3xl font-eb-garamond font-slim italic tracking-tight  text-neutral-900"
+              className="text-3xl font-slim italic tracking-tight  text-neutral-900"
             >
               Want to build with us?
             </motion.p>

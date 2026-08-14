@@ -1,6 +1,6 @@
 "use client";
 
-import AppNavbar from "components/Heading/app-navbar";
+import { AppNavbar } from "components/Heading/app-navbar";
 import { useBannerVisible } from "hooks/use-banner-visible";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -22,21 +22,7 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  return (
-    <>
-      <AppNavbar
-        siteName="Mori Prep"
-        categories={[
-          { label: "Home", href: "/home" },
-          { label: "Practice", href: "/practice" },
-          { label: "Lessons", href: "/lessons" },
-          { label: "Analytics", href: "/analytics" },
-        ]}
-        showBanner={false}
-      />
-      {children}
-    </>
-  );
+  return <AppNavbar>{children}</AppNavbar>;
 }
 
 export default function PracticeLayout({

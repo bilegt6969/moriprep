@@ -4,6 +4,7 @@ import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
+import { useReducedMotion } from "hooks/use-reduced-motion";
 import { Bookmark, ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -104,6 +105,7 @@ const springTransition = {
 
 function RWPracticePageContent() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain");
   const difficultyParam = searchParams.get("difficulty");
@@ -260,10 +262,57 @@ function RWPracticePageContent() {
 
   if (!selectedQuestion) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F5F5F7]">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading question...</p>
+      <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
+        {/* Main Content Skeleton */}
+        <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+          {/* Left: Passage Skeleton */}
+          <div className="flex-1 overflow-y-auto border-r border-gray-200 bg-[#F5F5F7]">
+            <div className="max-w-3xl mx-auto p-8 md:p-12">
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-11/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-10/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-11/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-9/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-10/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-11/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-9/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-10/12" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Question Skeleton */}
+          <div className="w-full md:w-[45%] overflow-y-auto bg-white">
+            <div className="p-8 md:p-12">
+              {/* Question Header Skeleton */}
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse pulse-reduced-motion" />
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                  <div className="w-24 h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                </div>
+              </div>
+
+              {/* Question Prompt Skeleton */}
+              <div className="mb-8 space-y-3">
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-11/12" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse pulse-reduced-motion w-10/12" />
+              </div>
+
+              {/* Answer Options Skeleton */}
+              <div className="space-y-4">
+                <div className="h-20 bg-gray-100 rounded-xl border-2 border-gray-200 animate-pulse pulse-reduced-motion" />
+                <div className="h-20 bg-gray-100 rounded-xl border-2 border-gray-200 animate-pulse pulse-reduced-motion" />
+                <div className="h-20 bg-gray-100 rounded-xl border-2 border-gray-200 animate-pulse pulse-reduced-motion" />
+                <div className="h-20 bg-gray-100 rounded-xl border-2 border-gray-200 animate-pulse pulse-reduced-motion" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -272,7 +321,7 @@ function RWPracticePageContent() {
   return (
     <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
         {/* Left: Passage */}
         <div className="flex-1 overflow-y-auto border-r border-gray-200 bg-[#F5F5F7]">
           <div className="max-w-3xl mx-auto p-8 md:p-12">
@@ -300,7 +349,7 @@ function RWPracticePageContent() {
         </div>
 
         {/* Right: Question */}
-        <div className="w-[45%] min-w-[400px] overflow-y-auto bg-white">
+        <div className="w-full md:w-[45%] overflow-y-auto bg-white">
           <div className="p-8 md:p-12">
             {/* Question Header */}
             <div className="flex items-center gap-4 mb-8">
@@ -368,8 +417,12 @@ function RWPracticePageContent() {
                 return (
                   <motion.button
                     key={key}
-                    whileHover={!showExplanation ? { scale: 1.01 } : {}}
-                    whileTap={!showExplanation ? { scale: 0.99 } : {}}
+                    whileHover={
+                      reduce || showExplanation ? undefined : { scale: 1.01 }
+                    }
+                    whileTap={
+                      reduce || showExplanation ? undefined : { scale: 0.99 }
+                    }
                     onClick={() => {
                       if (!showExplanation) {
                         setHighlightedAnswer(key);
@@ -424,8 +477,8 @@ function RWPracticePageContent() {
             {/* Submit Button */}
             {!showExplanation && (
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={reduce ? undefined : { scale: 1.02 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
                 onClick={handleAnswerSubmit}
                 disabled={!highlightedAnswer}
                 className="w-full mt-8 py-4 bg-black text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"

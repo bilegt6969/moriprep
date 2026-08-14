@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useReducedMotion } from "hooks/use-reduced-motion";
 import { Check, ChevronLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,7 @@ const difficulties = [
 
 export default function RWSetupPage() {
   const router = useRouter();
+  const reduce = useReducedMotion();
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
     [],
@@ -126,8 +128,8 @@ export default function RWSetupPage() {
             {domains.map((domain) => (
               <motion.button
                 key={domain}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={reduce ? undefined : { scale: 1.02 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
                 onClick={() => toggleDomain(domain)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   selectedDomains.includes(domain)
@@ -165,8 +167,8 @@ export default function RWSetupPage() {
             {difficulties.map((diff) => (
               <motion.button
                 key={diff.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={reduce ? undefined : { scale: 1.02 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
                 onClick={() => toggleDifficulty(diff.id)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   selectedDifficulties.includes(diff.id)
@@ -223,8 +225,8 @@ export default function RWSetupPage() {
             ].map((status) => (
               <motion.button
                 key={status.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={reduce ? undefined : { scale: 1.02 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
                 onClick={() => setStatusFilter(status.id)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   statusFilter === status.id
@@ -280,8 +282,8 @@ export default function RWSetupPage() {
             ].map((attempt) => (
               <motion.button
                 key={attempt.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={reduce ? undefined : { scale: 1.02 }}
+                whileTap={reduce ? undefined : { scale: 0.98 }}
                 onClick={() => setAttemptFilter(attempt.id)}
                 className={`relative p-6 rounded-2xl border-2 transition-all text-left ${
                   attemptFilter === attempt.id
@@ -315,8 +317,8 @@ export default function RWSetupPage() {
           className="text-center"
         >
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={reduce ? undefined : { scale: 1.02 }}
+            whileTap={reduce ? undefined : { scale: 0.98 }}
             onClick={handleStartPractice}
             className="inline-flex items-center justify-center px-12 py-4 rounded-full bg-black text-white font-semibold text-lg hover:bg-neutral-800 transition-all shadow-xl shadow-black/10"
           >

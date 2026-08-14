@@ -1,7 +1,8 @@
 "use client";
 
-import Footer from "components/Heading/Footer";
 import Navbar from "components/Heading/Navbar";
+import CTA from "../components/CTA";
+import { Footer } from "../components/Footer";
 
 export default function BlogLayout({
   children,
@@ -15,13 +16,14 @@ export default function BlogLayout({
         categories={[
           { label: "Home", href: "/home" },
           { label: "Practice", href: "/practice" },
-          { label: "Lessons", href: "/lessons" },
+          { label: "Lessons", href: "/resources" },
           { label: "Analytics", href: "/analytics" },
         ]}
         showBanner={false}
       />
       {children}
-      <Footer siteName="Mori Prep" />
+      <CTA />
+      <Footer />
     </>
   );
 }

@@ -23,14 +23,14 @@ interface SatTestDatesProps {
 }
 
 const testDates = [
-  "August 22, 2026",
-  "September 12, 2026",
-  "October 3, 2026",
-  "November 7, 2026",
-  "December 5, 2026",
-  "March 6, 2027",
-  "May 1, 2027",
-  "June 5, 2027",
+  "December 7, 2023",
+  "March 9, 2024",
+  "May 4, 2024",
+  "June 1, 2024",
+  "August 24, 2024",
+  "October 5, 2024",
+  "November 2, 2024",
+  "December 7, 2024",
 ];
 
 export function SatTestDates({

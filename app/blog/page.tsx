@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
@@ -11,136 +12,156 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      delayChildren: 0.2,
+      delayChildren: 0.1,
     },
   },
 };
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: customEase },
+    transition: { duration: 0.6, ease: customEase },
   },
 };
 
 const blogPosts = [
   {
-    id: 1,
-    title: "How to Ace the Digital SAT Reading Section",
+    id: "why-family-accounts",
+    title: "The Crypto Wallet Problem – Why We Created Family Accounts",
     excerpt:
-      "Learn proven strategies for tackling the new digital SAT reading format with confidence.",
-    date: "July 28, 2026",
-    category: "Reading",
-    readTime: "5 min read",
-    image: "/home/analytics.png",
+      "Traditional wallets rely on seed phrases and private keys, but this approach has fundamental flaws. Losing access to your bank account because you misplaced a single piece of information would be unthinkable—yet in crypto, this remains a common reality. Most users struggle with managing seed phrases and private keys, often resorting to insecure storage methods like screenshots or digital notes.",
+    date: "13 May, 2025",
+    categories: ["News", "Wallet"],
   },
   {
-    id: 2,
-    title: "Mastering SAT Math: From Algebra to Advanced Problems",
-    excerpt: "A comprehensive guide to conquering every math topic on the SAT.",
-    date: "July 25, 2026",
-    category: "Math",
-    readTime: "8 min read",
-    image: "/home/calendar.png",
-  },
-  {
-    id: 3,
-    title: "The Ultimate SAT Study Schedule for 2026",
+    id: "family-accounts",
+    title: "Making Family Simpler & Safer",
     excerpt:
-      "Plan your preparation with our optimized study timeline for maximum results.",
-    date: "July 20, 2026",
-    category: "Strategy",
-    readTime: "6 min read",
-    image: "/home/browser.png",
+      "We're thrilled to announce a major upgrade to Family—designed to make onboarding and navigating Ethereum simpler and safer than ever. Born from our own need for seamless yet secure crypto experiences, these features offer the easiest path to getting onchain.",
+    date: "2 April, 2025",
+    categories: ["News", "Wallet"],
   },
   {
-    id: 4,
-    title: "Understanding Standard English Conventions",
-    excerpt: "Break down grammar rules and learn to identify common SAT traps.",
-    date: "July 15, 2026",
-    category: "Writing",
-    readTime: "4 min read",
-    image: "/home/analytics.png",
+    id: "launch",
+    title: "Avara Launches Family: The Feature-Rich Crypto Wallet",
+    excerpt:
+      "With features for beginners and experienced users alike, Family makes interacting with web3 secure, effortless and fun.",
+    date: "11 November, 2024",
+    categories: ["News", "Wallet"],
+  },
+  {
+    id: "avara",
+    title: "Family Acquired by Avara (Aave Companies)",
+    excerpt:
+      "I'm thrilled to announce that Los Feliz Engineering (LFE)—the company behind Family and previously, Honk—has been acquired by Avara, formerly known as Aave Companies.",
+    date: "16 November, 2023",
+    categories: ["News"],
+  },
+  {
+    id: "unveiling-previews",
+    title: "Unveiling Previews in Family, Powered by Blowfish",
+    excerpt:
+      "We're excited to share a major feature addition to Family, Previews. Enabled by our collaboration with Blowfish, Previews offers an unprecedented level of user control and transparency when navigating the world of Ethereum.",
+    date: "16 August, 2023",
+    categories: ["News", "Wallet"],
+  },
+  {
+    id: "the-merge",
+    title: "The Merge",
+    excerpt:
+      "The Merge is finally here. While the Ethereum community celebrates the coming of the Merge, some people are still wondering how we got here, what the Merge actually is, and what it all means for the future of Ethereum. Let's jump right in.",
+    date: "15 Sep, 2022",
+    categories: ["News"],
   },
 ];
 
-export default function BlogPage() {
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative py-24 px-6 bg-gradient-to-b from-neutral-50 to-white">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="max-w-5xl mx-auto text-center"
-        >
-          <motion.h1
-            variants={fadeInUp}
-            className="text-5xl md:text-7xl font-medium tracking-tight text-neutral-900 mb-6 leading-[1.05]"
-          >
-            Blog
-          </motion.h1>
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto leading-relaxed"
-          >
-            Tips, strategies, and insights to help you master the SAT.
-          </motion.p>
-        </motion.div>
-      </section>
+const filters = ["All", "News", "Wallet"];
 
-      {/* Blog Posts Grid */}
-      <section className="py-16 px-6">
+export default function BlogPage() {
+  const [activeFilter, setActiveFilter] = useState("All");
+
+  const filteredPosts = blogPosts.filter(
+    (post) => activeFilter === "All" || post.categories.includes(activeFilter),
+  );
+
+  return (
+    <div className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
+      <div className="max-w-[67rem] mx-auto px-6 pt-12">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between py-20 gap-6">
+          <div className="flex flex-col gap-5">
+            <h1 className="text-[44px] font-medium leading-[48px] tracking-[-1.35px] text-[#343433]">
+              Blog
+            </h1>
+            <p className="text-[15px] leading-[22px] tracking-[-0.13px] text-[#848281]">
+              The latest news from Family
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <ul className="flex gap-2 m-0 p-0 list-none">
+              {filters.map((filter) => (
+                <li key={filter} className="inline-block">
+                  <button
+                    onClick={() => setActiveFilter(filter)}
+                    className={`relative inline-block overflow-hidden px-3 py-[0.45rem] rounded-[2rem] text-[15px] font-medium select-none cursor-pointer transition-all duration-200 ${
+                      activeFilter === filter
+                        ? "bg-[#EAEAEA] text-[#343433]"
+                        : "bg-[#FBFAF9] text-[#848281] hover:bg-[#EAEAEA]"
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Blog List Section */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="max-w-6xl mx-auto"
+          className="flex flex-col"
         >
-          <div className="grid md:grid-cols-2 gap-8">
-            {blogPosts.map((post) => (
-              <motion.div
-                key={post.id}
-                variants={fadeInUp}
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.3, ease: customEase }}
+          {filteredPosts.map((post) => (
+            <motion.div key={post.id} variants={fadeInUp}>
+              <Link
+                href={`/blog/${post.id}`}
+                className="grid grid-cols-1 md:grid-cols-[0.85fr_1.75fr_2.5fr] gap-8 py-[4.5rem] md:pt-[6rem] md:pb-[4.5rem] border-b border-[#f2f0ed] relative hover:opacity-75 transition-opacity duration-200"
               >
-                <Link href={`/blog/${post.id}`}>
-                  <article className="h-full bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                    <div className="aspect-video bg-neutral-100 overflow-hidden">
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-xs font-medium text-neutral-600 bg-neutral-100 px-3 py-1 rounded-full">
-                          {post.category}
-                        </span>
-                        <span className="text-xs text-neutral-400">
-                          {post.readTime}
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-semibold text-neutral-900 mb-2 leading-tight">
-                        {post.title}
-                      </h2>
-                      <p className="text-sm text-neutral-500 mb-4 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                      <p className="text-xs text-neutral-400">{post.date}</p>
-                    </div>
-                  </article>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+                {/* Column 1: Date */}
+                <p className="text-[15px] font-normal leading-[22px] tracking-[-0.13px] text-[#848281]">
+                  {post.date}
+                  <span className="md:hidden block mt-1">
+                    <span className="mr-1">•</span> {post.categories.join(", ")}
+                  </span>
+                </p>
+
+                {/* Column 2: Title & Category */}
+                <div className="flex flex-col justify-start items-start gap-[14px] w-full">
+                  <h5 className="text-[23px] font-medium leading-[25px] tracking-[-0.44px] text-[#343433]">
+                    {post.title}
+                  </h5>
+                  <p className="text-[15px] font-normal leading-[22px] tracking-[-0.13px] text-[#848281] hidden md:block">
+                    {post.categories.join(", ")}
+                  </p>
+                </div>
+
+                {/* Column 3: Excerpt */}
+                <div className="relative md:-top-[3px] overflow-hidden text-ellipsis">
+                  <p className="text-[17px] font-normal leading-[26px] tracking-[-0.22px] text-[#494440] line-clamp-3">
+                    {post.excerpt}
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
-      </section>
+      </div>
     </div>
   );
 }

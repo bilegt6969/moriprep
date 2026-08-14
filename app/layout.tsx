@@ -4,34 +4,28 @@ import { CookieConsentProvider } from "components/cookie-consent";
 import { Providers } from "components/providers/tooltip-provider";
 import { baseUrl } from "lib/utils";
 import type { Metadata } from "next";
-import { EB_Garamond, Geist } from "next/font/google";
+import { EB_Garamond } from "next/font/google";
 import { ReactNode } from "react";
 import "./globals.css";
 
-const { SITE_NAME } = process.env;
-
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist",
-  display: "swap",
-});
-
 const ebGaramond = EB_Garamond({
-  subsets: ["latin"] as const,
+  subsets: ["latin"],
   variable: "--font-eb-garamond",
   display: "swap",
 });
 
+const { SITE_NAME } = process.env;
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Mori Prep - Master the DSAT",
+    default: "Mori Prep - Your Digital SAT preparation companion",
     template: `%s | Mori Prep`,
   },
   description:
-    "Mori Prep is your complete DSAT preparation platform. Practice with exam-calibrated questions, track your progress, and master the Digital SAT with comprehensive study tools.",
+    "Free Digital SAT preparation for students worldwide. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
   keywords:
-    "DSAT, Digital SAT, SAT prep, SAT practice, college prep, standardized testing, exam preparation, Mori Prep, SAT study",
+    "Digital SAT, SAT preparation, DSAT, college admissions, test prep, free education, adaptive learning, student success",
   robots: {
     follow: true,
     index: true,
@@ -56,34 +50,23 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: baseUrl,
     siteName: "Mori Prep",
-    title: "Mori Prep - Master the DSAT",
+    title: "Mori Prep - Your Digital SAT preparation companion",
     description:
-      "Mori Prep is your complete DSAT preparation platform. Practice with exam-calibrated questions, track your progress, and master the Digital SAT with comprehensive study tools.",
+      "Free Digital SAT preparation for students worldwide. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
   },
   other: {
-    "google-font-preconnect": "https://fonts.googleapis.com",
-    "google-font-preconnect-crossorigin": "https://fonts.gstatic.com",
-    "google-font-stylesheet":
-      "https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap",
+    // No external fonts needed - using Geist
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} ${ebGaramond.variable}`}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-[#f9f9f9] text-neutral-900 antialiased selection:bg-neutral-200">
+    <html lang="en">
+      <head>{/* Fonts are loaded via next/font/google */}</head>
+      <body
+        className={`${ebGaramond.className} bg-background text-primary antialiased selection:bg-green-500 selection:text-white`}
+        style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
+      >
         <Providers>
           <CookieConsentProvider>
             <AuthSessionSync />

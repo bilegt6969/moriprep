@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useReducedMotion } from "hooks/use-reduced-motion";
 import { OnboardingData } from "../onboarding-flow";
 
 const springTransition = {
@@ -175,6 +176,7 @@ export function HowDidYouHear({
   onNext,
   onBack,
 }: HowDidYouHearProps) {
+  const reduce = useReducedMotion();
   const handleSelect = (sourceName: string) => {
     updateData({ howDidYouHear: sourceName });
     // Don't auto-advance, let user click Next button
@@ -187,7 +189,7 @@ export function HowDidYouHear({
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       className="text-center w-full max-w-2xl mx-auto px-4"
     >
-      <h1 className="text-4xl md:text-[44px] font-light tracking-tight text-neutral-900 mb-3 font-eb-garamond leading-tight">
+      <h1 className="text-4xl md:text-[44px] font-light tracking-tight text-neutral-900 mb-3 leading-tight">
         How did you hear about us?
       </h1>
       <p className="text-neutral-500 font-light text-[17px] mb-12">
@@ -206,8 +208,8 @@ export function HowDidYouHear({
           return (
             <motion.button
               variants={itemVariants}
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.985 }}
+              whileHover={reduce ? undefined : { scale: 1.015 }}
+              whileTap={reduce ? undefined : { scale: 0.985 }}
               key={source.name}
               type="button"
               onClick={() => handleSelect(source.name)}

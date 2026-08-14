@@ -839,7 +839,7 @@ function RWPracticePageContent() {
           {/* Highlighter Tool Popover */}
           {highlightMenu.visible && (
             <div
-              className="fixed z-[100] flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100"
+              className="fixed z-[100] flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
               style={{
                 top: highlightMenu.y,
                 left: highlightMenu.x,
@@ -910,7 +910,7 @@ function RWPracticePageContent() {
                   <ChevronDown size={14} strokeWidth={2} className="mt-0.5" />
                 </button>
                 {showDirections && (
-                  <div className="directions-menu absolute top-10 left-0 w-[550px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 text-[15px] leading-relaxed text-gray-800">
+                  <div className="directions-menu absolute top-10 left-0 w-[90vw] max-w-[550px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 text-[15px] leading-relaxed text-gray-800">
                     The questions in this section address a number of important
                     reading and writing skills. Each question includes one or
                     more passages, which may include a table or graph. Read each
@@ -937,7 +937,7 @@ function RWPracticePageContent() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsTimerPaused(!isTimerPaused)}
-                  className="w-7 h-7 flex items-center justify-center border border-gray-200 hover:bg-gray-50 rounded-full transition-colors"
+                  className="w-9 h-9 flex items-center justify-center border border-gray-200 hover:bg-gray-50 rounded-full transition-colors"
                 >
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
@@ -1151,15 +1151,15 @@ function RWPracticePageContent() {
                 </div>
 
                 <div className="flex items-center gap-4 text-gray-500">
-                  <button className="hover:text-gray-800 transition-colors">
+                  <button className="w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-50">
                     <Copy size={16} strokeWidth={2} />
                   </button>
-                  <button className="flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors">
+                  <button className="flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors px-3 py-2 rounded-full hover:bg-gray-50">
                     <Flag size={16} strokeWidth={2} /> Report
                   </button>
                   <button
                     onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                    className={`w-7 h-7 rounded-full flex items-center justify-center relative shadow-sm transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "bg-black text-white hover:bg-gray-800"}`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center relative shadow-sm transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "bg-black text-white hover:bg-gray-800"}`}
                   >
                     <span className="font-sans font-bold text-xs">S</span>
                     <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
@@ -1244,7 +1244,7 @@ function RWPracticePageContent() {
                             <button
                               onClick={(e) => toggleElimination(e, key)}
                               disabled={showExplanation}
-                              className="flex items-center justify-center w-8 h-8 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
+                              className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
                             >
                               <div
                                 className={`relative flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-400 text-gray-500 group-hover:border-gray-600 group-hover:text-gray-600"}`}

@@ -40,22 +40,22 @@ const StaticInput = ({
 );
 
 const SkeletonLayout = () => (
-  <div className="w-full animate-pulse flex flex-col pt-8">
-    <div className="h-10 bg-gray-200 rounded-md w-48 mb-8" />
+  <div className="w-full flex flex-col pt-8">
+    <div className="h-10 bg-gray-200 rounded-md w-48 mb-8 shimmer" />
     <div className="flex gap-6 mb-8 border-b border-gray-200/70 pb-3">
-      <div className="h-5 bg-gray-200 rounded w-16" />
-      <div className="h-5 bg-gray-200 rounded w-24" />
-      <div className="h-5 bg-gray-200 rounded w-16" />
+      <div className="h-5 bg-gray-200 rounded w-16 shimmer" />
+      <div className="h-5 bg-gray-200 rounded w-24 shimmer" />
+      <div className="h-5 bg-gray-200 rounded w-16 shimmer" />
     </div>
     <div className="py-8 border-b border-gray-200/70">
-      <div className="h-5 bg-gray-200 rounded w-24 mb-2" />
-      <div className="h-4 bg-gray-200 rounded w-64 mb-6" />
-      <div className="w-24 h-24 bg-gray-200 rounded-2xl" />
+      <div className="h-5 bg-gray-200 rounded w-24 mb-2 shimmer" />
+      <div className="h-4 bg-gray-200 rounded w-64 mb-6 shimmer" />
+      <div className="w-24 h-24 bg-gray-200 rounded-2xl shimmer" />
     </div>
     <div className="py-8 border-b border-gray-200/70">
-      <div className="h-5 bg-gray-200 rounded w-32 mb-2" />
-      <div className="h-4 bg-gray-200 rounded w-72 mb-6" />
-      <div className="h-10 bg-gray-200 rounded-lg max-w-md" />
+      <div className="h-5 bg-gray-200 rounded w-32 mb-2 shimmer" />
+      <div className="h-4 bg-gray-200 rounded w-72 mb-6 shimmer" />
+      <div className="h-10 bg-gray-200 rounded-lg max-w-md shimmer" />
     </div>
   </div>
 );
@@ -186,12 +186,12 @@ export default function AccountPage() {
               </h1>
 
               {/* Tabs */}
-              <div className="flex gap-6 border-b border-gray-200/70 mb-2 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-6 border-b border-gray-200/70 mb-2 overflow-x-auto [&::-webkit-scrollbar]:hidden -mx-6 px-6 sm:mx-0 sm:px-0">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-3 text-[14px] font-medium transition-colors relative whitespace-nowrap ${
+                    className={`pb-3 px-2 py-2 text-[14px] font-medium transition-colors relative whitespace-nowrap ${
                       activeTab === tab
                         ? "text-[#111827]"
                         : "text-gray-500 hover:text-gray-800"
@@ -248,7 +248,7 @@ export default function AccountPage() {
                         </svg>
                       </button>
                     </div>
-                    <p className="text-[13px] text-gray-400">
+                    <p className="text-[13px] text-gray-500">
                       We recommend a size of at least 256x256 px.
                     </p>
                   </div>

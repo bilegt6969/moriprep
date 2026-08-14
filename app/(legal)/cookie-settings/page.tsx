@@ -43,10 +43,9 @@ export default function CookieSettings() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        width: "100vw",
+        minHeight: "100dvh",
+        width: "100%",
         background: "#ffffff",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
         color: "#222",
         display: "flex",
         flexDirection: "column",

@@ -1,19 +1,29 @@
-"use client";
-
-import { EducationHero } from "@/components/home/education-hero";
-import Footer from "components/Heading/Footer";
-import Navbar from "components/Heading/Navbar";
-import { MoriPrepSections } from "components/home/mori-prep-sections";
+import CTA from "./components/CTA";
+import { DSATShowcase } from "./components/DSATShowcase";
+import { Explore } from "./components/Explore";
+import { Faq } from "./components/Faq";
+import FeaturesSection from "./components/Features";
+import { Footer } from "./components/Footer";
+import { Hero } from "./components/Hero";
+import Onboarding from "./components/Onboarding";
+import SecurityFeatureSection from "./components/Security";
+import { SendReceiveSwap } from "./components/SendReceiveSwap";
+import LatestFromFamily from "./components/Testimonials";
 
 export default function HomePage() {
   return (
-    <>
-      <Navbar siteName="Mori Prep" categories={[]} showBanner={true} />
-      <div className="pt-0">
-        <EducationHero />
-        <MoriPrepSections />
-      </div>
-      <Footer siteName="Mori Prep" />
-    </>
+    <main className="min-h-screen">
+      <Hero />
+      <Explore />
+      <SendReceiveSwap />
+      <FeaturesSection />
+      <DSATShowcase />
+      <SecurityFeatureSection />
+      <Onboarding />
+      <LatestFromFamily />
+      <Faq />
+      <CTA />
+      <Footer />
+    </main>
   );
 }

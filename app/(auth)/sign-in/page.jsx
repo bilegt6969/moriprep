@@ -15,45 +15,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-function AuthNavbar() {
-  return (
-    <div className="w-full bg-[#f4f4f6]/70 backdrop-blur-xl border-b border-gray-200/50 flex justify-center shrink-0">
-      <div className="w-full max-w-[1040px] flex justify-between items-center px-10 py-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center gap-1.5 text-sm font-medium text-[#86868b] hover:text-[#1d1d1f] transition-colors bg-transparent border-none cursor-pointer p-0"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
-        <div className="flex items-center h-5">
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="bg-transparent border-none cursor-pointer p-0 h-5 flex items-center"
-          >
-            <img
-              src="/morin.svg"
-              alt="Brand Logo"
-              className="h-full w-auto object-contain opacity-80"
-            />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SignInContent({
   email,
   setEmail,
@@ -246,7 +207,7 @@ function SignInContent({
       </form>
 
       <div className="relative mt-8 flex items-center justify-center">
-        <span className="absolute bg-[#f4f4f6] px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+        <span className="absolute bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
           OR
         </span>
         <div className="w-full border-t border-neutral-200"></div>

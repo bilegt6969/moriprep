@@ -178,7 +178,7 @@ export default function AnalyticsPage() {
   }
 
   const accuracy = stats
-    ? (stats.correctAnswers / stats.totalQuestions) * 100 || 0
+    ? ((stats.correctAnswers ?? 0) / (stats.totalQuestions ?? 1)) * 100 || 0
     : 0;
 
   const totalTimeMs = progress.reduce((total, item) => {
@@ -538,7 +538,7 @@ export default function AnalyticsPage() {
             <AchievementCard
               title="First Steps"
               description="Answer your first question"
-              unlocked={stats?.totalQuestions > 0}
+              unlocked={(stats?.totalQuestions ?? 0) > 0}
               icon="🎯"
             />
             <AchievementCard

@@ -6,10 +6,10 @@ import Link from "next/link";
 export default function Navbar() {
   return (
     <div className="w-full bg-white border-b border-gray-200 flex justify-center sticky top-0 z-50">
-      <div className="w-full max-w-[1200px] px-6 py-4 flex justify-between items-center">
+      <div className="w-full max-w-300 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap text-sm">
           <Link
-            href="/lessons"
+            href="/resources"
             className="text-neutral-500 hover:text-neutral-900 transition-colors"
           >
             Lessons
