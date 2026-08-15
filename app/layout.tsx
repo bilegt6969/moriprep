@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>{/* Fonts are loaded via next/font/google */}</head>
       <body
-        className="bg-background text-primary antialiased selection:bg-green-500 selection:text-white"
+        className="bg-background text-primary antialiased selection:bg-gray-200 selection:text-black"
         style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
       >
         <Providers>

@@ -645,3 +645,10 @@ body:has(.hide-footer-on-success) > :last-child {
 .logo-scroll:hover {
   animation-play-state: paused;
 }
+
+/* Force text selection for passage highlighting */
+.passage-content,
+.passage-content * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}

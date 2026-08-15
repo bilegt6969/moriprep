@@ -1,37 +1,42 @@
 "use client";
 
-import { saveUserProgress, updateUserStats } from "@/lib/dsat/questions";
+import {
+  getAnsweredQuestions,
+  saveAnsweredQuestions,
+  saveUserProgress,
+  updateUserStats,
+} from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    BellOff,
-    Bookmark,
-    CheckCircle2,
-    ChevronDown,
-    ChevronLeft,
-    Clock,
-    Command,
-    Copy,
-    Flag,
-    Highlighter,
-    History,
-    Info,
-    List,
-    Maximize2,
-    Moon,
-    MoreVertical,
-    Pause,
-    Play,
-    Shuffle,
-    Trash2,
-    Underline as UnderlineIcon,
-    X,
+  AlertCircle,
+  BellOff,
+  Bookmark,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Command,
+  Copy,
+  Flag,
+  Highlighter,
+  History,
+  Info,
+  List,
+  Maximize2,
+  Moon,
+  MoreVertical,
+  Pause,
+  Play,
+  Shuffle,
+  Trash2,
+  Underline as UnderlineIcon,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 const springTransition = {
   type: "spring",
@@ -42,26 +47,27 @@ const springTransition = {
 // Skeleton Loading Components
 function SkeletonHeader() {
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white/70 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
-        <div className="w-32 h-6 bg-gray-200 rounded animate-pulse" />
+    <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 shrink-0 bg-white z-40 relative sticky top-0">
+      {/* Left: Go back & Directions */}
+      <div className="flex items-center gap-6 w-1/3">
+        <div className="w-20 h-5 bg-gray-200 rounded animate-pulse" />
+        <div className="w-24 h-5 bg-gray-200 rounded animate-pulse" />
       </div>
 
+      {/* Center: Timer & Controls */}
       <div className="flex flex-col items-center justify-center w-1/3">
-        <div className="w-20 h-7 bg-gray-200 rounded animate-pulse mb-1.5" />
+        <div className="w-16 h-7 bg-gray-200 rounded animate-pulse mb-1.5" />
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gray-200 rounded-full animate-pulse" />
-          <div className="w-12 h-6 bg-gray-200 rounded-full animate-pulse" />
+          <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+          <div className="w-14 h-6 bg-gray-200 rounded-full animate-pulse" />
         </div>
       </div>
 
+      {/* Right: Tools & Badges */}
       <div className="flex items-center justify-end gap-3 w-1/3">
-        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-purple-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-pink-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-16 h-12 bg-gray-200 rounded-[20px] animate-pulse" />
+        <div className="w-12 h-12 bg-gray-200 rounded-[20px] animate-pulse" />
+        <div className="w-16 h-8 bg-gray-200 rounded-full animate-pulse ml-2" />
       </div>
     </header>
   );
@@ -70,7 +76,7 @@ function SkeletonHeader() {
 function SkeletonPassage() {
   return (
     <div className="p-10 md:p-12">
-      <div className="max-w-3xl space-y-3">
+      <div className="max-w-3xl space-y-5">
         <div className="h-4 bg-gray-200 rounded animate-pulse" />
         <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
         <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
@@ -79,11 +85,6 @@ function SkeletonPassage() {
         <div className="h-4 bg-gray-200 rounded animate-pulse w-9/12" />
         <div className="h-4 bg-gray-200 rounded animate-pulse" />
         <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-9/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
       </div>
     </div>
   );
@@ -119,14 +120,17 @@ function SkeletonQuestion() {
 function SkeletonQuestionHeader() {
   return (
     <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+      {/* Left: Number & Mark for Review */}
       <div className="flex items-center gap-4">
         <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-        <div className="w-32 h-6 bg-gray-200 rounded animate-pulse" />
+        <div className="w-28 h-5 bg-gray-200 rounded animate-pulse" />
       </div>
+
+      {/* Right: Action Buttons */}
       <div className="flex items-center gap-4">
-        <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
-        <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
-        <div className="w-7 h-7 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-20 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
       </div>
     </div>
   );
@@ -134,17 +138,20 @@ function SkeletonQuestionHeader() {
 
 function SkeletonFooter() {
   return (
-    <footer className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+    <footer className="flex items-center justify-between px-6 py-4 border-t border-gray-200 shrink-0 bg-white">
+      {/* Left: Navigator & History */}
       <div className="flex items-center gap-3">
-        <div className="w-24 h-10 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
       </div>
+
+      {/* Right: Suite of Tools */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-purple-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-pink-200 rounded-full animate-pulse" />
-        <div className="w-24 h-8 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-20 h-10 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-20 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-28 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
       </div>
     </footer>
   );
@@ -226,6 +233,71 @@ function RWPracticePageContent() {
 
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
+
+  // Load answered questions from localStorage on mount or Firebase if user is authenticated
+  useEffect(() => {
+    const loadAnsweredQuestions = async () => {
+      if (user) {
+        try {
+          const firebaseAnsweredQuestions = await getAnsweredQuestions(
+            user.uid,
+          );
+          setAnsweredQuestions(firebaseAnsweredQuestions);
+        } catch (e) {
+          console.error("Error loading answered questions from Firebase:", e);
+          // Fallback to localStorage
+          const savedAnsweredQuestions =
+            localStorage.getItem("answeredQuestions");
+          if (savedAnsweredQuestions) {
+            try {
+              const parsed = JSON.parse(savedAnsweredQuestions);
+              setAnsweredQuestions(new Map(parsed));
+            } catch (e) {
+              console.error(
+                "Error loading answered questions from localStorage:",
+                e,
+              );
+            }
+          }
+        }
+      } else {
+        // Load from localStorage for non-authenticated users
+        const savedAnsweredQuestions =
+          localStorage.getItem("answeredQuestions");
+        if (savedAnsweredQuestions) {
+          try {
+            const parsed = JSON.parse(savedAnsweredQuestions);
+            setAnsweredQuestions(new Map(parsed));
+          } catch (e) {
+            console.error(
+              "Error loading answered questions from localStorage:",
+              e,
+            );
+          }
+        }
+      }
+    };
+
+    loadAnsweredQuestions();
+  }, [user]);
+
+  // Save answered questions to localStorage and Firebase whenever it changes
+  useEffect(() => {
+    // Always save to localStorage as fallback
+    localStorage.setItem(
+      "answeredQuestions",
+      JSON.stringify(Array.from(answeredQuestions.entries())),
+    );
+
+    // Save to Firebase if user is authenticated
+    if (user) {
+      saveAnsweredQuestions(user.uid, answeredQuestions).catch((e) => {
+        console.error("Error saving answered questions to Firebase:", e);
+      });
+    }
+  }, [answeredQuestions, user]);
+
+  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isHighlightActive, setIsHighlightActive] = useState(true);
   const [highlightMenu, setHighlightMenu] = useState<{
     visible: boolean;
@@ -727,117 +799,161 @@ function RWPracticePageContent() {
     if (isInsidePassage || isInsideQuestion) {
       const rect = range.getBoundingClientRect();
       setCurrentSelection(range);
+
+      // --- VIEWPORT BOUNDARY FIX ---
+
+      // 1. Estimate the dimensions of your highlight menu
+      const menuWidth = 320;
+      const menuHeight = 50;
+      const edgePadding = 16; // Gives the menu 16px of breathing room from the screen edge
+
+      // 2. Calculate the default center coordinates
+      let menuX = rect.left + rect.width / 2;
+      let menuY = rect.top - 10;
+
+      // 3. Prevent cutting off on the Left and Right edges
+      // Math.max prevents it from going too far left, Math.min prevents going too far right
+      const minX = menuWidth / 2 + edgePadding;
+      const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+      menuX = Math.max(minX, Math.min(menuX, maxX));
+
+      // 4. Prevent cutting off on the Top edge
+      // If there isn't enough room above the text, flip the menu BELOW the selected text
+      if (menuY < menuHeight + edgePadding) {
+        // We add menuHeight because your CSS uses translateY(-100%), so this offsets it
+        menuY = rect.bottom + 10 + menuHeight;
+      }
+
+      // --- END VIEWPORT BOUNDARY FIX ---
+
       setHighlightMenu({
         visible: true,
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10,
+        x: menuX,
+        y: menuY,
       });
     } else {
       setHighlightMenu({ visible: false, x: 0, y: 0 });
     }
   };
 
+  const wrapRangeMultiNode = (range: Range, span: HTMLElement) => {
+    // Whole selection sits inside one text node — surroundContents handles this natively
+    if (
+      range.startContainer === range.endContainer &&
+      range.startContainer.nodeType === Node.TEXT_NODE
+    ) {
+      range.surroundContents(span);
+      return;
+    }
+
+    // Selection spans multiple nodes/elements — walk and wrap each intersecting text node
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) =>
+          range.intersectsNode(node)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT,
+      },
+    );
+
+    const nodes: Text[] = [];
+    let n: Node | null;
+    while ((n = walker.nextNode())) nodes.push(n as Text);
+
+    nodes.forEach((textNode) => {
+      const nodeRange = document.createRange();
+      nodeRange.selectNodeContents(textNode);
+      if (textNode === range.startContainer)
+        nodeRange.setStart(textNode, range.startOffset);
+      if (textNode === range.endContainer)
+        nodeRange.setEnd(textNode, range.endOffset);
+      if (nodeRange.collapsed) return;
+      nodeRange.surroundContents(span.cloneNode() as HTMLElement);
+    });
+  };
+
   const applyHighlight = (colorClass: string) => {
-    if (!currentSelection || currentSelection.toString().length === 0) return;
+    if (!currentSelection || currentSelection.collapsed) {
+      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      return;
+    }
 
     setActiveHighlightColor(colorClass);
 
-    try {
-      const range = currentSelection.cloneRange();
-      const span = document.createElement("span");
-      span.className = colorClass;
+    const bgColor = colorClass.includes("yellow")
+      ? "#fde68a"
+      : colorClass.includes("pink")
+        ? "#fbcfe8"
+        : colorClass.includes("underline")
+          ? "transparent"
+          : "#bfdbfe";
 
-      // Check if selection crosses element boundaries
-      const startNode = range.startContainer;
-      const endNode = range.endContainer;
+    // --- NEW: Check if we are updating an existing highlight ---
+    const node = currentSelection.commonAncestorContainer;
+    // Get the parent element if the node is a text node
+    const parentElement =
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : (node as HTMLElement);
 
-      if (
-        startNode === endNode ||
-        startNode.contains?.(endNode) ||
-        endNode.contains?.(startNode)
-      ) {
-        // Simple case: selection within one node
-        try {
-          range.surroundContents(span);
-        } catch (e) {
-          // Fallback for complex selections
-          const contents = range.extractContents();
-          span.appendChild(contents);
-          range.insertNode(span);
-        }
+    // If the selection is already inside one of our highlights, just update its style!
+    if (parentElement && parentElement.classList.contains("dsat-highlight")) {
+      if (colorClass.includes("underline")) {
+        parentElement.style.backgroundColor = "transparent";
+        parentElement.className = `dsat-highlight ${colorClass}`;
       } else {
-        // Complex case: selection spans multiple nodes
-        const contents = range.extractContents();
-        span.appendChild(contents);
-        range.insertNode(span);
+        parentElement.style.backgroundColor = bgColor;
+        parentElement.className = "dsat-highlight"; // Clear underline classes if changing to a solid color
       }
-
       window.getSelection()?.removeAllRanges();
+      setCurrentSelection(null);
       setHighlightMenu({ visible: false, x: 0, y: 0 });
+      return;
+    }
+    // --- END NEW LOGIC ---
+
+    const span = document.createElement("span");
+    span.classList.add("dsat-highlight"); // Add tracking class
+
+    if (colorClass.includes("underline")) {
+      span.className = `dsat-highlight ${colorClass}`;
+    } else {
+      span.style.backgroundColor = bgColor;
+      span.style.padding = "2px 0";
+      span.style.borderRadius = "2px";
+    }
+
+    try {
+      wrapRangeMultiNode(currentSelection, span);
     } catch (e) {
       console.error("Highlight error:", e);
-      setHighlightMenu({ visible: false, x: 0, y: 0 });
     }
+
+    window.getSelection()?.removeAllRanges();
+    setCurrentSelection(null);
+    setHighlightMenu({ visible: false, x: 0, y: 0 });
   };
 
   const clearHighlights = () => {
-    // Clear highlights from passage
-    if (passageRef.current) {
-      const highlights =
-        passageRef.current.querySelectorAll('span[class*="bg-"]');
-      highlights.forEach((highlight) => {
-        const parent = highlight.parentNode;
-        if (parent) {
-          // Replace the span with its content
-          while (highlight.firstChild) {
-            parent.insertBefore(highlight.firstChild, highlight);
+    // Check both containers efficiently
+    [passageRef.current, questionRef.current].forEach((container) => {
+      if (container) {
+        // ONLY target the specific highlights we dynamically generated
+        const highlights = container.querySelectorAll(".dsat-highlight");
+        highlights.forEach((highlight) => {
+          const parent = highlight.parentNode;
+          if (parent) {
+            // Replace the span with its inner text
+            while (highlight.firstChild) {
+              parent.insertBefore(highlight.firstChild, highlight);
+            }
+            parent.removeChild(highlight);
           }
-          parent.removeChild(highlight);
-        }
-      });
-
-      // Also remove underline decorations
-      const underlines = passageRef.current.querySelectorAll(
-        'span[class*="decoration-"]',
-      );
-      underlines.forEach((underline) => {
-        const parent = underline.parentNode;
-        if (parent) {
-          while (underline.firstChild) {
-            parent.insertBefore(underline.firstChild, underline);
-          }
-          parent.removeChild(underline);
-        }
-      });
-    }
-
-    // Clear highlights from question section
-    if (questionRef.current) {
-      const highlights =
-        questionRef.current.querySelectorAll('span[class*="bg-"]');
-      highlights.forEach((highlight) => {
-        const parent = highlight.parentNode;
-        if (parent) {
-          while (highlight.firstChild) {
-            parent.insertBefore(highlight.firstChild, highlight);
-          }
-          parent.removeChild(highlight);
-        }
-      });
-
-      const underlines = questionRef.current.querySelectorAll(
-        'span[class*="decoration-"]',
-      );
-      underlines.forEach((underline) => {
-        const parent = underline.parentNode;
-        if (parent) {
-          while (underline.firstChild) {
-            parent.insertBefore(underline.firstChild, underline);
-          }
-          parent.removeChild(underline);
-        }
-      });
-    }
+        });
+      }
+    });
   };
 
   // Clear highlights when highlight tool is disabled
@@ -845,6 +961,75 @@ function RWPracticePageContent() {
     if (!isHighlightActive) {
       clearHighlights();
     }
+  }, [isHighlightActive]);
+
+  // Setup text selection listener for highlighting
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!isHighlightActive) return;
+
+      // --- NEW: Intercept clicks on existing highlights ---
+      const target = e.target as HTMLElement;
+      const highlightSpan = target.closest(".dsat-highlight");
+
+      if (highlightSpan) {
+        // Programmatically select the exact text inside the highlight
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(highlightSpan);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+      // --- END NEW LOGIC ---
+
+      // Small delay to ensure selection is complete
+      setTimeout(() => {
+        handleTextSelection();
+      }, 10);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+
+    // Debug code to trace selection clearing
+    let lastNonEmpty = "";
+    const handleSelectionChange = () => {
+      const s = window.getSelection()?.toString() || "";
+      if (s === "" && lastNonEmpty !== "") {
+        console.log(
+          "%cSELECTION CLEARED — last value was:",
+          "color:red;font-weight:bold",
+          lastNonEmpty,
+        );
+        console.trace();
+      }
+      if (s !== "") lastNonEmpty = s;
+    };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    // Watch for DOM mutations in passage
+    const passageEl = document.querySelector(".passage-content");
+    let observer: MutationObserver | null = null;
+    if (passageEl) {
+      observer = new MutationObserver((mutations) => {
+        console.log(
+          "%cPASSAGE DOM MUTATED:",
+          "color:orange;font-weight:bold",
+          mutations,
+        );
+      });
+      observer.observe(passageEl, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+      });
+    }
+
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      if (observer) observer.disconnect();
+    };
   }, [isHighlightActive]);
 
   useEffect(() => {
@@ -885,6 +1070,27 @@ function RWPracticePageContent() {
       ? Array.from(new Set(questions.map((q) => q.skill)))
       : selectedDomains.flatMap((d) => domainSkills[d] || []);
 
+  // Memoize passage to prevent re-render on highlight menu state changes
+  const memoizedPassage = useMemo(() => {
+    if (!selectedQuestion?.passage) return null;
+
+    const htmlContent =
+      selectedQuestion.has_underline && selectedQuestion.underlined_text
+        ? selectedQuestion.passage.replace(
+            selectedQuestion.underlined_text,
+            `<u class="bg-yellow-200 px-1">${selectedQuestion.underlined_text}</u>`,
+          )
+        : selectedQuestion.passage;
+
+    return (
+      <div className="mb-6" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+    );
+  }, [
+    selectedQuestion?.passage,
+    selectedQuestion?.has_underline,
+    selectedQuestion?.underlined_text,
+  ]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
@@ -918,19 +1124,23 @@ function RWPracticePageContent() {
               }}
             >
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-yellow-200/80")}
                 className={`w-7 h-7 rounded-full bg-[#fde68a] border-2 transition-transform ${activeHighlightColor === "bg-yellow-200/80" ? "border-black" : "border-transparent"}`}
               />
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-blue-200/80")}
                 className={`w-7 h-7 rounded-full bg-[#bfdbfe] border-2 transition-transform ${activeHighlightColor === "bg-blue-200/80" ? "border-black" : "border-transparent"}`}
               />
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-pink-200/80")}
                 className={`w-7 h-7 rounded-full bg-[#fbcfe8] border-2 transition-transform ${activeHighlightColor === "bg-pink-200/80" ? "border-black" : "border-transparent"}`}
               />
               <div className="w-[1px] h-6 bg-gray-200 mx-1" />
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() =>
                   applyHighlight("underline decoration-2 decoration-gray-400")
                 }
@@ -939,10 +1149,12 @@ function RWPracticePageContent() {
                 <UnderlineIcon size={18} />
               </button>
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  navigator.clipboard.writeText(
-                    currentSelection?.toString() || "",
-                  );
+                  const text = currentSelection?.toString() || "";
+                  navigator.clipboard.writeText(text).catch((err) => {
+                    console.error("Clipboard write failed:", err);
+                  });
                   setHighlightMenu({ visible: false, x: 0, y: 0 });
                 }}
                 className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
@@ -950,6 +1162,7 @@ function RWPracticePageContent() {
                 <Copy size={18} />
               </button>
               <button
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setHighlightMenu({ visible: false, x: 0, y: 0 })}
                 className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -1120,8 +1333,7 @@ function RWPracticePageContent() {
             {/* Left Pane: Reading Material */}
             <div
               style={{ width: `${leftPaneWidth}%` }}
-              className={`p-10 md:p-12 overflow-y-auto ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
-              onMouseUp={handleTextSelection}
+              className={`passage-content p-10 md:p-12 overflow-y-auto ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
             >
               <div
                 ref={passageRef}
@@ -1148,23 +1360,7 @@ function RWPracticePageContent() {
                       ))}
                     </div>
                   )}
-                {selectedQuestion.passage && (
-                  <div
-                    className="mb-6"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        selectedQuestion.has_underline &&
-                        selectedQuestion.underlined_text
-                          ? selectedQuestion.passage.replace(
-                              selectedQuestion.underlined_text,
-                              `<u class="bg-yellow-200 px-1">${selectedQuestion.underlined_text}</u>`,
-                            )
-                          : selectedQuestion.passage,
-                    }}
-                  >
-                    {/* Assuming raw passage structure aligns with what's visible in image */}
-                  </div>
-                )}
+                {memoizedPassage}
               </div>
             </div>
 
@@ -1334,94 +1530,155 @@ function RWPracticePageContent() {
             </div>
           </main>
 
-          {/* Explanation Modal - Full screen overlay */}
+          {/* Explanation Modal - Apple Inspired Design */}
           <AnimatePresence>
             {showExplanation && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-30 p-4"
+                // Changed from absolute z-30 to fixed z-[100] to sit above the footer
+                className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
                 onClick={() => setShowExplanation(false)}
               >
                 <motion.div
-                  initial={{ scale: 0.92, opacity: 0, y: 10 }}
+                  initial={{ scale: 0.95, opacity: 0, y: 10 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.92, opacity: 0, y: 10 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                  transition={{ type: "spring", damping: 30, stiffness: 400 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden border border-gray-100/50"
+                  className="bg-white rounded-[32px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-8 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                  <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-white">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <CheckCircle2 size={20} className="text-white" />
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Info
+                          size={16}
+                          className="text-gray-600"
+                          strokeWidth={2.5}
+                        />
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                          Explanation
-                        </h2>
-                        <p className="text-xs text-gray-500 font-medium">
-                          Question Analysis
-                        </p>
-                      </div>
+                      <h2 className="text-[17px] font-semibold text-gray-900 tracking-tight">
+                        Explanation
+                      </h2>
                     </div>
                     <button
                       onClick={() => setShowExplanation(false)}
-                      className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-all duration-200 flex items-center justify-center"
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center"
                     >
-                      <X size={18} strokeWidth={2} />
+                      <X size={16} strokeWidth={2.5} />
                     </button>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-8 overflow-y-auto max-h-[calc(85vh-80px)]">
-                    {/* Correct Answer Section */}
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl p-6 mb-8 shadow-sm">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <CheckCircle2 size={12} className="text-white" />
-                        </div>
-                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-                          Correct Answer
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-500/30 shrink-0">
-                          {selectedQuestion.correct_answer}
-                        </div>
-                        <div className="flex-1 pt-1">
-                          <p className="text-gray-800 leading-relaxed font-medium text-[16px]">
-                            {
-                              selectedQuestion.choices[
-                                selectedQuestion.correct_answer as keyof typeof selectedQuestion.choices
-                              ]
+                  {/* Content Area */}
+                  <div className="p-8 overflow-y-auto">
+                    <div className="flex flex-col gap-4 mb-8">
+                      {/* Conditional logic: Did the user answer this, and was it wrong? */}
+                      {answeredQuestions.has(selectedQuestion.question_id) &&
+                        !answeredQuestions.get(selectedQuestion.question_id)
+                          ?.isCorrect && (
+                          <div className="bg-red-50/50 border border-red-100 rounded-[24px] p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                              <X
+                                size={14}
+                                strokeWidth={3}
+                                className="text-red-500"
+                              />
+                              <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider">
+                                Your Answer
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-4">
+                              <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-[17px] shrink-0">
+                                {
+                                  answeredQuestions.get(
+                                    selectedQuestion.question_id,
+                                  )?.answer
+                                }
+                              </div>
+                              <div className="flex-1 pt-1.5">
+                                <p className="text-gray-800 leading-relaxed font-medium text-[15px]">
+                                  {
+                                    selectedQuestion.choices[
+                                      answeredQuestions.get(
+                                        selectedQuestion.question_id,
+                                      )
+                                        ?.answer as keyof typeof selectedQuestion.choices
+                                    ]
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* The Correct Answer Block */}
+                      <div
+                        className={`border rounded-[24px] p-6 ${
+                          answeredQuestions.get(selectedQuestion.question_id)
+                            ?.isCorrect
+                            ? "bg-green-50/50 border-green-100"
+                            : "bg-gray-50/50 border-gray-200/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-4">
+                          <CheckCircle2
+                            size={14}
+                            strokeWidth={3}
+                            className={
+                              answeredQuestions.get(
+                                selectedQuestion.question_id,
+                              )?.isCorrect
+                                ? "text-green-500"
+                                : "text-gray-500"
                             }
-                          </p>
+                          />
+                          <span
+                            className={`text-[11px] font-bold uppercase tracking-wider ${
+                              answeredQuestions.get(
+                                selectedQuestion.question_id,
+                              )?.isCorrect
+                                ? "text-green-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            Correct Answer
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[17px] shrink-0 ${
+                              answeredQuestions.get(
+                                selectedQuestion.question_id,
+                              )?.isCorrect
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {selectedQuestion.correct_answer}
+                          </div>
+                          <div className="flex-1 pt-1.5">
+                            <p className="text-gray-800 leading-relaxed font-medium text-[15px]">
+                              {
+                                selectedQuestion.choices[
+                                  selectedQuestion.correct_answer as keyof typeof selectedQuestion.choices
+                                ]
+                              }
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Explanation Section */}
-                    <div className="space-y-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                          <Info
-                            size={16}
-                            className="text-indigo-600"
-                            strokeWidth={2.5}
-                          />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 tracking-tight">
-                          Step-by-step explanation
-                        </h3>
-                      </div>
-                      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                        <p className="text-gray-700 leading-[1.8] font-serif text-[15px]">
-                          {selectedQuestion.rationale}
-                        </p>
-                      </div>
+                    {/* Rationale Section */}
+                    <div className="space-y-3 px-2">
+                      <h3 className="text-[15px] font-semibold text-gray-900 tracking-tight">
+                        Step-by-step breakdown
+                      </h3>
+                      <p className="text-gray-600 leading-[1.7] text-[15px]">
+                        {selectedQuestion.rationale}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
@@ -1750,6 +2007,13 @@ export default function RWPracticePage() {
       }
     >
       <RWPracticePageContent />
+      <style jsx global>{`
+        .passage-content,
+        .passage-content * {
+          user-select: text !important;
+          -webkit-user-select: text !important;
+        }
+      `}</style>
     </Suspense>
   );
 }

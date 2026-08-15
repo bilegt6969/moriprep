@@ -169,3 +169,41 @@ export async function getQuestionSkills(): Promise<string[]> {
   }
   return response.json();
 }
+
+export async function saveAnsweredQuestions(
+  userId: string,
+  answeredQuestions: Map<string, { isCorrect: boolean; answer: string }>,
+): Promise<void> {
+  const answeredRef = doc(db, "userAnsweredQuestions", userId);
+  // Convert Map to object to avoid nested arrays which Firebase doesn't support
+  const answeredQuestionsObj = Object.fromEntries(answeredQuestions.entries());
+  await setDoc(answeredRef, {
+    userId,
+    answeredQuestions: answeredQuestionsObj,
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
+export async function getAnsweredQuestions(
+  userId: string,
+): Promise<Map<string, { isCorrect: boolean; answer: string }>> {
+  try {
+    const answeredRef = doc(db, "userAnsweredQuestions", userId);
+    const docSnap = await getDoc(answeredRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data() as {
+        answeredQuestions: Record<
+          string,
+          { isCorrect: boolean; answer: string }
+        >;
+      };
+      return new Map(Object.entries(data.answeredQuestions));
+    }
+
+    return new Map();
+  } catch (error) {
+    console.error("Error fetching answered questions:", error);
+    return new Map();
+  }
+}
