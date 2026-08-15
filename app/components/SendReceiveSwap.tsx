@@ -46,22 +46,20 @@ export function SendReceiveSwap() {
           initial="hidden"
           animate="visible"
         >
-          {/* Send Column - Blue */}
+          {/* Practice Column - Blue */}
           <motion.div
             className="flex flex-col items-stretch justify-center gap-5 text-[#018DFF]"
             variants={itemVariants}
           >
-            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-12 py-6">
-              <div className="-mb-[77%]">
-                <div className="relative mx-auto w-full max-w-[381px]">
-                  <Image
-                    src="/assets/phone.png"
-                    alt="Send phone mockup"
-                    width={381}
-                    height={751}
-                    className="h-auto w-full"
-                  />
-                </div>
+            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
+              <div className="relative mx-auto w-full max-w-[450px]">
+                <Image
+                  src="/assets/practice.png"
+                  alt="Practice phone mockup"
+                  width={450}
+                  height={887}
+                  className="h-auto w-full rounded-t-xl"
+                />
               </div>
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">
@@ -94,22 +92,20 @@ export function SendReceiveSwap() {
             </div>
           </motion.div>
 
-          {/* Receive Column - Green */}
+          {/* Resources Column - Green */}
           <motion.div
             className="flex flex-col items-stretch justify-center gap-5 text-[#34C759]"
             variants={itemVariants}
           >
-            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-12 py-6">
-              <div className="-mt-[77%]">
-                <div className="relative mx-auto w-full max-w-[381px]">
-                  <Image
-                    src="/assets/phone.png"
-                    alt="Receive phone mockup"
-                    width={381}
-                    height={751}
-                    className="h-auto w-full"
-                  />
-                </div>
+            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
+              <div className="relative mx-auto w-full max-w-[450px]">
+                <Image
+                  src="/assets/resources.png"
+                  alt="Resources phone mockup"
+                  width={450}
+                  height={887}
+                  className="h-auto w-full rounded-t-xl"
+                />
               </div>
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">
@@ -135,22 +131,20 @@ export function SendReceiveSwap() {
             </div>
           </motion.div>
 
-          {/* Swap Column - Gray */}
+          {/* Analytics Column - Gray */}
           <motion.div
             className="flex flex-col items-stretch justify-center gap-5 text-[#747484]"
             variants={itemVariants}
           >
-            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-12 py-6">
-              <div className="-mb-[77%]">
-                <div className="relative mx-auto w-full max-w-[381px]">
-                  <Image
-                    src="/assets/phone.png"
-                    alt="Swap phone mockup"
-                    width={381}
-                    height={751}
-                    className="h-auto w-full"
-                  />
-                </div>
+            <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
+              <div className="relative mx-auto w-full max-w-[450px]">
+                <Image
+                  src="/assets/domains.png"
+                  alt="Domains phone mockup"
+                  width={450}
+                  height={887}
+                  className="h-auto w-full rounded-t-xl"
+                />
               </div>
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">

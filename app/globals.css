@@ -522,10 +522,10 @@ button {
     opacity: 1;
     transform: none !important;
   }
-  /* Logo ticker - continuous scroll should stop under reduced motion */
-  .animate-infinite-scroll {
+  /* Logo ticker - keep animation even with reduced motion */
+  /* .logo-scroll {
     animation: none !important;
-  }
+  } */
   /* Shimmer effect */
   .animate-shimmer {
     animation: none !important;
@@ -625,4 +625,23 @@ button {
 /* Hide footer on checkout success page */
 body:has(.hide-footer-on-success) > :last-child {
   display: none;
+}
+
+/* Logo ticker animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.logo-scroll {
+  display: flex;
+  animation: scroll 35s linear infinite;
+}
+
+.logo-scroll:hover {
+  animation-play-state: paused;
 }

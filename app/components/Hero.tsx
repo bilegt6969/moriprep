@@ -51,15 +51,15 @@ const schools = [
   { logo: "stanford.png", url: "https://www.stanford.edu" },
   { logo: "yale.avif", url: "https://www.yale.edu" },
   { logo: "princeton.png", url: "https://www.princeton.edu" },
-  { logo: "1.png", url: "yonsei" },
-  { logo: "2.png", url: "kaist" },
-  { logo: "3.png", url: "reed college" },
-  { logo: "4.png", url: "sewanee uni of south" },
-  { logo: "5.png", url: "cwru" },
-  { logo: "6.png", url: "wake forest" },
-  { logo: "7.png", url: "nyu shanghai" },
-  { logo: "8.png", url: "uoft" },
-  { logo: "9.png", url: "duke khusnshan" },
+  { logo: "1.png", url: "https://www.yonsei.ac.kr" },
+  { logo: "2.png", url: "https://www.kaist.ac.kr" },
+  { logo: "3.png", url: "https://www.reed.edu" },
+  { logo: "4.png", url: "https://www.sewanee.edu" },
+  { logo: "5.png", url: "https://www.case.edu" },
+  { logo: "6.png", url: "https://www.wfu.edu" },
+  { logo: "7.png", url: "https://shanghai.nyu.edu" },
+  { logo: "8.png", url: "https://www.utoronto.ca" },
+  { logo: "9.png", url: "https://dukekunshan.edu.cn" },
 ];
 
 // ==========================================
@@ -69,20 +69,6 @@ const schools = [
 const LogoTicker = memo(() => {
   return (
     <div className="absolute bottom-0 left-0 right-0 h-18.75 sm:h-21.25 md:h-25 w-full bg-transparent flex flex-col justify-center z-20">
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @keyframes infinite-scroll {
-              0% { transform: translate3d(0, 0, 0); }
-              100% { transform: translate3d(-50%, 0, 0); }
-            }
-            .animate-infinite-scroll {
-              animation: infinite-scroll 35s linear infinite;
-              will-change: transform;
-            }
-          `,
-        }}
-      />
       <div className="max-w-7xl mx-auto w-full flex flex-col items-center">
         <motion.p
           initial={{ opacity: 0, y: 5 }}
@@ -103,7 +89,17 @@ const LogoTicker = memo(() => {
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 pointer-events-none bg-linear-to-r from-white via-white/90 to-transparent" />
 
           {/* The Wrapper that Animates */}
-          <div className="flex w-max animate-infinite-scroll group-hover:paused">
+          <motion.div
+            className="flex"
+            animate={{
+              x: [0, -1500],
+            }}
+            transition={{
+              duration: 35,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          >
             {/* Group 1 */}
             <div className="flex items-center px-4">
               {schools.map((school, index) => (
@@ -148,7 +144,7 @@ const LogoTicker = memo(() => {
                 </a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Frosted Fade Right */}
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 z-10 pointer-events-none bg-linear-to-l from-white via-white/90 to-transparent" />
@@ -286,58 +282,9 @@ export function Hero() {
                     "rgba(23, 23, 23, 0.8)")
                 }
               >
-                <svg
-                  width="16"
-                  height="20"
-                  viewBox="0 0 16 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-5"
-                  style={{ transform: "translateY(-1px)" }}
-                >
-                  <path
-                    d="M13.3636 10.6359C13.3832 9.09202 14.1985 7.63115 15.4918 6.82249C14.6759 5.6374 13.3092 4.88602 11.8874 4.84078C10.3708 4.67889 8.90062 5.76366 8.12782 5.76366C7.34007 5.76366 6.15022 4.85685 4.86895 4.88366C3.19887 4.93853 1.64194 5.90417 0.82941 7.38906C-0.917205 10.4644 0.385612 14.9841 2.05872 17.47C2.89582 18.6873 3.87414 20.047 5.15425 19.9988C6.40692 19.9459 6.87477 19.1864 8.38684 19.1864C9.88489 19.1864 10.3238 19.9988 11.6299 19.9681C12.9741 19.9459 13.821 18.7454 14.6287 17.5166C15.2301 16.6493 15.693 15.6907 16 14.6763C14.4204 13.9969 13.3654 12.3802 13.3636 10.6359Z"
-                    fill="currentColor"
-                  ></path>
-                  <path
-                    d="M10.8966 3.20595C11.6295 2.31119 11.9906 1.16113 11.9031 0C10.7834 0.1196 9.74914 0.663834 9.00635 1.52426C8.27999 2.36494 7.90199 3.49477 7.97345 4.61152C9.09356 4.62325 10.1947 4.09376 10.8966 3.20595Z"
-                    fill="currentColor"
-                  ></path>
-                </svg>
                 Start Practicing
               </a>
             </div>
-            <button
-              className="flex items-center justify-center gap-3 px-5 py-3 rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100"
-              style={{
-                borderRadius: "32px",
-                height: "3rem",
-                letterSpacing: "-0.01375rem",
-                backgroundColor: "#F6F4EF",
-                color: "#121212",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#EAE6DD";
-              }}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "#F6F4EF")
-              }
-            >
-              <svg
-                width="18"
-                height="20"
-                viewBox="0 0 18 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4.5 h-5"
-              >
-                <path
-                  d="M0.5 3.29857L0.499999 16.7014C0.499998 19.0333 3.04392 20.4736 5.04349 19.2739L16.2125 12.5725C18.1546 11.4073 18.1546 8.59273 16.2125 7.42752L5.04349 0.726094C3.04392 -0.47365 0.5 0.966686 0.5 3.29857Z"
-                  fill="currentColor"
-                ></path>
-              </svg>
-              Watch Demo
-            </button>
           </motion.div>
         </motion.div>
       </div>

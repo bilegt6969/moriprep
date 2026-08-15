@@ -9,7 +9,7 @@ const BLOG_POSTS = [
     date: "13 May, 2026",
     excerpt:
       "Why Bytecode built Mori Prep as a non-profit open education initiative to ensure that financial status never stands between a Mongolian student and world-class higher education. We are bringing structured test prep, open lessons, and strategy guides to everyone for free.",
-    image: "/media/closing-the-dsat-gap.png",
+    image: "/blog/closing-gap.png",
   },
   {
     slug: "official-question-bank-integration",
@@ -17,7 +17,7 @@ const BLOG_POSTS = [
     date: "2 April, 2026",
     excerpt:
       "How we brought thousands of official Digital SAT practice questions, multi-stage adaptive testing logic, and curated prep resources under one seamless, 100% free dashboard built for student success.",
-    image: "/media/official-question-bank.png",
+    image: "/blog/collegeboard.png",
   },
 ];
 

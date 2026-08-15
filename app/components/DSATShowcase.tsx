@@ -195,6 +195,7 @@ export function DSATShowcase() {
           { label: "Lessons", href: "#lessons" },
           { label: "Resources", href: "#resources" },
         ]}
+        showBanner={true}
       />
       {/* Question Bank Practice Section */}
       <FeatureShowcase
