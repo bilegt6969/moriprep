@@ -164,6 +164,7 @@ function RWPracticePageContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentOffset, setCurrentOffset] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const BATCH_SIZE = 24; // Load 2 dozen at a time
   const [selectedQuestion, setSelectedQuestion] = useState<DSATQuestion | null>(
     null,
@@ -395,12 +396,29 @@ function RWPracticePageContent() {
 
   async function fetchQuestions() {
     try {
+      // First, get the total count
+      const countParams = new URLSearchParams();
+      if (domainsParam) countParams.append("domain", domainsParam);
+      if (difficultiesParam)
+        countParams.append("difficulty", difficultiesParam);
+      const skillsParam = searchParams.get("skills");
+      if (skillsParam) countParams.append("skill", skillsParam);
+      countParams.append("count_only", "true");
+
+      const countResponse = await fetch(
+        `/api/questions?${countParams.toString()}`,
+      );
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        setTotalQuestions(countData.count || 0);
+      }
+
+      // Then fetch the questions
       const params = new URLSearchParams();
       params.append("limit", BATCH_SIZE.toString());
 
       if (domainsParam) params.append("domain", domainsParam);
       if (difficultiesParam) params.append("difficulty", difficultiesParam);
-      const skillsParam = searchParams.get("skills");
       if (skillsParam) params.append("skill", skillsParam);
 
       const response = await fetch(`/api/questions?${params.toString()}`);
@@ -1423,7 +1441,7 @@ function RWPracticePageContent() {
                   {filteredQuestions.findIndex(
                     (q) => q.question_id === selectedQuestion.question_id,
                   ) + 1}{" "}
-                  of {filteredQuestions.length}
+                  of {totalQuestions}
                 </span>
                 <ChevronDown
                   size={16}
