@@ -158,11 +158,13 @@ function RWPracticePageContent() {
   const difficultyParam = searchParams.get("difficulty");
   const difficultiesParam = searchParams.get("difficulties");
 
-  const [questions, setQuestions] = useState<DSATQuestion[]>([]);
-  const [filteredQuestions, setFilteredQuestions] = useState<DSATQuestion[]>(
-    [],
-  );
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [filteredQuestions, setFilteredQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const BATCH_SIZE = 24; // Load 2 dozen at a time
   const [selectedQuestion, setSelectedQuestion] = useState<DSATQuestion | null>(
     null,
   );
@@ -393,14 +395,55 @@ function RWPracticePageContent() {
 
   async function fetchQuestions() {
     try {
-      const response = await fetch("/api/questions");
+      const params = new URLSearchParams();
+      params.append("limit", BATCH_SIZE.toString());
+
+      if (domainsParam) params.append("domain", domainsParam);
+      if (difficultiesParam) params.append("difficulty", difficultiesParam);
+      const skillsParam = searchParams.get("skills");
+      if (skillsParam) params.append("skill", skillsParam);
+
+      const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch questions");
       const questionsData = await response.json();
       setQuestions(questionsData);
+      setFilteredQuestions(questionsData);
       setLoading(false);
+      setHasMore(questionsData.length === BATCH_SIZE);
+      setCurrentOffset(BATCH_SIZE);
     } catch (error) {
       console.error("Error fetching questions:", error);
       setLoading(false);
+    }
+  }
+
+  async function loadMoreQuestions() {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+
+      const params = new URLSearchParams();
+      params.append("limit", BATCH_SIZE.toString());
+      params.append("offset", currentOffset.toString());
+
+      if (domainsParam) params.append("domain", domainsParam);
+      if (difficultiesParam) params.append("difficulty", difficultiesParam);
+      const skillsParam = searchParams.get("skills");
+      if (skillsParam) params.append("skill", skillsParam);
+
+      const response = await fetch(`/api/questions?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch more questions");
+      const questionsData = await response.json();
+
+      setQuestions((prev) => [...prev, ...questionsData]);
+      setFilteredQuestions((prev) => [...prev, ...questionsData]);
+      setCurrentOffset((prev) => prev + BATCH_SIZE);
+      setHasMore(questionsData.length === BATCH_SIZE);
+    } catch (error) {
+      console.error("Error fetching more questions:", error);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -807,7 +850,8 @@ function RWPracticePageContent() {
     "Information and Ideas": [
       "Central Ideas and Details",
       "Inferences",
-      "Command of Evidence",
+      "Command of Evidence — Textual",
+      "Command of Evidence — Quantitative",
     ],
     "Craft and Structure": [
       "Words in Context",
@@ -815,10 +859,7 @@ function RWPracticePageContent() {
       "Cross-Text Connections",
     ],
     "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
-    "Standard English Conventions": [
-      "Boundaries",
-      "Form, Structure, and Sense",
-    ],
+    "Standard English Convention": ["Boundaries", "Form Structure and Sense"],
   };
   const domains = Object.keys(domainSkills);
   const availableSkills =
@@ -834,24 +875,7 @@ function RWPracticePageContent() {
           <div className="w-1/2 border-r border-gray-200">
             <SkeletonPassage />
           </div>
-          <div className="w-0 relative flex flex-col items-center justify-center z-10">
-            <div className="absolute top-0 bottom-0 border-l border-gray-200" />
-            <div className="absolute w-4 h-8 bg-gray-100 border border-gray-200 rounded-sm flex flex-col items-center justify-center gap-[2px] shadow-sm">
-              <div className="flex gap-[2px]">
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-              </div>
-              <div className="flex gap-[2px]">
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-              </div>
-              <div className="flex gap-[2px]">
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-                <div className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="w-1/2 bg-gray-50/30 flex flex-col border-l border-gray-100">
+          <div className="w-1/2 bg-gray-50/30 flex flex-col">
             <SkeletonQuestionHeader />
             <SkeletonQuestion />
           </div>

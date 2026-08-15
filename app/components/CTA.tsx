@@ -18,6 +18,7 @@ export default function CallToAction() {
             height={179}
             className="object-contain"
             style={{ width: "auto", height: "auto" }}
+            priority
           />
         </div>
 

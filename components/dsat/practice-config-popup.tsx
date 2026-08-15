@@ -21,19 +21,17 @@ interface PracticeConfig {
 const domainSkills: Record<string, string[]> = {
   "Information and Ideas": [
     "Central Ideas and Details",
-    "Textual Evidence",
     "Inferences",
+    "Command of Evidence — Textual",
+    "Command of Evidence — Quantitative",
   ],
   "Craft and Structure": [
     "Words in Context",
     "Text Structure and Purpose",
     "Cross-Text Connections",
-    "Point of View",
-    "Purpose",
-    "Claims and Counterclaims",
   ],
   "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
-  "Standard English Conventions": ["Boundaries", "Form, Structure, and Sense"],
+  "Standard English Convention": ["Boundaries", "Form Structure and Sense"],
 };
 
 const domains = Object.keys(domainSkills);
@@ -359,38 +357,71 @@ export function PracticeConfigPopup({
                         <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
                           Skills
                         </label>
-                        {selectedSkills.length > 0 && (
-                          <button
-                            onClick={() => setSelectedSkills([])}
-                            className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                          >
-                            Clear all
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 pb-1">
-                        {availableSkills.map((skill) => {
-                          const isSelected = selectedSkills.includes(skill);
-                          return (
-                            <button
-                              key={skill}
-                              onClick={() => {
-                                if (isSelected) {
-                                  setSelectedSkills(
-                                    selectedSkills.filter((s) => s !== skill),
-                                  );
-                                } else {
-                                  setSelectedSkills([...selectedSkills, skill]);
+                        <div className="flex gap-3">
+                          {selectedSkills.length !== availableSkills.length &&
+                            availableSkills.length > 0 && (
+                              <button
+                                onClick={() =>
+                                  setSelectedSkills(availableSkills)
                                 }
-                              }}
-                              className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                                isSelected
-                                  ? "bg-zinc-900 text-white shadow-md"
-                                  : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                              }`}
+                                className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                              >
+                                Select all
+                              </button>
+                            )}
+                          {selectedSkills.length > 0 && (
+                            <button
+                              onClick={() => setSelectedSkills([])}
+                              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
                             >
-                              {skill}
+                              Clear all
                             </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        {selectedDomains.map((domain) => {
+                          const domainSkillList = domainSkills[domain] || [];
+                          if (domainSkillList.length === 0) return null;
+
+                          return (
+                            <div key={domain} className="flex flex-col gap-2">
+                              <span className="text-[11px] font-medium text-zinc-600 uppercase tracking-wider">
+                                {domain}
+                              </span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {domainSkillList.map((skill) => {
+                                  const isSelected =
+                                    selectedSkills.includes(skill);
+                                  return (
+                                    <button
+                                      key={skill}
+                                      onClick={() => {
+                                        if (isSelected) {
+                                          setSelectedSkills(
+                                            selectedSkills.filter(
+                                              (s) => s !== skill,
+                                            ),
+                                          );
+                                        } else {
+                                          setSelectedSkills([
+                                            ...selectedSkills,
+                                            skill,
+                                          ]);
+                                        }
+                                      }}
+                                      className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
+                                        isSelected
+                                          ? "bg-zinc-900 text-white shadow-md"
+                                          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                                      }`}
+                                    >
+                                      {skill}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>

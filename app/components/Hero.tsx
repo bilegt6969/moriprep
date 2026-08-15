@@ -1,4 +1,5 @@
 "use client";
+
 import { motion } from "framer-motion";
 import { memo, useEffect, useState } from "react";
 import { SlotText } from "slot-text/react";
@@ -67,6 +68,12 @@ const schools = [
 // Memoized so it NEVER re-renders when the text changes
 // ==========================================
 const LogoTicker = memo(() => {
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+
+  const handleImageLoad = (index: number) => {
+    setLoadedImages((prev) => new Set(prev).add(index));
+  };
+
   return (
     <div className="absolute bottom-0 left-0 right-0 h-18.75 sm:h-21.25 md:h-25 w-full bg-transparent flex flex-col justify-center z-20">
       <div className="max-w-7xl mx-auto w-full flex flex-col items-center">
@@ -110,14 +117,20 @@ const LogoTicker = memo(() => {
                   rel="noopener noreferrer"
                   className="shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
-                  <img
-                    src={`/schools/${school.logo}`}
-                    alt="University Logo"
-                    width="150"
-                    height="60"
-                    decoding="async"
-                    className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
-                  />
+                  <div className="relative h-9 sm:h-10 md:h-12 w-auto">
+                    {!loadedImages.has(index) && (
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse rounded" />
+                    )}
+                    <img
+                      src={`/schools/${school.logo}`}
+                      alt="University Logo"
+                      width="150"
+                      height="60"
+                      loading="eager"
+                      className={`h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300 ${loadedImages.has(index) ? "opacity-100" : "opacity-0"}`}
+                      onLoad={() => handleImageLoad(index)}
+                    />
+                  </div>
                 </a>
               ))}
             </div>
@@ -133,14 +146,20 @@ const LogoTicker = memo(() => {
                   tabIndex={-1}
                   className="shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
-                  <img
-                    src={`/schools/${school.logo}`}
-                    alt="University Logo"
-                    width="150"
-                    height="60"
-                    decoding="async"
-                    className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
-                  />
+                  <div className="relative h-9 sm:h-10 md:h-12 w-auto">
+                    {!loadedImages.has(index) && (
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse rounded" />
+                    )}
+                    <img
+                      src={`/schools/${school.logo}`}
+                      alt="University Logo"
+                      width="150"
+                      height="60"
+                      loading="eager"
+                      className={`h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300 ${loadedImages.has(index) ? "opacity-100" : "opacity-0"}`}
+                      onLoad={() => handleImageLoad(index)}
+                    />
+                  </div>
                 </a>
               ))}
             </div>
@@ -260,9 +279,7 @@ export function Hero() {
                 }}
               />
               <a
-                href="download.html"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/practice"
                 className="flex items-center justify-center gap-3 px-6 py-3 text-white rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100 relative z-10"
                 style={{
                   borderRadius: "32px",

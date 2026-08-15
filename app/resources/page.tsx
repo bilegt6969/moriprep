@@ -624,10 +624,10 @@ export default function LessonsPage() {
           className="max-w-6xl mx-auto"
         >
           {/* Folders Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 p-8">
             <motion.div
               variants={fadeInUp}
-              className="flex flex-col items-center group"
+              className="flex flex-col items-center group p-6"
             >
               <Link
                 href="https://drive.google.com/drive/folders/1To4VgOSligMHWE-A6M1zYmagvboKqj18?usp=sharing"
@@ -641,14 +641,16 @@ export default function LessonsPage() {
                 <h3 className="text-[17px] font-semibold tracking-tight text-foreground">
                   DSAT MATH
                 </h3>
-                <span className="mt-1 text-[13px] text-muted-foreground">
-                  Math Resources
-                </span>
+                <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[13px] text-muted-foreground">
+                    Math Resources
+                  </span>
+                </div>
               </div>
             </motion.div>
             <motion.div
               variants={fadeInUp}
-              className="flex flex-col items-center group"
+              className="flex flex-col items-center group p-6"
             >
               <Link
                 href="https://drive.google.com/drive/folders/1MzQS12r3xIh5svSQZpSZcCA8RV6XGWeN?usp=sharing"
@@ -662,15 +664,17 @@ export default function LessonsPage() {
                 <h3 className="text-[17px] font-semibold tracking-tight text-foreground">
                   DSAT RW
                 </h3>
-                <span className="mt-1 text-[13px] text-muted-foreground">
-                  Reading & Writing
-                </span>
+                <div className="mt-1 inline-block bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="text-[13px] text-muted-foreground">
+                    Reading & Writing
+                  </span>
+                </div>
               </div>
             </motion.div>
 
             <motion.div
               variants={fadeInUp}
-              className="flex flex-col items-center group"
+              className="flex flex-col items-center group p-6"
             >
               <Link
                 href="https://drive.google.com/drive/folders/1TXd3Ka7wgj6QmY6E1eAqEVOFwgRRS2Mk?usp=sharing"
@@ -684,9 +688,11 @@ export default function LessonsPage() {
                 <h3 className="text-[17px] font-semibold tracking-tight text-foreground">
                   Application Process
                 </h3>
-                <span className="mt-1 text-[13px] text-muted-foreground">
-                  College Applications
-                </span>
+                <div className="mt-1 inline-block bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="text-[13px] text-muted-foreground">
+                    College Applications
+                  </span>
+                </div>
               </div>
             </motion.div>
           </div>

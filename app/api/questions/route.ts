@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const skill = searchParams.get("skill");
     const limit = searchParams.get("limit");
+    const offset = searchParams.get("offset");
     const question_id = searchParams.get("question_id");
     const question_ids = searchParams.get("question_ids");
     const count_only = searchParams.get("count_only");
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
       difficulty,
       skill,
       limit,
+      offset,
       question_id,
       question_ids,
       count_only,
@@ -90,19 +92,78 @@ export async function GET(request: NextRequest) {
 
     let filtered = questionsData;
 
+    // If no filters are provided, return empty count
+    if (!domain && !difficulty && !skill) {
+      if (count_only === "true") {
+        console.log("No filters provided, returning count: 0");
+        return NextResponse.json({ count: 0 });
+      }
+      console.log("No filters provided, returning empty array");
+      return NextResponse.json([]);
+    }
+
+    // Log initial counts for debugging
+    console.log("Total questions in database:", questionsData.length);
+    console.log(
+      "Questions with domain:",
+      questionsData.filter((q: any) => q.domain).length,
+    );
+    console.log(
+      "Questions with difficulty:",
+      questionsData.filter((q: any) => q.difficulty).length,
+    );
+
+    // Log unique domain names in database
+    const uniqueDomains = Array.from(
+      new Set(questionsData.map((q: any) => q.domain).filter(Boolean)),
+    );
+    console.log("Unique domains in database:", uniqueDomains);
+    console.log(
+      "Domain counts:",
+      uniqueDomains.map((d) => ({
+        domain: d,
+        count: questionsData.filter((q: any) => q.domain === d).length,
+      })),
+    );
+
+    // Log unique skill names in database
+    const uniqueSkills = Array.from(
+      new Set(questionsData.map((q: any) => q.skill).filter(Boolean)),
+    );
+    console.log("Unique skills in database:", uniqueSkills);
+    console.log(
+      "Skill counts:",
+      uniqueSkills.map((s) => ({
+        skill: s,
+        count: questionsData.filter((q: any) => q.skill === s).length,
+      })),
+    );
+
     if (domain) {
       const domains = domain.split(",").map((d) => d.trim());
+      const beforeFilter = filtered.length;
       filtered = filtered.filter((q: any) => domains.includes(q.domain));
+      console.log(
+        `Domain filter: ${domains.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
+      );
     }
     if (difficulty) {
       const difficulties = difficulty.split(",").map((d) => d.trim());
+      const beforeFilter = filtered.length;
       filtered = filtered.filter((q: any) =>
         difficulties.includes(q.difficulty),
+      );
+      console.log(
+        `Difficulty filter: ${difficulties.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
       );
     }
     if (skill) {
       const skills = skill.split(",").map((s) => s.trim());
+      const beforeFilter = filtered.length;
       filtered = filtered.filter((q: any) => skills.includes(q.skill));
+      console.log(
+        `Skill filter: ${skills.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
+      );
     }
 
     // If count_only is true, return just the count
@@ -112,7 +173,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (limit) {
-      filtered = filtered.slice(0, parseInt(limit));
+      const limitNum = parseInt(limit);
+      const offsetNum = offset ? parseInt(offset) : 0;
+      filtered = filtered.slice(offsetNum, offsetNum + limitNum);
     }
 
     console.log("Returning", filtered.length, "questions");
