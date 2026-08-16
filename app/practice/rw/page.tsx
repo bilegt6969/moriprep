@@ -364,6 +364,7 @@ function RWPracticePageContent() {
     selectedDifficulties,
     statusFilter,
     attemptFilter,
+    answeredQuestions,
   ]);
 
   useEffect(() => {
@@ -403,12 +404,12 @@ function RWPracticePageContent() {
     setEliminatedChoices(new Set());
     setSelectedAnswer("");
     setHighlightedAnswer("");
-    setIsCrossOutMode(false);
+    // Keep eliminator mode on when moving to next question
+    // setIsCrossOutMode(false);
     setShowExplanation(false);
     setElapsedSeconds(0);
     setIsTimerPaused(false);
     showHistory && setShowHistory(false);
-    setQuestionAttempts([]);
 
     // Clear highlights when moving to a new question
     clearHighlights();
@@ -427,6 +428,8 @@ function RWPracticePageContent() {
       } else {
         setQuestionAttempts([]);
       }
+    } else {
+      setQuestionAttempts([]);
     }
   }, [selectedQuestion, user, isAuthLoaded]);
 
@@ -956,6 +959,30 @@ function RWPracticePageContent() {
     });
   };
 
+  const handleWordDoubleClick = (e: React.MouseEvent) => {
+    // e.detail === 2 means it was a rapid double-click
+    if (e.detail === 2) {
+      // Small timeout lets the browser finish natively selecting the word
+      setTimeout(() => {
+        const selection = window.getSelection();
+
+        // If a word was successfully selected, highlight it instantly
+        if (
+          selection &&
+          !selection.isCollapsed &&
+          selection.toString().trim().length > 0
+        ) {
+          // Set the current selection for applyHighlight to use
+          const range = selection.getRangeAt(0);
+          setCurrentSelection(range);
+
+          // Uses the last active color, or defaults to yellow if none was picked yet
+          applyHighlight(activeHighlightColor || "bg-yellow-200");
+        }
+      }, 10);
+    }
+  };
+
   // Clear highlights when highlight tool is disabled
   useEffect(() => {
     if (!isHighlightActive) {
@@ -1324,6 +1351,13 @@ function RWPracticePageContent() {
                     #{selectedQuestion?.question_id || "N/A"}
                   </span>
                 </div>
+                {selectedQuestion?.difficulty && (
+                  <div className="flex items-center gap-1.5 border border-gray-100 rounded-full px-3 py-1.5 bg-white shadow-sm">
+                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      {selectedQuestion.difficulty}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </header>
@@ -1334,6 +1368,7 @@ function RWPracticePageContent() {
             <div
               style={{ width: `${leftPaneWidth}%` }}
               className={`passage-content p-10 md:p-12 overflow-y-auto ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+              onClick={handleWordDoubleClick}
             >
               <div
                 ref={passageRef}
@@ -1439,6 +1474,7 @@ function RWPracticePageContent() {
                 ref={questionRef}
                 className={`p-8 md:p-12 pt-8 pb-8 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
                 onMouseUp={handleTextSelection}
+                onClick={handleWordDoubleClick}
               >
                 {selectedQuestion.prompt && (
                   <div className="mb-8 text-[16px] font-serif text-[#1C1C1E] leading-relaxed">
