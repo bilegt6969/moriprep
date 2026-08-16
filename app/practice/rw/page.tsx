@@ -877,8 +877,12 @@ function RWPracticePageContent() {
     });
   };
 
-  const applyHighlight = (colorClass: string) => {
-    if (!currentSelection || currentSelection.collapsed) {
+  // FIX: Accept an optional overrideRange parameter
+  const applyHighlight = (colorClass: string, overrideRange?: Range) => {
+    // Use the passed range from double-click, or fallback to state for manual drag selections
+    const targetRange = overrideRange || currentSelection;
+
+    if (!targetRange || targetRange.collapsed) {
       setHighlightMenu({ visible: false, x: 0, y: 0 });
       return;
     }
@@ -894,7 +898,7 @@ function RWPracticePageContent() {
           : "#bfdbfe";
 
     // --- NEW: Check if we are updating an existing highlight ---
-    const node = currentSelection.commonAncestorContainer;
+    const node = targetRange.commonAncestorContainer;
     // Get the parent element if the node is a text node
     const parentElement =
       node.nodeType === Node.TEXT_NODE
@@ -929,7 +933,8 @@ function RWPracticePageContent() {
     }
 
     try {
-      wrapRangeMultiNode(currentSelection, span);
+      // FIX: Use targetRange here instead of currentSelection
+      wrapRangeMultiNode(targetRange, span);
     } catch (e) {
       console.error("Highlight error:", e);
     }
@@ -960,24 +965,23 @@ function RWPracticePageContent() {
   };
 
   const handleWordDoubleClick = (e: React.MouseEvent) => {
-    // e.detail === 2 means it was a rapid double-click
+    // FIX: Respect the highlighter toggle state
+    if (!isHighlightActive) return;
+
     if (e.detail === 2) {
-      // Small timeout lets the browser finish natively selecting the word
       setTimeout(() => {
         const selection = window.getSelection();
 
-        // If a word was successfully selected, highlight it instantly
         if (
           selection &&
           !selection.isCollapsed &&
           selection.toString().trim().length > 0
         ) {
-          // Set the current selection for applyHighlight to use
           const range = selection.getRangeAt(0);
           setCurrentSelection(range);
 
-          // Uses the last active color, or defaults to yellow if none was picked yet
-          applyHighlight(activeHighlightColor || "bg-yellow-200");
+          // FIX: Pass the range directly to bypass React's async state delay
+          applyHighlight(activeHighlightColor || "bg-yellow-200", range);
         }
       }, 10);
     }
@@ -1190,7 +1194,11 @@ function RWPracticePageContent() {
               </button>
               <button
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setHighlightMenu({ visible: false, x: 0, y: 0 })}
+                onClick={() => {
+                  // FIX: Actually clear the highlights before closing the menu
+                  clearHighlights();
+                  setHighlightMenu({ visible: false, x: 0, y: 0 });
+                }}
                 className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <Trash2 size={18} />
