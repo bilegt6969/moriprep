@@ -2,13 +2,12 @@
 
 import { motion } from "framer-motion";
 import {
-    ArrowDownToLine,
-    Check,
-    DollarSign,
-    Flame,
-    Repeat2,
+  ArrowDownToLine,
+  DollarSign,
+  Flame,
+  Repeat2
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import BackupButton from "../../components/BackupButton";
 
 const COLORS = {
@@ -27,9 +26,7 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.1 },
   },
 };
 
@@ -38,20 +35,12 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.5,
-    },
+    transition: { duration: 0.5 },
   },
 };
 
-const headingStyle = {
-  color: COLORS.heading,
-  letterSpacing: "-0.02em",
-};
-
-const bodyStyle = {
-  letterSpacing: "-0.01em",
-};
+const headingStyle = { color: COLORS.heading, letterSpacing: "-0.02em" };
+const bodyStyle = { letterSpacing: "-0.01em" };
 
 function CardFooter({
   title,
@@ -118,41 +107,123 @@ function ActionRow({
   );
 }
 
-function TimelineStep({
-  label,
-  date,
-  time,
-  isLast,
-}: {
-  label: string;
-  date: string;
-  time: string;
-  isLast?: boolean;
-}) {
+function AnimatedTimelineCard() {
+  const [tick, setTick] = useState(0);
+
+  // A precise state-engine for the waterfall animation.
+  // 0: Reset, 1: Dot1, 2: Line1, 3: Dot2, 4: Line2, 5: Dot3. (6-11: hold state to read)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => (t + 1) % 12);
+    }, 400); // 400ms pace feels very natural
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    {
+      label: "Reading & Writing",
+      date: "",
+      time: "1669 questions",
+      dotTick: 1,
+      lineTick: 2,
+    },
+    {
+      label: "Math Domains",
+      date: "Desmos",
+      time: "2890 questions",
+      dotTick: 3,
+      lineTick: 4,
+    },
+    {
+      label: "Bluebook UI",
+      date: "Aug 11 2026",
+      time: "14:42",
+      dotTick: 5,
+      lineTick: 99,
+    },
+  ];
+
   return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center">
-        <span
-          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: COLORS.blue }}
-        >
-          <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
-        </span>
-        {!isLast && <span className="my-0.5 w-px flex-1 bg-blue-100" />}
-      </div>
-      <div
-        className={`flex flex-1 items-center justify-between ${isLast ? "" : "pb-4"}`}
-      >
-        <span
-          className="text-[15px] font-semibold"
-          style={{ color: COLORS.blue, ...bodyStyle }}
-        >
-          {label}
-        </span>
-        <span className="text-xs text-gray-400" style={bodyStyle}>
-          {date} · {time}
-        </span>
-      </div>
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+      {steps.map((step, idx) => {
+        const isLast = idx === steps.length - 1;
+        const isDotCompleted = tick >= step.dotTick;
+        const isLineCompleted = tick >= step.lineTick;
+
+        return (
+          <div key={step.label} className="flex gap-3">
+            {/* Visual Indicator Column */}
+            <div className="flex flex-col items-center">
+              {/* The Dot */}
+              <motion.div
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                animate={{
+                  backgroundColor: isDotCompleted ? COLORS.blue : "#E5E7EB",
+                  scale: isDotCompleted ? [1, 1.25, 1] : 1, // Subtle satisfying tactile pop
+                }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+              >
+                {/* SVG stays in DOM to prevent layout thrashing; only path draws */}
+                <motion.svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-2.5 w-2.5 text-white"
+                >
+                  <motion.path
+                    d="M4.5 12.5L9 17L19.5 6.5"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{
+                      pathLength: isDotCompleted ? 1 : 0,
+                      opacity: isDotCompleted ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeOut", delay: 0.05 }}
+                  />
+                </motion.svg>
+              </motion.div>
+
+              {/* The Connecting Line */}
+              {!isLast && (
+                <div className="relative my-1 w-[2px] flex-1 overflow-hidden rounded-full bg-gray-100">
+                  <motion.div
+                    className="absolute inset-0 w-full origin-top"
+                    style={{ backgroundColor: COLORS.blue }}
+                    initial={{ scaleY: 0 }}
+                    animate={{ scaleY: isLineCompleted ? 1 : 0 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Text Column */}
+            <div
+              className={`flex flex-1 items-center justify-between ${isLast ? "" : "pb-4"}`}
+            >
+              <motion.span
+                className="text-[15px] font-semibold"
+                animate={{ color: isDotCompleted ? COLORS.blue : "#9CA3AF" }}
+                transition={{ duration: 0.35 }}
+                style={bodyStyle}
+              >
+                {step.label}
+              </motion.span>
+              <motion.span
+                className="text-xs"
+                animate={{ color: isDotCompleted ? "#9CA3AF" : "#D1D5DB" }}
+                transition={{ duration: 0.35 }}
+                style={bodyStyle}
+              >
+                {step.date ? `${step.date} · ` : ""}
+                {step.time}
+              </motion.span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -172,7 +243,6 @@ export function Explore() {
   return (
     <section className="px-4 py-16 md:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl">
-        {/* Section Header */}
         <motion.h1
           className="mb-8 text-center text-[2.5rem] font-medium leading-[1.05] tracking-tighter md:text-[3.25rem]"
           style={headingStyle}
@@ -183,7 +253,6 @@ export function Explore() {
           DSAT prep made easier
         </motion.h1>
 
-        {/* Bento Grid Layout */}
         <motion.div
           className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4"
           variants={containerVariants}
@@ -268,29 +337,12 @@ export function Explore() {
             />
           </motion.div>
 
-          {/* Fast Card */}
+          {/* College Board Aligned Card - Now Smoothed Out */}
           <motion.div
             className="flex flex-col justify-between gap-5 rounded-3xl bg-[#fafafa] p-5 md:p-6"
             variants={itemVariants}
           >
-            <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <TimelineStep
-                label="Reading & Writing"
-                date=""
-                time="1669 questions"
-              />
-              <TimelineStep
-                label="Math Domains"
-                date="Desmos"
-                time="2890 questions"
-              />
-              <TimelineStep
-                label="Bluebook UI"
-                date="Aug 11 2026"
-                time="14:42"
-                isLast
-              />
-            </div>
+            <AnimatedTimelineCard />
             <CardFooter
               title="College Board Aligned"
               description="Real exam difficulty, adaptive structure, and domain breakdowns."
