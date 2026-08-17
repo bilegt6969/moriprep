@@ -1,13 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import {
-  ArrowDownToLine,
-  DollarSign,
-  Flame,
-  Repeat2
-} from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { ArrowDownToLine, DollarSign, Flame, Repeat2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import BackupButton from "../../components/BackupButton";
 
 const COLORS = {
@@ -64,45 +59,115 @@ function CardFooter({
   );
 }
 
-function ActionRow({
-  icon,
-  color,
-  title,
-  description,
-  badge,
-}: {
-  icon: ReactNode;
-  color: string;
-  title: string;
-  description: string;
-  badge?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl bg-[#111111] p-3.5">
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ backgroundColor: color }}
+// -----------------------------------------------------
+// Animated Features List (All-In-One Card)
+// -----------------------------------------------------
+const FEATURES_DATA = [
+  {
+    id: "practice",
+    title: "Practice Bank",
+    description: "Official College Board DSAT questions by domain.",
+    color: COLORS.blue,
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        className="h-4 w-4 text-white"
       >
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-[15px] font-semibold text-white" style={bodyStyle}>
-            {title}
-          </p>
-          {badge && (
-            <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-medium text-white/60">
-              {badge}
-            </span>
-          )}
-        </div>
-        <p
-          className="mt-0.5 text-[13px] leading-snug text-white/45"
-          style={bodyStyle}
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M5 12h14M12 5l7 7-7 7"
+        />
+      </svg>
+    ),
+    hoverAnim: { x: 5, scale: 1.15 },
+  },
+  {
+    id: "review",
+    title: "Smart Review",
+    description: "Target missed questions with adaptive review loops.",
+    color: COLORS.gray,
+    icon: <Repeat2 className="h-4 w-4 text-white" strokeWidth={2.5} />,
+    hoverAnim: { rotate: 180, scale: 1.15 },
+  },
+  {
+    id: "resources",
+    title: "Free Resources",
+    description: "Download prep books, cheat sheets, and strategy guides.",
+    color: COLORS.green,
+    icon: <ArrowDownToLine className="h-4 w-4 text-white" strokeWidth={2.5} />,
+    hoverAnim: { scale: 1.15 },
+  },
+  {
+    id: "open",
+    title: "100% Open",
+    badge: "Free",
+    description: "Zero paywalls or subscriptions—powered by Bytecode.",
+    color: COLORS.pink,
+    icon: <DollarSign className="h-4 w-4 text-white" strokeWidth={2.5} />,
+    hoverAnim: { rotateY: 180, scale: 1.15 },
+  },
+];
+
+function AnimatedFeaturesCard() {
+  return (
+    <div className="flex flex-col gap-2">
+      {FEATURES_DATA.map((feature, index) => (
+        <motion.div
+          key={feature.id}
+          initial={{ opacity: 0, x: -15 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            duration: 0.4,
+            delay: index * 0.1 + 0.2,
+            ease: "easeOut",
+          }}
+          whileHover="hover"
+          whileTap="tap"
+          className="group flex cursor-pointer items-start gap-3 rounded-2xl bg-[#111111] p-3.5 transition-colors hover:bg-[#1a1a1a]"
         >
-          {description}
-        </p>
-      </div>
+          <motion.div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: feature.color }}
+            variants={{
+              hover: feature.hoverAnim,
+              tap: { scale: 0.9 },
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 15,
+            }}
+          >
+            {feature.icon}
+          </motion.div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p
+                className="text-[15px] font-semibold text-white transition-colors group-hover:text-gray-200"
+                style={bodyStyle}
+              >
+                {feature.title}
+              </p>
+              {feature.badge && (
+                <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-medium text-white/60">
+                  {feature.badge}
+                </span>
+              )}
+            </div>
+            <p
+              className="mt-0.5 text-[13px] leading-snug text-white/45 transition-colors group-hover:text-white/60"
+              style={bodyStyle}
+            >
+              {feature.description}
+            </p>
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 }
@@ -110,12 +175,10 @@ function ActionRow({
 function AnimatedTimelineCard() {
   const [tick, setTick] = useState(0);
 
-  // A precise state-engine for the waterfall animation.
-  // 0: Reset, 1: Dot1, 2: Line1, 3: Dot2, 4: Line2, 5: Dot3. (6-11: hold state to read)
   useEffect(() => {
     const interval = setInterval(() => {
       setTick((t) => (t + 1) % 12);
-    }, 400); // 400ms pace feels very natural
+    }, 400);
     return () => clearInterval(interval);
   }, []);
 
@@ -152,18 +215,20 @@ function AnimatedTimelineCard() {
 
         return (
           <div key={step.label} className="flex gap-3">
-            {/* Visual Indicator Column */}
             <div className="flex flex-col items-center">
-              {/* The Dot */}
               <motion.div
                 className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
                 animate={{
                   backgroundColor: isDotCompleted ? COLORS.blue : "#E5E7EB",
-                  scale: isDotCompleted ? [1, 1.25, 1] : 1, // Subtle satisfying tactile pop
+                  scale: isDotCompleted ? 1.25 : 1, // Fixed: single target for spring compatibility
                 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
+                transition={{
+                  duration: 0.35,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 15,
+                }}
               >
-                {/* SVG stays in DOM to prevent layout thrashing; only path draws */}
                 <motion.svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -185,7 +250,6 @@ function AnimatedTimelineCard() {
                 </motion.svg>
               </motion.div>
 
-              {/* The Connecting Line */}
               {!isLast && (
                 <div className="relative my-1 w-[2px] flex-1 overflow-hidden rounded-full bg-gray-100">
                   <motion.div
@@ -199,7 +263,6 @@ function AnimatedTimelineCard() {
               )}
             </div>
 
-            {/* Text Column */}
             <div
               className={`flex flex-1 items-center justify-between ${isLast ? "" : "pb-4"}`}
             >
@@ -228,16 +291,189 @@ function AnimatedTimelineCard() {
   );
 }
 
-const FUN_BUBBLES: { emoji: string; color: string }[] = [
-  { emoji: "\u{1F3A9}", color: COLORS.purple },
-  { emoji: "\u{1F419}", color: COLORS.blue },
-  { emoji: "\u{1F91D}", color: COLORS.green },
-  { emoji: "\u{1F60E}", color: COLORS.blue },
-  { emoji: "\u{2764}\u{FE0F}\u{200D}\u{1F525}", color: COLORS.red },
-  { emoji: "\u{1F60B}", color: COLORS.yellow },
-  { emoji: "\u{1F98A}", color: COLORS.orange },
-  { emoji: "\u{1F47D}", color: COLORS.pink },
+function AnimatedSessionsCard() {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, Math.round);
+  const [isDone, setIsDone] = useState(false);
+
+  useEffect(() => {
+    const controls = animate(count, 23, {
+      type: "tween",
+      duration: 3.5,
+      ease: [0.25, 1, 0.5, 1],
+      onComplete: () => setIsDone(true),
+    });
+    return controls.stop;
+  }, [count]);
+
+  return (
+    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-orange-50/60"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isDone ? 1 : 0 }}
+        transition={{ duration: 1.5 }}
+      />
+
+      <span
+        className="relative z-10 text-lg font-semibold"
+        style={{ color: COLORS.heading, ...bodyStyle }}
+      >
+        Sessions
+      </span>
+
+      <div className="relative z-10 flex items-center gap-1.5">
+        <span
+          className="flex items-center gap-1 text-sm font-medium text-gray-500"
+          style={bodyStyle}
+        >
+          ~{" "}
+          <motion.span
+            className="inline-block min-w-[1.15rem] text-center font-bold"
+            animate={
+              isDone
+                ? { scale: 1.2, color: COLORS.orange }
+                : { color: "#6B7280", scale: 1 }
+            }
+            transition={{ duration: 0.4, type: "spring", stiffness: 400 }}
+          >
+            {rounded}
+          </motion.span>{" "}
+          days
+        </span>
+
+        <div className="relative flex items-center justify-center">
+          <motion.div
+            className="absolute inset-0 rounded-full bg-orange-400 blur-md"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{
+              opacity: isDone ? [0.15, 0.35, 0.15] : 0,
+              scale: isDone ? [1, 1.4, 1] : 0.5,
+            }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, -5, 5, -2, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="relative z-10 origin-bottom"
+          >
+            <Flame
+              className="h-5 w-5 drop-shadow-sm"
+              style={{ color: COLORS.orange }}
+              fill={COLORS.orange}
+            />
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ALL_FUN_BUBBLES: { emoji: string; color: string }[] = [
+  { emoji: "🎩", color: COLORS.purple },
+  { emoji: "🐙", color: COLORS.blue },
+  { emoji: "🤝", color: COLORS.green },
+  { emoji: "😎", color: COLORS.blue },
+  { emoji: "❤️‍🔥", color: COLORS.red },
+  { emoji: "😋", color: COLORS.yellow },
+  { emoji: "🦊", color: COLORS.orange },
+  { emoji: "👽", color: COLORS.pink },
 ];
+
+function AnimatedFunCard() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(ALL_FUN_BUBBLES.length);
+
+  useEffect(() => {
+    const calculateVisibleBubbles = () => {
+      if (!containerRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth;
+
+      // Math breakdown:
+      // First bubble = 56px (w-14)
+      // Remaining space = containerWidth - 56px
+      // Each additional bubble takes 40px (56px width - 16px negative margin)
+      if (containerWidth < 56) {
+        setVisibleCount(1);
+        return;
+      }
+
+      const additionalBubbles = Math.floor((containerWidth - 56) / 40);
+      const maxBubbles = 1 + additionalBubbles;
+
+      // Clamp the number between 1 and the total available emojis
+      setVisibleCount(
+        Math.max(1, Math.min(maxBubbles, ALL_FUN_BUBBLES.length)),
+      );
+    };
+
+    // Run calculation on mount
+    calculateVisibleBubbles();
+
+    // Attach ResizeObserver to dynamically adjust on window/container resize
+    const observer = new ResizeObserver(() => {
+      calculateVisibleBubbles();
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Slice the array based on the dynamic calculation
+  const visibleBubbles = ALL_FUN_BUBBLES.slice(0, visibleCount);
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex items-center overflow-visible py-2 w-full"
+    >
+      {visibleBubbles.map((bubble, index) => (
+        <motion.div
+          key={bubble.emoji} // Better to use a unique property than array index
+          drag
+          dragSnapToOrigin
+          dragElastic={0.2}
+          whileHover={{
+            scale: 1.15,
+            zIndex: 40,
+            rotate: index % 2 === 0 ? 10 : -10,
+            transition: { type: "spring", stiffness: 400, damping: 10 },
+          }}
+          whileTap={{ scale: 0.9, cursor: "grabbing" }}
+          initial={{ opacity: 0, scale: 0, x: -10 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 20,
+            delay: index * 0.05 + 0.3,
+          }}
+          // Notice we removed the "hidden md:flex" and "md:hidden" logic entirely
+          className="relative flex h-14 w-14 shrink-0 select-none cursor-grab items-center justify-center rounded-full text-2xl shadow-sm ring-4 ring-[#fafafa]"
+          style={{
+            backgroundColor: bubble.color,
+            marginLeft: index === 0 ? 0 : -16,
+            zIndex: visibleBubbles.length - index,
+          }}
+        >
+          {bubble.emoji}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
 
 export function Explore() {
   return (
@@ -259,71 +495,17 @@ export function Explore() {
           initial="hidden"
           animate="visible"
         >
-          {/* Easy Card - Spans 2 rows */}
           <motion.div
             className="flex flex-col justify-between gap-6 overflow-hidden rounded-3xl bg-[#fafafa] p-5 md:row-span-2 md:p-6"
             variants={itemVariants}
           >
-            <div className="flex flex-col gap-2">
-              <ActionRow
-                icon={
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    className="h-4 w-4 text-white"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 12h14M12 5l7 7-7 7"
-                    />
-                  </svg>
-                }
-                color={COLORS.blue}
-                title="Practice Bank"
-                description="Official College Board DSAT questions by domain."
-              />
-              <ActionRow
-                icon={
-                  <Repeat2 className="h-4 w-4 text-white" strokeWidth={2.5} />
-                }
-                color={COLORS.gray}
-                title="Smart Review"
-                description="Target missed questions with adaptive review loops."
-              />
-              <ActionRow
-                icon={
-                  <ArrowDownToLine
-                    className="h-4 w-4 text-white"
-                    strokeWidth={2.5}
-                  />
-                }
-                color={COLORS.green}
-                title="Free Resources"
-                description="Download prep books, cheat sheets, and strategy guides."
-              />
-              <ActionRow
-                icon={
-                  <DollarSign
-                    className="h-4 w-4 text-white"
-                    strokeWidth={2.5}
-                  />
-                }
-                color={COLORS.pink}
-                title="100% Open"
-                badge="Free"
-                description="Zero paywalls or subscriptions—powered by Bytecode."
-              />
-            </div>
+            <AnimatedFeaturesCard />
             <CardFooter
               title="All-In-One"
               description="Everything you need for a 1500+ score in one dashboard."
             />
           </motion.div>
 
-          {/* Secure Card */}
           <motion.div
             className="flex flex-col justify-between gap-5 rounded-3xl bg-[#fafafa] p-5 md:p-6"
             variants={itemVariants}
@@ -337,7 +519,6 @@ export function Explore() {
             />
           </motion.div>
 
-          {/* College Board Aligned Card - Now Smoothed Out */}
           <motion.div
             className="flex flex-col justify-between gap-5 rounded-3xl bg-[#fafafa] p-5 md:p-6"
             variants={itemVariants}
@@ -349,57 +530,22 @@ export function Explore() {
             />
           </motion.div>
 
-          {/* Powerful Card */}
           <motion.div
             className="flex flex-col justify-between gap-5 rounded-3xl bg-[#fafafa] p-5 md:p-6"
             variants={itemVariants}
           >
-            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-              <span
-                className="text-lg font-semibold"
-                style={{ color: COLORS.heading, ...bodyStyle }}
-              >
-                Sessions
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="text-sm font-medium text-gray-500"
-                  style={bodyStyle}
-                >
-                  ~ 23 days
-                </span>
-                <Flame
-                  className="h-5 w-5"
-                  style={{ color: COLORS.orange }}
-                  fill={COLORS.orange}
-                />
-              </div>
-            </div>
+            <AnimatedSessionsCard />
             <CardFooter
               title="Reward system"
               description="Pinpoint weak spots in specific math concepts or grammar rules instantly."
             />
           </motion.div>
 
-          {/* Fun Card */}
           <motion.div
             className="flex flex-col justify-between gap-5 rounded-3xl bg-[#fafafa] p-5 md:p-6"
             variants={itemVariants}
           >
-            <div className="flex items-center overflow-hidden">
-              {FUN_BUBBLES.map((bubble, index) => (
-                <div
-                  key={index}
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl ring-4 ring-[#fafafa]"
-                  style={{
-                    backgroundColor: bubble.color,
-                    marginLeft: index === 0 ? 0 : -16,
-                  }}
-                >
-                  {bubble.emoji}
-                </div>
-              ))}
-            </div>
+            <AnimatedFunCard />
             <CardFooter
               title="Fun"
               description="bytecode family takes fun seriously. Delightful interactions with every tap."

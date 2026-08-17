@@ -164,8 +164,8 @@ export default function Navbar({
                   <Image
                     src="/morin.svg"
                     alt={siteName}
-                    width={1666}
-                    height={360}
+                    width={200}
+                    height={43}
                     className="h-4 w-auto max-w-[5.5rem] object-contain object-left opacity-60 sm:h-[1rem] sm:max-w-[6rem]"
                     priority
                   />

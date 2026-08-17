@@ -1,8 +1,48 @@
 "use client";
 
 import Navbar from "components/Heading/Navbar";
-import Image from "next/image";
-import { FC, ReactNode } from "react";
+import Image, { ImageProps } from "next/image";
+import { FC, ReactNode, useState } from "react";
+
+// --- Custom Image with Skeleton ---
+
+interface ImageWithSkeletonProps extends ImageProps {
+  wrapperClassName?: string;
+  skeletonClassName?: string;
+}
+
+const ImageWithSkeleton: FC<ImageWithSkeletonProps> = ({
+  wrapperClassName = "",
+  skeletonClassName = "",
+  ...props
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div
+      className={`relative ${props.fill ? "h-full w-full" : ""} ${wrapperClassName}`}
+    >
+      {/* Skeleton Pulse Layer */}
+      {!isLoaded && (
+        <div
+          className={`absolute inset-0 z-0 animate-pulse bg-gray-200 ${skeletonClassName}`}
+          aria-hidden="true"
+        />
+      )}
+      {/* Actual Image */}
+      <Image
+        {...props}
+        className={`${props.className || ""} relative z-10 transition-opacity duration-500 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={(e) => {
+          setIsLoaded(true);
+          if (props.onLoad) props.onLoad(e);
+        }}
+      />
+    </div>
+  );
+};
 
 // --- Shared Reusable Assets ---
 
@@ -55,8 +95,7 @@ interface ShowcaseProps {
   demoSubtitle?: string;
   demoThumbnailSrc: string;
   videoSrc?: string;
-  posterSrc: string;
-  phoneImageSrc?: string;
+  imageSrc: string;
   reversed?: boolean;
 }
 
@@ -72,13 +111,12 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
   demoSubtitle = "Watch the demo",
   demoThumbnailSrc,
   videoSrc = "",
-  posterSrc,
-  phoneImageSrc = "/assets/phone.png",
+  imageSrc,
   reversed = false,
 }) => {
   return (
     <section className="w-full overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 md:px-6 lg:px-10 py-[5.625rem] md:grid-cols-2 md:gap-x-[5.75rem]">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 py-12 md:grid-cols-2 md:gap-x-[5.75rem] md:px-6 lg:px-10">
         {/* Text Content Column */}
         <div
           className={`flex flex-col gap-4 ${reversed ? "md:order-2" : "md:order-1"}`}
@@ -122,11 +160,12 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
             <div className="relative flex items-center justify-center">
               <PlayIcon />
               <div className="relative h-[44px] w-[78px] overflow-hidden rounded-md bg-gray-100">
-                <Image
+                <ImageWithSkeleton
                   src={demoThumbnailSrc}
                   alt={`${demoTitle} thumbnail`}
                   fill
                   className="object-cover"
+                  skeletonClassName="rounded-md"
                 />
               </div>
             </div>
@@ -142,39 +181,37 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
           </button>
         </div>
 
-        {/* Media / Phone Mockup Column */}
+        {/* Media / Gray Padded Container (Redesigned) */}
         <div
           className={`flex items-center justify-center ${reversed ? "md:order-1" : "md:order-2"}`}
         >
-          <div className="relative -mb-[30%] flex w-full max-w-[381px] items-center justify-center px-6 pt-8 pb-0 md:-mb-[50%]">
-            {/* Phone Bezel */}
-            <Image
-              src={phoneImageSrc}
-              alt="App interface mockup frame"
-              width={381}
-              height={751}
-              priority
-              className="relative z-10 h-auto w-full"
-            />
-
-            {/* Embedded Screen Video */}
-            <div className="absolute top-[3%] z-0 h-[94%] w-[88%] overflow-hidden rounded-[2.5rem]">
-              {videoSrc ? (
-                <video
-                  src={videoSrc}
-                  poster={posterSrc}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div
-                  className="h-full w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${posterSrc})` }}
-                />
-              )}
+          <div className="relative flex w-full max-w-[700px] items-center justify-center">
+            {/* Gray background padding with no shadows */}
+            <div className="relative w-full rounded-[24px] bg-[#fafafa] p-2 sm:p-3 lg:p-4">
+              {/* Inner image/video container with its own rounded corners */}
+              <div className="relative w-full overflow-hidden rounded-[12px] bg-white">
+                {videoSrc ? (
+                  <video
+                    src={videoSrc}
+                    poster={imageSrc}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-auto w-full object-cover"
+                  />
+                ) : (
+                  <ImageWithSkeleton
+                    src={imageSrc}
+                    alt="App interface preview"
+                    width={1200}
+                    height={800}
+                    wrapperClassName="w-full"
+                    className="h-auto w-full object-cover"
+                    skeletonClassName="aspect-[4/3] w-full"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -214,8 +251,8 @@ export function DSATShowcase() {
           "Bluebook-Style UI",
         ]}
         demoTitle="Question Bank Demo"
-        demoThumbnailSrc="/videos/promo-watch.png"
-        posterSrc="/videos/promo-watch.png"
+        demoThumbnailSrc="/assets/image.png"
+        imageSrc="/assets/image.png"
         reversed={false}
       />
 
@@ -236,8 +273,8 @@ export function DSATShowcase() {
           "Real-Time Pacing Metrics",
         ]}
         demoTitle="Analytics Overview"
-        demoThumbnailSrc="/videos/promo-activity.png"
-        posterSrc="/videos/promo-activity.png"
+        demoThumbnailSrc="/assets/image copy.png"
+        imageSrc="/assets/image copy.png"
         reversed={true}
       />
     </main>
@@ -265,7 +302,7 @@ export default function FeaturesPage() {
         ]}
         demoTitle="Question Bank Demo"
         demoThumbnailSrc="/videos/promo-watch.png"
-        posterSrc="/videos/promo-watch.png"
+        imageSrc="/videos/promo-watch.png"
         reversed={false}
       />
 
@@ -287,7 +324,7 @@ export default function FeaturesPage() {
         ]}
         demoTitle="Analytics Overview"
         demoThumbnailSrc="/videos/promo-activity.png"
-        posterSrc="/videos/promo-activity.png"
+        imageSrc="/videos/promo-activity.png"
         reversed={true}
       />
     </main>

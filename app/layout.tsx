@@ -66,8 +66,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main>{children}</main>
           </CookieConsentProvider>
         </Providers>
-        <Analytics />
       </body>
+      <Analytics />
     </html>
   );
 }

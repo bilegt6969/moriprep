@@ -180,6 +180,9 @@ export function Hero() {
   const words = ["Free", "Super", "Open"];
   const [wordIndex, setWordIndex] = useState(0);
 
+  // Track image load state
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setWordIndex((prev: number) => (prev + 1) % words.length);
@@ -311,14 +314,22 @@ export function Hero() {
         variants={textVariants}
         initial="hidden"
         animate="visible"
-        className="absolute bottom-0 left-0 right-0 z-10 w-full pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 z-10 w-full pointer-events-none flex justify-center"
       >
+        {/* Placeholder Skeleton */}
         <img
-          src="/home/68e8f533b2d110c6d06c6afd_Group 1261154922 (2).avif"
+          src="/home/68e8f533b2d110c6d06c6afd_Group%201261154922%20(2).avif"
           alt="Illustration"
-          className="w-[95%] sm:w-[90%] md:max-w-375 mx-auto h-auto block translate-y-[6%]"
+          onLoad={() => setImgLoaded(true)}
+          className={`block mx-auto transition-opacity duration-700 ease-out
+            /* Mobile: Width 150% scales it up. h-[35vh] with object-cover forces the bottom half to be cut off */
+            w-[150%] max-w-[150%] h-[35vh] object-cover object-top translate-y-[15%]
+            /* Tablet/Desktop: Restores the standard behavior and proportions */
+            sm:w-[90%] sm:max-w-none sm:h-auto sm:object-contain sm:translate-y-[6%] md:max-w-375
+            opacity-100
+          `}
         />
-        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 bg-linear-to-t from-white/90 from-30% via-white/80 via-60% to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 bg-linear-to-t from-white/90 from-30% via-white/80 via-60% to-transparent pointer-events-none" />
       </motion.div>
 
       {/* RENDER ISOLATED TICKER */}
