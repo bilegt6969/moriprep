@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
     const count_only = searchParams.get("count_only");
     const domains_only = searchParams.get("domains_only");
     const skills_only = searchParams.get("skills_only");
+    const attempt_filter = searchParams.get("attempt_filter");
+    const status_filter = searchParams.get("status_filter");
 
     console.log("Query params:", {
       domain,
@@ -46,6 +48,8 @@ export async function GET(request: NextRequest) {
       count_only,
       domains_only,
       skills_only,
+      attempt_filter,
+      status_filter,
     });
 
     // If question_id is provided, return only that question
@@ -165,6 +169,9 @@ export async function GET(request: NextRequest) {
         `Skill filter: ${skills.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
       );
     }
+
+    // Note: attempt_filter and status_filter are handled client-side
+    // since we don't have Firebase Admin SDK credentials configured
 
     // If count_only is true, return just the count
     if (count_only === "true") {

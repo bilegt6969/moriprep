@@ -7,7 +7,7 @@ import {
 } from "lib/auth/cookies";
 import { cookies } from "next/headers";
 
-function getAdminApp(): App {
+export function getAdminApp(): App {
   const existing = getApps()[0];
   if (existing) {
     return existing;

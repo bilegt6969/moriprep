@@ -1,8 +1,9 @@
 "use client";
 
+import { auth, db, doc, getDoc } from "@/lib/firebase";
+import type { Auth } from "firebase/auth";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
-import { auth, db, doc, getDoc } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -75,7 +76,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
       if (!user) {
         router.replace("/sign-in?next=/account");
         return;
@@ -99,7 +100,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     const fetchOnboardingData = async () => {
-      if (!auth?.currentUser) return;
+      if (!auth?.currentUser || !db) return;
       try {
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {

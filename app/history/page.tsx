@@ -1,8 +1,9 @@
 "use client";
 
+import { auth, db } from "@/lib/firebase";
+import type { Auth } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { motion, useReducedMotion } from "framer-motion";
-import { auth, db } from "lib/firebase";
 import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
@@ -155,14 +156,16 @@ export default function HistoryPage() {
       }
     };
 
-    const unsubscribe = auth?.onAuthStateChanged?.((user: any) => {
-      if (user) {
-        setIsAuthenticated(true);
-        fetchQuestionHistory();
-      } else {
-        setIsLoading(false);
-      }
-    });
+    const unsubscribe = auth
+      ? (auth as Auth).onAuthStateChanged?.((user: any) => {
+          if (user) {
+            setIsAuthenticated(true);
+            fetchQuestionHistory();
+          } else {
+            setIsLoading(false);
+          }
+        })
+      : undefined;
 
     checkAuth();
 
@@ -172,10 +175,10 @@ export default function HistoryPage() {
   }, []);
 
   const fetchQuestionHistory = () => {
-    if (!auth?.currentUser) return;
+    if (!auth?.currentUser || !db) return;
 
     const q = query(
-      collection(db, "userAnswers"),
+      collection(db, "userProgress"),
       where("userId", "==", auth.currentUser.uid),
     );
 
@@ -188,8 +191,12 @@ export default function HistoryPage() {
             ...doc.data(),
           }))
           .sort((a: any, b: any) => {
-            const dateA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-            const dateB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            const dateA = a.lastAttemptedAt
+              ? new Date(a.lastAttemptedAt).getTime()
+              : 0;
+            const dateB = b.lastAttemptedAt
+              ? new Date(b.lastAttemptedAt).getTime()
+              : 0;
             return dateB - dateA; // Sort descending (newest first)
           });
 
@@ -344,21 +351,27 @@ export default function HistoryPage() {
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-            {questions.map((question, index) => (
-              <QuestionCard
-                key={question.id}
-                question={question.question || "Question text not available"}
-                category={question.category || "General"}
-                difficulty={question.difficulty || "Medium"}
-                date={
-                  question.timestamp
-                    ? new Date(question.timestamp).toLocaleDateString()
-                    : "Unknown"
-                }
-                score={question.score || 0}
-                index={index}
-              />
-            ))}
+            {questions.map((question, index) => {
+              const lastAttempt =
+                question.attempts && question.attempts.length > 0
+                  ? question.attempts[question.attempts.length - 1]
+                  : null;
+              return (
+                <QuestionCard
+                  key={question.id}
+                  question={`Question #${question.questionId}`}
+                  category="DSAT"
+                  difficulty="Medium"
+                  date={
+                    question.lastAttemptedAt
+                      ? new Date(question.lastAttemptedAt).toLocaleDateString()
+                      : "Unknown"
+                  }
+                  score={lastAttempt?.isCorrect ? 1 : 0}
+                  index={index}
+                />
+              );
+            })}
           </motion.div>
         )}
       </div>

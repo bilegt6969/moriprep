@@ -255,6 +255,7 @@ export function Hero() {
               text={rotatingWord}
               options={{ direction: wordIndex % 2 === 0 ? "up" : "down" }}
             />
+            {""}!
           </motion.h1>
 
           {/* Subtext */}

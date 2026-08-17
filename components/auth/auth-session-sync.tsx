@@ -1,7 +1,7 @@
 "use client";
 
+import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "lib/firebase";
 import { useEffect } from "react";
 
 export function AuthSessionSync() {

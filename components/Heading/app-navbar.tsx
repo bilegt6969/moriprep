@@ -22,8 +22,8 @@ import {
     useAnimatedSidebar,
 } from "@/components/motion/animated-sidebar";
 import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
+import { auth as firebaseAuth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth as firebaseAuth } from "lib/firebase.js";
 import {
     BarChart3,
     BookOpen,

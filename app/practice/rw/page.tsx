@@ -1,39 +1,38 @@
 "use client";
 
 import {
-  getAnsweredQuestions,
-  saveAnsweredQuestions,
-  saveUserProgress,
-  updateUserStats,
+    saveAnsweredQuestions,
+    saveUserProgress,
+    updateUserStats,
 } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertCircle,
-  BellOff,
-  Bookmark,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Command,
-  Copy,
-  Flag,
-  Highlighter,
-  History,
-  Info,
-  List,
-  Maximize2,
-  Moon,
-  MoreVertical,
-  Pause,
-  Play,
-  Shuffle,
-  Trash2,
-  Underline as UnderlineIcon,
-  X,
+    AlertCircle,
+    BellOff,
+    Bookmark,
+    CheckCircle2,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Command,
+    Copy,
+    Flag,
+    Highlighter,
+    History,
+    Info,
+    List,
+    Maximize2,
+    Moon,
+    MoreVertical,
+    Pause,
+    Play,
+    Shuffle,
+    Trash2,
+    Underline as UnderlineIcon,
+    X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -207,8 +206,14 @@ function RWPracticePageContent() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skill, setSkill] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [attemptFilter, setAttemptFilter] = useState<string>("all");
+  const statusFilterParam = searchParams.get("statusFilter");
+  const attemptFilterParam = searchParams.get("attemptFilter");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    statusFilterParam || "all",
+  );
+  const [attemptFilter, setAttemptFilter] = useState<string>(
+    attemptFilterParam || "all",
+  );
 
   const [user, setUser] = useState<any>(null);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
@@ -239,10 +244,36 @@ function RWPracticePageContent() {
     const loadAnsweredQuestions = async () => {
       if (user) {
         try {
-          const firebaseAnsweredQuestions = await getAnsweredQuestions(
-            user.uid,
+          // Load from userProgress collection for attempt/status filtering
+          const { collection, getDocs, query, where } = await import(
+            "firebase/firestore"
           );
-          setAnsweredQuestions(firebaseAnsweredQuestions);
+          const { db } = await import("@/lib/firebase");
+
+          if (db) {
+            const q = query(
+              collection(db, "userProgress"),
+              where("userId", "==", user.uid),
+            );
+            const querySnapshot = await getDocs(q);
+
+            const answeredMap = new Map<
+              string,
+              { isCorrect: boolean; answer: string }
+            >();
+            querySnapshot.forEach((doc: any) => {
+              const data = doc.data();
+              if (data.attempts && data.attempts.length > 0) {
+                const lastAttempt = data.attempts[data.attempts.length - 1];
+                answeredMap.set(data.questionId, {
+                  isCorrect: lastAttempt.isCorrect,
+                  answer: lastAttempt.answer,
+                });
+              }
+            });
+
+            setAnsweredQuestions(answeredMap);
+          }
         } catch (e) {
           console.error("Error loading answered questions from Firebase:", e);
           // Fallback to localStorage
@@ -471,26 +502,37 @@ function RWPracticePageContent() {
 
   async function fetchQuestions() {
     try {
-      // First, get the total count
-      const countParams = new URLSearchParams();
-      if (domainsParam) countParams.append("domain", domainsParam);
-      if (difficultiesParam)
-        countParams.append("difficulty", difficultiesParam);
       const skillsParam = searchParams.get("skills");
-      if (skillsParam) countParams.append("skill", skillsParam);
-      countParams.append("count_only", "true");
 
-      const countResponse = await fetch(
-        `/api/questions?${countParams.toString()}`,
-      );
-      if (countResponse.ok) {
-        const countData = await countResponse.json();
-        setTotalQuestions(countData.count || 0);
+      // When attempt/status filters are active, fetch ALL questions for client-side filtering
+      const shouldFetchAll = statusFilter !== "all" || attemptFilter !== "all";
+
+      // First, get the total count (only if no attempt/status filters)
+      if (!shouldFetchAll) {
+        const countParams = new URLSearchParams();
+        if (domainsParam) countParams.append("domain", domainsParam);
+        if (difficultiesParam)
+          countParams.append("difficulty", difficultiesParam);
+        if (skillsParam) countParams.append("skill", skillsParam);
+        countParams.append("count_only", "true");
+
+        const countResponse = await fetch(
+          `/api/questions?${countParams.toString()}`,
+        );
+        if (countResponse.ok) {
+          const countData = await countResponse.json();
+          setTotalQuestions(countData.count || 0);
+        }
       }
 
       // Then fetch the questions
       const params = new URLSearchParams();
-      params.append("limit", BATCH_SIZE.toString());
+      if (shouldFetchAll) {
+        // Fetch all questions when filters are active
+        params.append("limit", "10000"); // Large limit to get all questions
+      } else {
+        params.append("limit", BATCH_SIZE.toString());
+      }
 
       if (domainsParam) params.append("domain", domainsParam);
       if (difficultiesParam) params.append("difficulty", difficultiesParam);
@@ -502,8 +544,8 @@ function RWPracticePageContent() {
       setQuestions(questionsData);
       setFilteredQuestions(questionsData);
       setLoading(false);
-      setHasMore(questionsData.length === BATCH_SIZE);
-      setCurrentOffset(BATCH_SIZE);
+      setHasMore(shouldFetchAll ? false : questionsData.length === BATCH_SIZE);
+      setCurrentOffset(shouldFetchAll ? 0 : BATCH_SIZE);
     } catch (error) {
       console.error("Error fetching questions:", error);
       setLoading(false);
@@ -574,6 +616,9 @@ function RWPracticePageContent() {
     }
 
     setFilteredQuestions(filtered);
+
+    // Always update total questions count to reflect the actual filtered questions
+    setTotalQuestions(filtered.length);
   }
 
   function handleAnswerHighlight(answer: string) {
@@ -1211,7 +1256,7 @@ function RWPracticePageContent() {
           )}
 
           {/* Top Header Bar strictly matching Screenshot 2026-07-22 at 17.54.13.jpg */}
-          <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 shrink-0 bg-white z-40 relative">
+          <header className="flex items-center justify-between px-6 py-3 shrink-0 bg-white z-40 relative">
             {/* Left: Go back & Directions */}
             <div className="flex items-center gap-6 w-1/3 relative">
               <button
@@ -1375,7 +1420,7 @@ function RWPracticePageContent() {
             {/* Left Pane: Reading Material */}
             <div
               style={{ width: `${leftPaneWidth}%` }}
-              className={`passage-content p-10 md:p-12 overflow-y-auto ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+              className={`passage-content p-10 md:p-12 overflow-y-auto bg-gray-50 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
               onClick={handleWordDoubleClick}
             >
               <div
@@ -1432,10 +1477,10 @@ function RWPracticePageContent() {
             {/* Right Pane: Question and Answers */}
             <div
               style={{ width: `${100 - leftPaneWidth}%` }}
-              className="overflow-y-auto bg-gray-50/30 flex flex-col relative border-l border-gray-100"
+              className="overflow-y-auto bg-white flex flex-col relative border-l border-gray-100"
             >
               {/* Question Header Bar matching screenshot */}
-              <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+              <div className="flex items-center justify-between px-8 py-4 bg-white sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                   <div className="bg-black text-white w-8 h-8 rounded-lg text-[15px] font-bold flex items-center justify-center shadow-sm">
                     {filteredQuestions.findIndex(
@@ -1594,7 +1639,7 @@ function RWPracticePageContent() {
                   className="bg-white rounded-[32px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-white">
+                  <div className="flex items-center justify-between px-8 py-5 bg-white">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                         <Info
@@ -1739,10 +1784,13 @@ function RWPracticePageContent() {
                 className="flex items-center gap-2 text-white bg-black px-4 py-2 rounded-full text-sm font-semibold transition-colors hover:bg-gray-800"
               >
                 <span>
-                  {filteredQuestions.findIndex(
-                    (q) => q.question_id === selectedQuestion.question_id,
-                  ) + 1}{" "}
-                  of {totalQuestions}
+                  {Math.max(
+                    1,
+                    filteredQuestions.findIndex(
+                      (q) => q.question_id === selectedQuestion.question_id,
+                    ) + 1,
+                  )}{" "}
+                  of {Math.max(1, totalQuestions)}
                 </span>
                 <ChevronDown
                   size={16}
@@ -2020,6 +2068,18 @@ function RWPracticePageContent() {
                         }
                         if (config.skills?.length > 0) {
                           params.set("skills", config.skills.join(","));
+                        }
+                        if (
+                          config.statusFilter &&
+                          config.statusFilter !== "all"
+                        ) {
+                          params.set("statusFilter", config.statusFilter);
+                        }
+                        if (
+                          config.attemptFilter &&
+                          config.attemptFilter !== "all"
+                        ) {
+                          params.set("attemptFilter", config.attemptFilter);
                         }
                         router.push(`/practice/rw?${params.toString()}`);
                       } catch (e) {

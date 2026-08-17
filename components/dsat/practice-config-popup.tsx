@@ -65,9 +65,11 @@ export function PracticeConfigPopup({
     };
   }, []);
 
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
-    [],
-  );
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([
+    "Easy",
+    "Medium",
+    "Hard",
+  ]);
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -82,7 +84,9 @@ export function PracticeConfigPopup({
     if (savedConfig) {
       try {
         const config = JSON.parse(savedConfig);
-        setSelectedDifficulties(config.difficulties || []);
+        setSelectedDifficulties(
+          config.difficulties || ["Easy", "Medium", "Hard"],
+        );
         setSelectedDomains(config.domains || []);
         setSelectedSkills(config.skills || []);
         setStatusFilter(config.statusFilter || "all");
@@ -111,7 +115,7 @@ export function PracticeConfigPopup({
     attemptFilter,
   ]);
 
-  // Real-time filtering count from API
+  // Real-time filtering count from API with client-side attempt/status filtering
   useEffect(() => {
     const fetchFilteredCount = async () => {
       setIsLoadingCount(true);
@@ -133,13 +137,99 @@ export function PracticeConfigPopup({
           params.append("skill", selectedSkills.join(","));
         }
 
-        // Use count_only to get just the count instead of all questions
-        params.append("count_only", "true");
-
         const response = await fetch(`/api/questions?${params.toString()}`);
         if (response.ok) {
-          const data = await response.json();
-          setFilteredCount(data.count || 0);
+          const questions = await response.json();
+
+          // Apply client-side attempt and status filters
+          let filtered = questions;
+
+          if (
+            attemptFilter === "tried" ||
+            attemptFilter === "not-tried" ||
+            statusFilter === "correct" ||
+            statusFilter === "incorrect"
+          ) {
+            // Fetch user progress from Firebase
+            const { auth, db } = await import("@/lib/firebase");
+            const currentUser = auth?.currentUser;
+
+            if (currentUser && db) {
+              const userId = currentUser.uid;
+              const { collection, getDocs, query, where } = await import(
+                "firebase/firestore"
+              );
+
+              const q = query(
+                collection(db, "userProgress"),
+                where("userId", "==", userId),
+              );
+              const querySnapshot = await getDocs(q);
+
+              const userProgressMap = new Map<string, { attempts: any[] }>();
+              querySnapshot.forEach((doc: any) => {
+                const data = doc.data();
+                userProgressMap.set(data.questionId, {
+                  attempts: data.attempts || [],
+                });
+              });
+
+              // Apply attempt filter
+              if (attemptFilter === "tried") {
+                filtered = filtered.filter((q: any) =>
+                  userProgressMap.has(q.question_id),
+                );
+              } else if (attemptFilter === "not-tried") {
+                filtered = filtered.filter(
+                  (q: any) => !userProgressMap.has(q.question_id),
+                );
+              }
+
+              // Apply status filter
+              if (statusFilter === "correct") {
+                filtered = filtered.filter((q: any) => {
+                  const progress = userProgressMap.get(q.question_id);
+                  if (
+                    !progress ||
+                    !progress.attempts ||
+                    progress.attempts.length === 0
+                  )
+                    return false;
+                  return progress.attempts.some(
+                    (attempt: any) => attempt.isCorrect === true,
+                  );
+                });
+              } else if (statusFilter === "incorrect") {
+                filtered = filtered.filter((q: any) => {
+                  const progress = userProgressMap.get(q.question_id);
+                  if (
+                    !progress ||
+                    !progress.attempts ||
+                    progress.attempts.length === 0
+                  )
+                    return false;
+                  const hasIncorrect = progress.attempts.some(
+                    (attempt: any) => attempt.isCorrect === false,
+                  );
+                  const hasCorrect = progress.attempts.some(
+                    (attempt: any) => attempt.isCorrect === true,
+                  );
+                  return hasIncorrect && !hasCorrect;
+                });
+              }
+            } else {
+              // User not authenticated or db not available, can't apply attempt/status filters
+              if (
+                attemptFilter === "tried" ||
+                statusFilter === "correct" ||
+                statusFilter === "incorrect"
+              ) {
+                filtered = [];
+              }
+            }
+          }
+
+          setFilteredCount(filtered.length);
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);

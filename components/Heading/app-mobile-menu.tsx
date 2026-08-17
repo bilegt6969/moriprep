@@ -148,7 +148,7 @@ export default function AppMobileMenu({
                 <div className="mt-6 px-6 h-full">
                   <SignInButton
                     className="flex w-fit items-center gap-2 rounded-2xl px-5 py-3.5 text-lg font-medium text-white transition-colors hover:bg-neutral-800 active:scale-95"
-                    onClick={handleClose}
+                    onClickAction={handleClose}
                   />
                 </div>
               </Dialog.Panel>

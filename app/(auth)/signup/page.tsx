@@ -1,10 +1,11 @@
 "use client";
 
+import { auth, googleProvider } from "@/lib/firebase";
 import { OnboardingFlow } from "components/auth/onboarding-flow";
 import LiteNavbar from "components/LiteNavbar";
+import type { Auth, GoogleAuthProvider } from "firebase/auth";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { motion } from "framer-motion";
-import { auth, googleProvider } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -23,7 +24,7 @@ function SignUpContent() {
     setError("");
     try {
       if (!auth) throw new Error("Auth not initialized");
-      await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth as Auth, email, password);
       setShowOnboarding(true);
     } catch (err) {
       console.error("Email sign-up error:", err);
@@ -39,8 +40,8 @@ function SignUpContent() {
     setLoading(true);
     setError("");
     try {
-      if (!auth) throw new Error("Auth not initialized");
-      await signInWithPopup(auth, googleProvider);
+      if (!auth || !googleProvider) throw new Error("Auth not initialized");
+      await signInWithPopup(auth as Auth, googleProvider as GoogleAuthProvider);
       setShowOnboarding(true);
     } catch (err) {
       console.error("Google sign-up error:", err);

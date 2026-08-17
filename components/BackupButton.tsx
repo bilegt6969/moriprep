@@ -161,7 +161,7 @@ export default function BackupButton() {
         </AnimatePresence>
 
         <motion.span layout className="font-bold whitespace-nowrap">
-          {status === "idle" ? "Back Up Now" : "Backing Up"}
+          {status === "idle" ? "Backed by bytecode" : "Backing Up"}
         </motion.span>
       </motion.div>
     </motion.button>

@@ -20,8 +20,9 @@ export function Faq() {
         "You get complete access to thousands of official College Board questions, step-by-step Reading, Writing, and Math strategy lessons, downloadable formula cheat sheets, and curated prep books directly from your dashboard.",
     },
     {
-      question: "Lowk this is straight chillo ngl",
-      answer: "bro I been knew, let me cook ",
+      question: "Do I need to pay anything, ever?",
+      answer:
+        "No. Mori Prep is 100% free, permanently — no subscriptions, no paywalls, no hidden fees.",
     },
   ];
 

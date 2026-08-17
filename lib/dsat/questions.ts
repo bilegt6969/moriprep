@@ -50,6 +50,8 @@ export async function saveUserProgress(
   isCorrect: boolean,
   timeSpent: number,
 ): Promise<void> {
+  if (!db) return;
+
   const progressRef = doc(db, "userProgress", `${userId}_${questionId}`);
 
   const newAttempt: Attempt = {
@@ -86,6 +88,7 @@ export async function getQuestionAttempts(
   questionId: string,
 ): Promise<Attempt[]> {
   try {
+    if (!db) return [];
     const progressRef = doc(db, "userProgress", `${userId}_${questionId}`);
     const docSnap = await getDoc(progressRef);
 
@@ -102,6 +105,7 @@ export async function getQuestionAttempts(
 }
 
 export async function getUserProgress(userId: string): Promise<UserProgress[]> {
+  if (!db) return [];
   const q = query(
     collection(db, "userProgress"),
     where("userId", "==", userId),
@@ -111,6 +115,7 @@ export async function getUserProgress(userId: string): Promise<UserProgress[]> {
 }
 
 export async function getUserStats(userId: string): Promise<UserStats | null> {
+  if (!db) return null;
   const docRef = doc(db, "userStats", userId);
   const docSnap = await getDoc(docRef);
 
@@ -125,6 +130,7 @@ export async function updateUserStats(
   isCorrect: boolean,
   timeSpent: number,
 ): Promise<void> {
+  if (!db) return;
   const statsRef = doc(db, "userStats", userId);
   const docSnap = await getDoc(statsRef);
 
@@ -174,6 +180,7 @@ export async function saveAnsweredQuestions(
   userId: string,
   answeredQuestions: Map<string, { isCorrect: boolean; answer: string }>,
 ): Promise<void> {
+  if (!db) return;
   const answeredRef = doc(db, "userAnsweredQuestions", userId);
   // Convert Map to object to avoid nested arrays which Firebase doesn't support
   const answeredQuestionsObj = Object.fromEntries(answeredQuestions.entries());
@@ -188,6 +195,7 @@ export async function getAnsweredQuestions(
   userId: string,
 ): Promise<Map<string, { isCorrect: boolean; answer: string }>> {
   try {
+    if (!db) return new Map();
     const answeredRef = doc(db, "userAnsweredQuestions", userId);
     const docSnap = await getDoc(answeredRef);
 

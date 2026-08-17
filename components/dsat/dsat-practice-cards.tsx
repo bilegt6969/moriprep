@@ -71,6 +71,12 @@ export function DSATPracticeCards() {
     if (config.skills.length > 0) {
       params.set("skills", config.skills.join(","));
     }
+    if (config.statusFilter && config.statusFilter !== "all") {
+      params.set("statusFilter", config.statusFilter);
+    }
+    if (config.attemptFilter && config.attemptFilter !== "all") {
+      params.set("attemptFilter", config.attemptFilter);
+    }
 
     const queryString = params.toString();
     const url = `/practice/rw${queryString ? `?${queryString}` : ""}`;
@@ -99,7 +105,10 @@ export function DSATPracticeCards() {
               color: "var(--heading)",
             }}
           >
-            Practice at <span className="text-[1.15em] font-light">mori</span>{" "}
+            Practice at{" "}
+            <span className="text-[1.15em] font-eb-garamond tracking-tighter font-light">
+              mori
+            </span>{" "}
             Prep
           </h1>
 

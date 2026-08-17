@@ -1,16 +1,17 @@
 "use client";
 
+import { auth, db } from "@/lib/firebase";
+import type { Auth } from "firebase/auth";
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    updateDoc,
-    where,
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { motion, useReducedMotion } from "framer-motion";
-import { auth, db } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -105,7 +106,7 @@ export default function HomePage() {
       setIsLoading(false);
       return;
     }
-    const unsubscribe = auth.onAuthStateChanged((user: any) => {
+    const unsubscribe = (auth as Auth).onAuthStateChanged((user: any) => {
       // Temporarily disabled auth check
       // if (!user) {
       //   router.replace("/sign-in?next=/home");
@@ -129,7 +130,7 @@ export default function HomePage() {
     }
 
     const fetchUserData = async () => {
-      if (!auth?.currentUser) return;
+      if (!auth?.currentUser || !db) return;
       try {
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
@@ -159,7 +160,7 @@ export default function HomePage() {
 
     // Fetch user answers for real-time stats
     const fetchUserAnswers = () => {
-      if (!auth?.currentUser) return;
+      if (!auth?.currentUser || !db) return;
 
       const q = query(
         collection(db, "userAnswers"),
@@ -523,7 +524,7 @@ export default function HomePage() {
   };
 
   const handleExamDateUpdate = async () => {
-    if (!auth?.currentUser || !newExamDate) return;
+    if (!auth?.currentUser || !newExamDate || !db) return;
     try {
       const examDate = new Date(newExamDate);
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -543,7 +544,7 @@ export default function HomePage() {
   };
 
   const handleScoreUpdate = async () => {
-    if (!auth?.currentUser || newScore === "") return;
+    if (!auth?.currentUser || newScore === "" || !db) return;
     try {
       const scoreValue = parseInt(newScore);
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -563,22 +564,14 @@ export default function HomePage() {
         <div className="max-w-[1000px] mx-auto w-full">
           {/* Skeleton loading matching the redesigned layout */}
           <div className="mb-16 md:mb-20">
-            <div
-              className={`h-12 md:h-16 bg-[#f5f5f5] rounded w-3/4 ${reduce ? "" : "animate-pulse"}`}
-            />
+            <div className="h-12 md:h-16 bg-[#f5f5f5] rounded w-3/4 animate-pulse" />
           </div>
-          <div
-            className={`w-full min-h-[280px] md:min-h-[320px] bg-[#f5f5f5] rounded-lg mb-16 md:mb-20 ${reduce ? "" : "animate-pulse"}`}
-          />
+          <div className="w-full min-h-[280px] md:min-h-[320px] bg-[#f5f5f5] rounded-lg mb-16 md:mb-20 animate-pulse" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-16 md:mb-20">
             {[1, 2, 3, 4].map((i) => (
               <div key={i}>
-                <div
-                  className={`h-4 bg-[#f5f5f5] rounded w-1/2 mb-2 ${reduce ? "" : "animate-pulse"}`}
-                />
-                <div
-                  className={`h-10 bg-[#f5f5f5] rounded w-3/4 ${reduce ? "" : "animate-pulse"}`}
-                />
+                <div className="h-4 bg-[#f5f5f5] rounded w-1/2 mb-2 animate-pulse" />
+                <div className="h-10 bg-[#f5f5f5] rounded w-3/4 animate-pulse" />
               </div>
             ))}
           </div>

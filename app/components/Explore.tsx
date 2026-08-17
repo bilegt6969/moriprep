@@ -319,7 +319,7 @@ function AnimatedSessionsCard() {
         className="relative z-10 text-lg font-semibold"
         style={{ color: COLORS.heading, ...bodyStyle }}
       >
-        Sessions
+        Avg. Session
       </span>
 
       <div className="relative z-10 flex items-center gap-1.5">
@@ -339,7 +339,7 @@ function AnimatedSessionsCard() {
           >
             {rounded}
           </motion.span>{" "}
-          days
+          min
         </span>
 
         <div className="relative flex items-center justify-center">
@@ -515,7 +515,7 @@ export function Explore() {
             </div>
             <CardFooter
               title="Non-Profit"
-              description="Powered by bytecode. Built by students, for students"
+              description="Backed by Bytecode. Built by students, for students"
             />
           </motion.div>
 
@@ -536,8 +536,8 @@ export function Explore() {
           >
             <AnimatedSessionsCard />
             <CardFooter
-              title="Reward system"
-              description="Pinpoint weak spots in specific math concepts or grammar rules instantly."
+              title="Engagement"
+              description="Track your practice sessions and build consistent study habits."
             />
           </motion.div>
 

@@ -23,23 +23,23 @@ type Detail = {
 const DETAILS: Detail[] = [
   {
     id: "monitor",
-    eyebrow: "Monitor In Real-Time",
-    body: "Track the status of all your transactions in real-time, with live updates, detailed information, notifications, and seamless animations between states.",
+    eyebrow: "Track Your Progress in Real-Time",
+    body: "See your accuracy, pacing, and weak spots update live as you practice — no waiting, no guesswork about where you stand.",
   },
   {
     id: "protect",
-    eyebrow: "Protect Your Assets",
-    body: "Understand your transactions before you send them and receive warnings about potentially harmful actions. Get full protection over all of your assets.",
+    eyebrow: "Never Miss a Weak Spot",
+    body: "Get flagged the moment a topic or domain is dragging your score down, so you know exactly what to review next.",
   },
   {
     id: "organise",
-    eyebrow: "Organise Your Wallet",
-    body: "Take full control over your wallet with powerful organization across all assets. Rearrange your tokens and collectibles, star your favorites, or clean up.",
+    eyebrow: "Organize Your Practice",
+    body: "Sort questions by domain, topic, or difficulty. Bookmark the ones you want to revisit, and clear out what you've already mastered.",
   },
   {
     id: "clarity",
     eyebrow: "See Everything Clearly",
-    body: "Alleviate all confusion with crystal clear breakdowns of your wallets and their respective grouping. Family provides a birds eye view into your entire setup.",
+    body: "One dashboard for every domain — Reading & Writing, Math, and your overall Bluebook-style readiness — with a clean breakdown of where you stand.",
   },
 ];
 
@@ -385,7 +385,7 @@ function PanelSkeleton({ kind }: { kind: string }) {
 
 function PanelVisual({ kind }: { kind: string }) {
   return (
-    <div className="visual-wrap">
+    <div className="visual-wrap" aria-hidden="true" role="presentation">
       {kind === "monitor" && <MonitorVisual />}
       {kind === "protect" && <ProtectVisual />}
       {kind === "organise" && <OrganiseVisual />}
@@ -404,37 +404,37 @@ function PanelVisual({ kind }: { kind: string }) {
   );
 }
 
-/* ---- 1. Monitor: A 4-state infinite card stack with physical departures --- */
+/* ---- 1. Track Your Progress: A 4-state infinite card stack with physical departures --- */
 
 // Added a 4th card to make the bottom-entry rotation buttery smooth
-const TX_CARDS = [
+const STUDY_CARDS = [
   {
     id: 0,
-    coin: "ETH",
+    code: "INFO",
     color: "#25292E",
-    label: "Sending to Benji",
-    amount: "20.00 ETH",
+    label: "Information & Ideas",
+    amount: "85% accuracy",
   },
   {
     id: 1,
-    coin: "USDC",
+    code: "ALG",
     color: "#2775CA",
-    label: "Received from Jacob",
-    amount: "1,000 USDC",
+    label: "Algebra",
+    amount: "92% accuracy",
   },
   {
     id: 2,
-    coin: "SOL",
+    code: "SEC",
     color: "#FEBE44",
-    label: "Swapped on Family",
-    amount: "42.00 SOL",
+    label: "Standard English Conventions",
+    amount: "78% accuracy",
   },
   {
     id: 3,
-    coin: "BTC",
+    code: "ADV",
     color: "#F7931A",
-    label: "Sent to Vault",
-    amount: "0.50 BTC",
+    label: "Advanced Math",
+    amount: "88% accuracy",
   },
 ];
 
@@ -443,14 +443,14 @@ function MonitorVisual() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setActive((a) => (a + 1) % TX_CARDS.length);
+      setActive((a) => (a + 1) % STUDY_CARDS.length);
     }, 2400);
     return () => clearInterval(id);
   }, []);
 
   return (
     <div className="monitor">
-      {TX_CARDS.map((card, i) => {
+      {STUDY_CARDS.map((card, i) => {
         const isCurrent = i === active;
         const isNext = i === (active + 1) % 4;
         const isNextNext = i === (active + 2) % 4;
@@ -494,12 +494,12 @@ function MonitorVisual() {
               zIndex,
             }}
           >
-            <span className="monitor__coin" style={{ background: card.color }}>
-              {card.coin.slice(0, 1)}
+            <span className="monitor__code" style={{ background: card.color }}>
+              {card.code}
             </span>
             <div className="monitor__text">
-              <span className="monitor__label">{card.label}</span>
-              <span className="monitor__coinname">{card.coin}</span>
+              <span className="monitor__domain">{card.label}</span>
+              <span className="monitor__label">{card.code}</span>
             </div>
             <span className="monitor__amount">{card.amount}</span>
           </div>
@@ -531,7 +531,7 @@ function MonitorVisual() {
             opacity 0.7s ease;
           will-change: transform, opacity;
         }
-        .monitor__coin {
+        .monitor__code {
           width: 36px;
           height: 36px;
           border-radius: 50%;
@@ -540,7 +540,7 @@ function MonitorVisual() {
           align-items: center;
           justify-content: center;
           color: #fff;
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 700;
         }
         .monitor__text {
@@ -553,7 +553,7 @@ function MonitorVisual() {
           color: var(--blue, #3784f4);
           font-weight: 600;
         }
-        .monitor__coinname {
+        .monitor__domain {
           font-size: 15px;
           font-weight: 600;
           color: var(--heading, #1a1a1a);
@@ -569,16 +569,16 @@ function MonitorVisual() {
   );
 }
 
-/* ---- 2. Protect Your Assets: Seamless width & text slot-machine morph ---- */
+/* ---- 2. Never Miss a Weak Spot: Seamless width & text slot-machine morph ---- */
 
 function ProtectVisual() {
-  const [safe, setSafe] = useState(false);
+  const [complete, setComplete] = useState(false);
 
   useEffect(() => {
     const cycle = () => {
-      setSafe(false);
-      const toSafe = setTimeout(() => setSafe(true), 1800);
-      return toSafe;
+      setComplete(false);
+      const toComplete = setTimeout(() => setComplete(true), 1800);
+      return toComplete;
     };
     let inner = cycle();
     const id = setInterval(() => {
@@ -592,15 +592,15 @@ function ProtectVisual() {
   }, []);
 
   return (
-    <div className="protect">
+    <div className="analysis">
       <div
-        className={`protect__pill${safe ? " protect__pill--safe" : ""}`}
-        style={{ width: safe ? "185px" : "220px" }}
+        className={`analysis__pill${complete ? " analysis__pill--complete" : ""}`}
+        style={{ width: complete ? "185px" : "220px" }}
       >
-        <div className="protect__icon-wrap">
-          <span className={`protect__spinner ${safe ? "hidden" : ""}`} />
+        <div className="analysis__icon-wrap">
+          <span className={`analysis__spinner ${complete ? "hidden" : ""}`} />
           <svg
-            className={`protect__check ${!safe ? "hidden" : ""}`}
+            className={`analysis__check ${!complete ? "hidden" : ""}`}
             width="14"
             height="14"
             viewBox="0 0 14 14"
@@ -616,31 +616,31 @@ function ProtectVisual() {
           </svg>
         </div>
 
-        <div className="protect__text-wrap">
+        <div className="analysis__text-wrap">
           <span
-            className={`protect__label protect__label--analyzing ${
-              safe ? "hidden" : ""
+            className={`analysis__label analysis__label--analyzing ${
+              complete ? "hidden" : ""
             }`}
           >
-            Analyzing Transaction
+            Analyzing Weak Spots
           </span>
           <span
-            className={`protect__label protect__label--safe ${
-              !safe ? "hidden" : ""
+            className={`analysis__label analysis__label--complete ${
+              !complete ? "hidden" : ""
             }`}
           >
-            Transaction Safe
+            No Weak Spots Missed
           </span>
         </div>
       </div>
 
       <style jsx>{`
-        .protect {
+        .analysis {
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .protect__pill {
+        .analysis__pill {
           position: relative;
           display: flex;
           align-items: center;
@@ -654,10 +654,10 @@ function ProtectVisual() {
             width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
             background 0.7s ease;
         }
-        .protect__pill--safe {
+        .analysis__pill--complete {
           background: rgba(68, 198, 127, 0.14);
         }
-        .protect__icon-wrap {
+        .analysis__icon-wrap {
           position: relative;
           width: 24px;
           height: 24px;
@@ -671,11 +671,11 @@ function ProtectVisual() {
             background 0.7s ease,
             transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .protect__pill--safe .protect__icon-wrap {
+        .analysis__pill--complete .analysis__icon-wrap {
           background: var(--green, #44c67f);
           transform: scale(1.1);
         }
-        .protect__spinner {
+        .analysis__spinner {
           position: absolute;
           width: 12px;
           height: 12px;
@@ -685,7 +685,7 @@ function ProtectVisual() {
           animation: spin 0.8s linear infinite;
           transition: opacity 0.4s ease;
         }
-        .protect__spinner.hidden {
+        .analysis__spinner.hidden {
           opacity: 0;
         }
         @keyframes spin {
@@ -693,23 +693,23 @@ function ProtectVisual() {
             transform: rotate(360deg);
           }
         }
-        .protect__check {
+        .analysis__check {
           position: absolute;
           transition:
             transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
             opacity 0.4s ease;
         }
-        .protect__check.hidden {
+        .analysis__check.hidden {
           opacity: 0;
           transform: scale(0.4) rotate(-45deg);
         }
-        .protect__text-wrap {
+        .analysis__text-wrap {
           position: relative;
           flex: 1;
           height: 20px;
           margin-left: 10px;
         }
-        .protect__label {
+        .analysis__label {
           position: absolute;
           left: 0;
           top: 0;
@@ -720,20 +720,20 @@ function ProtectVisual() {
             opacity 0.5s ease,
             transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .protect__label--analyzing {
+        .analysis__label--analyzing {
           color: var(--blue, #3784f4);
           transform: translate3d(0, 0, 0);
         }
         /* Slot machine sliding effect */
-        .protect__label--analyzing.hidden {
+        .analysis__label--analyzing.hidden {
           opacity: 0;
           transform: translate3d(0, -12px, 0);
         }
-        .protect__label--safe {
+        .analysis__label--complete {
           color: var(--green, #44c67f);
           transform: translate3d(0, 0, 0);
         }
-        .protect__label--safe.hidden {
+        .analysis__label--complete.hidden {
           opacity: 0;
           transform: translate3d(0, 12px, 0);
         }
@@ -742,24 +742,24 @@ function ProtectVisual() {
   );
 }
 
-/* ---- 3. Organise Your Wallet: Token rows with bouncy sequenced stars ------ */
+/* ---- 3. Organize Your Practice: Question rows with bouncy sequenced bookmarks ------ */
 
-const TOKENS = [
+const QUESTIONS = [
   {
-    name: "Ethereum",
-    sub: "1.54 ETH",
-    value: "$3,080.00",
-    change: "0.00%",
+    name: "Algebra",
+    sub: "45 questions",
+    value: "88% avg",
+    change: "+12%",
     color: "#25292E",
-    glyph: "E",
+    glyph: "A",
   },
   {
-    name: "USDC",
-    sub: "41.00 USDC",
-    value: "$41.00",
-    change: "0.00%",
+    name: "Grammar",
+    sub: "32 questions",
+    value: "76% avg",
+    change: "+8%",
     color: "#2775CA",
-    glyph: "$",
+    glyph: "G",
   },
 ];
 
@@ -776,9 +776,9 @@ function OrganiseVisual() {
 
   return (
     <div className="organise">
-      {TOKENS.map((t, i) => (
+      {QUESTIONS.map((t, i) => (
         <div className="organise__row" key={t.name}>
-          <span className="organise__coin" style={{ background: t.color }}>
+          <span className="organise__code" style={{ background: t.color }}>
             {t.glyph}
           </span>
           <div className="organise__text">
@@ -790,7 +790,7 @@ function OrganiseVisual() {
             className={`organise__star${
               starred === i ? " organise__star--on" : ""
             }`}
-            aria-label={`Star ${t.name}`}
+            aria-label={`Bookmark ${t.name}`}
             tabIndex={-1}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -831,7 +831,7 @@ function OrganiseVisual() {
         .organise__row:hover {
           transform: translate3d(0, -2px, 0);
         }
-        .organise__coin {
+        .organise__code {
           width: 34px;
           height: 34px;
           border-radius: 50%;
@@ -898,15 +898,15 @@ function OrganiseVisual() {
   );
 }
 
-/* ---- 4. See Everything Clearly: Staggered breathing tiles ---------------- */
+/* ---- 4. See Everything Clearly: Staggered breathing domain tiles ---------------- */
 
 const GROUPS = [
-  { name: "Trading", count: "3 wallets", color: "#0ea5e9" },
-  { name: "Savings", count: "2 wallets", color: "#eab308" },
-  { name: "NFTs", count: "5 wallets", color: "#6366f1" },
-  { name: "DeFi", count: "1 wallet", color: "#f97316" },
-  { name: "Team", count: "4 wallets", color: "#006351" },
-  { name: "Personal", count: "6 wallets", color: "#f966ac" },
+  { name: "Info & Ideas", count: "R&W domain", color: "var(--blue)" },
+  { name: "Craft & Structure", count: "R&W domain", color: "#25292E" },
+  { name: "Expression", count: "R&W domain", color: "var(--yellow)" },
+  { name: "Algebra", count: "Math domain", color: "var(--green)" },
+  { name: "Advanced Math", count: "Math domain", color: "#2775CA" },
+  { name: "Geometry", count: "Math domain", color: "#F7931A" },
 ];
 
 function ClarityVisual() {

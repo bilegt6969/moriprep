@@ -1,8 +1,9 @@
 "use client";
 
+import { auth, db } from "@/lib/firebase";
+import type { Auth } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
-import { auth, db } from "lib/firebase";
 import { useEffect, useState } from "react";
 import { BestSatScoreSection } from "./steps/best-sat-score-section";
 import { BestSatScoreTotal } from "./steps/best-sat-score-total";
@@ -90,9 +91,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
   // Fetch user data from Firebase on mount
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!auth?.currentUser) return;
+      if (!auth?.currentUser || !db) return;
 
-      const currentUser = auth.currentUser;
+      const currentUser = (auth as Auth).currentUser;
+      if (!currentUser) return;
 
       try {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
@@ -131,10 +133,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
 
   // Save onboarding data to Firebase
   const saveToFirebase = async () => {
-    if (!auth?.currentUser) {
-      console.error("No authenticated user found");
-      return;
-    }
+    if (!auth?.currentUser || !db) return;
 
     const currentUser = auth.currentUser;
     console.log("Saving onboarding data for user:", currentUser.uid);

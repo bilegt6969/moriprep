@@ -103,6 +103,7 @@ function PracticePage() {
 
   async function fetchQuestions() {
     try {
+      if (!db) return;
       const q = query(collection(db, "questions"));
       const querySnapshot = await getDocs(q);
       const questionsData = querySnapshot.docs.map(
@@ -118,6 +119,7 @@ function PracticePage() {
 
   async function fetchUserProgress() {
     try {
+      if (!db) return;
       const progressQuery = query(
         collection(db, "userProgress"),
         where("userId", "==", user.uid),

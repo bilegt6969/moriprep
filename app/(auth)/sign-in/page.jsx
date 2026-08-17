@@ -1,5 +1,6 @@
 "use client";
 
+import { auth, googleProvider } from "@/lib/firebase";
 import { OnboardingFlow } from "components/auth/onboarding-flow";
 import LiteNavbar from "components/LiteNavbar";
 import {
@@ -10,10 +11,14 @@ import {
     signInWithRedirect,
 } from "firebase/auth";
 import { motion } from "framer-motion";
-import { auth, googleProvider } from "lib/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+/**
+ * @type {import("firebase/auth").Auth | null}
+ */
+const typedAuth = auth;
 
 function SignInContent({
   email,
@@ -42,7 +47,10 @@ function SignInContent({
     setLoading(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (!typedAuth) {
+        throw new Error("Firebase authentication is not available");
+      }
+      await signInWithEmailAndPassword(typedAuth, email, password);
       setShowOnboarding(true);
     } catch (err) {
       console.error("Email sign-in error:", err);
@@ -60,7 +68,10 @@ function SignInContent({
     setLoading(true);
     setError("");
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (!typedAuth || !googleProvider) {
+        throw new Error("Firebase authentication is not available");
+      }
+      await signInWithPopup(typedAuth, googleProvider);
       setShowOnboarding(true);
     } catch (err) {
       console.error("Google sign-in error:", err);
@@ -70,7 +81,7 @@ function SignInContent({
         err.code === "auth/popup-blocked"
       ) {
         try {
-          await signInWithRedirect(auth, googleProvider);
+          await signInWithRedirect(typedAuth, googleProvider);
         } catch (redirectErr) {
           console.error("Google redirect sign-in error:", redirectErr);
           setError(
@@ -93,7 +104,10 @@ function SignInContent({
     e.preventDefault();
     setResetError("");
     try {
-      await sendPasswordResetEmail(auth, resetEmail);
+      if (!typedAuth) {
+        throw new Error("Firebase authentication is not available");
+      }
+      await sendPasswordResetEmail(typedAuth, resetEmail);
       setResetSent(true);
     } catch (err) {
       console.error("Password reset error:", err);
@@ -268,7 +282,8 @@ export default function SignInPage() {
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
-        const result = await getRedirectResult(auth);
+        if (!typedAuth) return;
+        const result = await getRedirectResult(typedAuth);
         if (result) {
           setShowOnboarding(true);
         }
@@ -286,7 +301,10 @@ export default function SignInPage() {
     e.preventDefault();
     setResetError("");
     try {
-      await sendPasswordResetEmail(auth, resetEmail);
+      if (!typedAuth) {
+        throw new Error("Firebase authentication is not available");
+      }
+      await sendPasswordResetEmail(typedAuth, resetEmail);
       setResetSent(true);
     } catch (err) {
       console.error("Password reset error:", err);
