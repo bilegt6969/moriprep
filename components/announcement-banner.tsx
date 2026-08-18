@@ -43,7 +43,7 @@ export default function AnnouncementBanner() {
 
       {/* Main Glassmorphism Banner */}
       <a
-        href="#"
+        href="/join"
         onMouseEnter={() => setPlaybackRate(0.25)} // Slows down to 25% speed
         onMouseLeave={() => setPlaybackRate(1)} // Returns to normal speed
         className="group relative flex h-[25px] w-[280px] cursor-pointer items-center rounded-full border border-white/20 bg-[#007AFF] pl-2.5 pr-2 shadow-[0_8px_32px_0_rgba(0,122,255,0.2)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[0.96] hover:bg-[#007AFF]/80 active:scale-[0.94]"
