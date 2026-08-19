@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useReducedMotion } from "hooks/use-reduced-motion";
-import { LockIcon } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, LockIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { PracticeConfigPopup } from "./practice-config-popup";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
@@ -13,42 +13,44 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.1,
       delayChildren: 0.1,
     },
   },
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, y: 30, scale: 0.96 },
+const slideUp = {
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { duration: 0.8, ease: customEase },
+    transition: { duration: 0.6, ease: customEase },
   },
 };
 
+// Updated data structure to match the new dashboard aesthetic
 const practiceAreas = [
   {
     id: "reading-writing",
-    title: "Curated Reading & Writing",
-    description:
-      "1,492 questions spanning all four College Board domains. Our system adapts to your reading comprehension level.",
-    badgeText: "Reading & Writing",
-    backgroundImage:
-      "https://i.pinimg.com/1200x/53/c6/51/53c651e328f47c98471df7e1bd00bbcc.jpg",
+    title: "Reading & Writing",
+    greeting: "Ready to practice?",
+    questions: "1,492",
+    focus: "4 Domains",
+    description: "Our system adapts to your reading comprehension level.",
+    color: "bg-[#FFC800]", // Matching the yellow from the reference
+    textColor: "text-neutral-900",
     available: true,
     buttonText: "Start Practicing",
   },
   {
     id: "math",
-    title: "Expert Mathematics",
-    description:
-      "2,390 questions covering advanced algebra and data analysis. Enter any topic, and we'll supply the perfect problem set.",
-    badgeText: "Mathematics",
-    backgroundImage:
-      "https://i.pinimg.com/1200x/30/ba/54/30ba54fb8790cd4b1504b17c4138ef9b.jpg",
+    title: "Mathematics",
+    greeting: "Expert problem sets",
+    questions: "2,390",
+    focus: "Advanced Algebra",
+    description: "Enter any topic, and we'll supply the perfect problem set.",
+    color: "bg-[#7DD3FC]", // Matching the blue from the reference
+    textColor: "text-neutral-900",
     available: false,
     buttonText: "Coming Soon",
   },
@@ -57,9 +59,13 @@ const practiceAreas = [
 export function DSATPracticeCards() {
   const reduce = useReducedMotion();
   const [isConfigPopupOpen, setIsConfigPopupOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleStartPractice = (config: any) => {
-    // Convert config to URL params and navigate
     const params = new URLSearchParams();
 
     if (config.difficulties.length > 0) {
@@ -80,177 +86,115 @@ export function DSATPracticeCards() {
 
     const queryString = params.toString();
     const url = `/practice/rw${queryString ? `?${queryString}` : ""}`;
-
-    // Navigate to the practice page with config
     window.location.href = url;
   };
 
   return (
     <>
-      {/* Updated design matching landing page */}
-      <section className="min-h-screen w-full px-4 py-16 md:px-6 lg:px-10 bg-white relative overflow-hidden">
-        {/* Background gradient matching landing page */}
-        <div className="absolute inset-0 bg-linear-to-br from-blue-50 via-white to-orange-50 opacity-50" />
-
-        {/* Header Section - matching Hero style */}
+      {/* Pure white background as requested */}
+      <section className="min-h-screen w-full px-4 py-12 md:px-8 lg:px-12 bg-white relative font-sans">
+        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-6xl mx-auto text-center mb-12 relative z-10"
+          transition={{ duration: 0.5 }}
+          className="max-w-5xl mx-auto mb-10"
         >
-          <h1
-            className="text-[44px] md:text-[68px] font-medium leading-[1.1] tracking-tight mb-4"
-            style={{
-              color: "var(--heading)",
-            }}
-          >
-            Practice at{" "}
-            <span className="text-[1.15em] font-eb-garamond tracking-tighter font-light">
-              mori
-            </span>{" "}
-            Prep
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 mb-2">
+            Practice Overview
           </h1>
-
-          <p
-            className="text-lg md:text-xl max-w-2xl mx-auto"
-            style={{
-              letterSpacing: "-0.01em",
-              color: "var(--body-muted)",
-            }}
-          >
-            Your personalized Digital SAT practice experience. Choose your
-            domain and start improving today.
+          <p className="text-neutral-500 text-lg">
+            Choose your domain and start improving today.
           </p>
         </motion.div>
 
-        {/* Cards Grid - matching Explore bento grid style */}
+        {/* Dashboard Cards Container */}
         <motion.div
           variants={containerVariants}
-          initial="hidden"
+          initial={isMounted ? "hidden" : "visible"}
           whileInView="visible"
           viewport={{ once: true }}
-          className="max-w-6xl mx-auto relative z-10"
+          className="max-w-5xl mx-auto flex flex-col gap-4 md:gap-6"
         >
-          <div className="grid md:grid-cols-2 gap-4 md:gap-5 w-full">
-            {practiceAreas.map((area) => (
-              <motion.div
-                key={area.id}
-                variants={scaleIn}
-                whileHover={reduce || !area.available ? undefined : { y: -6 }}
-                transition={{ duration: 0.5, ease: customEase }}
-                className="flex h-full"
-              >
-                {/* Card container matching landing page bento style */}
-                <div className="w-full flex flex-col bg-[#fafafa] p-5 md:p-6 rounded-3xl shadow-sm ring-1 ring-black/5 transition-shadow duration-500 hover:shadow-md">
-                  {/* Visual Stage Container */}
-                  <div className="w-full aspect-[16/10] md:aspect-[1.8/1.1] rounded-2xl overflow-hidden flex items-center justify-center relative bg-neutral-100/50 mb-5">
-                    {/* Heavy blur applied to the image */}
-                    <div
-                      className="absolute inset-[-15%] bg-cover bg-center"
-                      style={{
-                        backgroundImage: `url(${area.backgroundImage})`,
-                        filter: "blur(30px) saturate(1.4)",
-                        transform: "scale(1.1)",
-                      }}
-                    />
-
-                    {/* Light overlay */}
-                    <div className="absolute inset-0 bg-white/10" />
-
-                    {/* Centered Overlay Text */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        delay: 0.3,
-                        duration: 0.8,
-                        ease: customEase,
-                      }}
-                      className="relative z-10 text-center px-4"
-                    >
-                      <p className="text-white text-[20px] md:text-[24px] font-medium tracking-tight drop-shadow-md">
-                        {area.badgeText}
-                      </p>
-                    </motion.div>
-                  </div>
-
-                  {/* Text & Button Content */}
-                  <div className="flex flex-col items-center text-center flex-1">
+          {practiceAreas.map((area) => (
+            <motion.div
+              key={area.id}
+              variants={slideUp}
+              className={`w-full ${area.color} rounded-[32px] p-8 md:p-10 relative overflow-hidden transition-transform duration-300 ${
+                !reduce && area.available ? "hover:scale-[1.01]" : ""
+              }`}
+            >
+              <div className="flex flex-col md:flex-row justify-between h-full gap-8 md:gap-4 relative z-10">
+                {/* Left Side: Headers and Stats */}
+                <div className="flex flex-col justify-between h-full min-h-[160px]">
+                  <div>
                     <h3
-                      className="text-[18px] md:text-[20px] font-medium mb-2"
-                      style={{
-                        color: "var(--heading)",
-                        letterSpacing: "-0.02em",
-                      }}
+                      className={`text-lg md:text-xl font-medium mb-1 opacity-80 ${area.textColor}`}
+                    >
+                      {area.greeting}
+                    </h3>
+                    <h2
+                      className={`text-4xl md:text-5xl font-bold tracking-tight ${area.textColor}`}
                     >
                       {area.title}
-                    </h3>
-                    <p
-                      className="text-[15px] md:text-[16px] leading-relaxed mb-5 max-w-[280px]"
-                      style={{
-                        letterSpacing: "-0.01em",
-                        color: "var(--body-muted)",
-                      }}
-                    >
-                      {area.description}
-                    </p>
+                    </h2>
+                  </div>
 
-                    <div className="mt-auto w-full flex justify-center">
-                      {area.available ? (
-                        area.id === "reading-writing" ? (
-                          <button
-                            onClick={() => setIsConfigPopupOpen(true)}
-                            className="inline-flex items-center justify-center px-6 md:px-8 py-3 text-white rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100 relative z-10"
-                            style={{
-                              borderRadius: "32px",
-                              height: "3rem",
-                              letterSpacing: "-0.01375rem",
-                              backgroundColor: "rgba(23, 23, 23, 0.8)",
-                              backdropFilter: "blur(10px)",
-                              WebkitBackdropFilter: "blur(10px)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "rgba(18, 18, 18, 0.9)")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "rgba(23, 23, 23, 0.8)")
-                            }
-                          >
-                            {area.buttonText}
-                          </button>
-                        ) : (
-                          <button
-                            disabled
-                            className="inline-flex items-center justify-center px-6 md:px-8 py-3 text-white rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100 relative z-10 opacity-50 cursor-not-allowed"
-                            style={{
-                              borderRadius: "32px",
-                              height: "3rem",
-                              letterSpacing: "-0.01375rem",
-                              backgroundColor: "rgba(23, 23, 23, 0.8)",
-                              backdropFilter: "blur(10px)",
-                              WebkitBackdropFilter: "blur(10px)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                            }}
-                          >
-                            {area.buttonText}
-                          </button>
-                        )
-                      ) : (
-                        <div className="inline-flex items-center justify-center px-6 md:px-8 py-3 bg-transparent border border-neutral-200 text-neutral-500 rounded-full font-medium text-[17px] gap-2 cursor-not-allowed">
-                          <LockIcon className="w-4 h-4 stroke-[2]" />
-                          {area.buttonText}
-                        </div>
-                      )}
+                  {/* Stats Row - Mimicking the "Total holding" layout */}
+                  <div className="flex gap-12 mt-12">
+                    <div>
+                      <p
+                        className={`text-sm mb-1 opacity-70 ${area.textColor}`}
+                      >
+                        Total questions
+                      </p>
+                      <p
+                        className={`text-2xl font-semibold tracking-tight ${area.textColor}`}
+                      >
+                        {area.questions}
+                      </p>
+                    </div>
+                    <div>
+                      <p
+                        className={`text-sm mb-1 opacity-70 ${area.textColor}`}
+                      >
+                        Focus area
+                      </p>
+                      <p
+                        className={`text-2xl font-semibold tracking-tight ${area.textColor}`}
+                      >
+                        {area.focus}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+
+                {/* Right Side: Action Button */}
+                <div className="flex flex-col justify-end items-start md:items-end">
+                  <p
+                    className={`hidden md:block max-w-[240px] text-right mb-6 text-sm opacity-80 ${area.textColor}`}
+                  >
+                    {area.description}
+                  </p>
+
+                  {area.available ? (
+                    <button
+                      onClick={() => setIsConfigPopupOpen(true)}
+                      className="group flex items-center gap-2 bg-white/20 hover:bg-white/30 text-neutral-900 px-6 py-3 rounded-full font-semibold transition-all backdrop-blur-sm"
+                    >
+                      {area.buttonText}
+                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-black/5 text-neutral-900/50 px-6 py-3 rounded-full font-semibold cursor-not-allowed">
+                      <LockIcon className="w-4 h-4" />
+                      {area.buttonText}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 

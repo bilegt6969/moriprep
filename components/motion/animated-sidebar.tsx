@@ -6,26 +6,26 @@ import { EASE_DRAWER, EASE_OUT, SPRING_LAYOUT, SPRING_PRESS } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import {
-  AnimatePresence,
-  type HTMLMotionProps,
-  motion,
-  useReducedMotion,
-  type Variants,
+    AnimatePresence,
+    type HTMLMotionProps,
+    motion,
+    useReducedMotion,
+    type Variants,
 } from "motion/react";
 import {
-  type ButtonHTMLAttributes,
-  createContext,
-  type CSSProperties,
-  forwardRef,
-  type HTMLAttributes,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  useSyncExternalStore,
+    type ButtonHTMLAttributes,
+    createContext,
+    type CSSProperties,
+    forwardRef,
+    type HTMLAttributes,
+    type ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+    useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -287,7 +287,7 @@ export function AnimatedSidebarProvider({
           ...style,
         }}
         className={cn(
-          "group/sidebar-wrapper flex min-h-svh w-full min-w-0",
+          "group/sidebar-wrapper flex min-h-svh w-full min-w-0 bg-white",
           className,
         )}
       >
@@ -506,7 +506,6 @@ export const AnimatedSidebar = forwardRef<HTMLElement, AnimatedSidebarProps>(
         style={style}
         className={cn(
           "group/sidebar relative hidden h-auto shrink-0 md:block will-change-[width]",
-          "peer",
           side === "right" && "order-last",
           className,
         )}
@@ -519,12 +518,9 @@ export const AnimatedSidebar = forwardRef<HTMLElement, AnimatedSidebarProps>(
           }}
           transition={context.reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
           className={cn(
-            "sticky top-0 flex h-svh w-full flex-col overflow-hidden bg-background",
+            "sticky top-0 flex h-svh w-full flex-col overflow-hidden",
             collapsible === "offcanvas" && "w-[var(--sidebar-width)]",
-            variant === "sidebar" &&
-              (side === "left"
-                ? "border-gray-200 border-r"
-                : "border-gray-200 border-l"),
+            variant === "sidebar" && "",
             variant === "floating" &&
               "m-2 h-[calc(100svh-1rem)] rounded-2xl border border-gray-200 shadow-sm",
             variant === "inset" && "m-2 h-[calc(100svh-1rem)] rounded-2xl",
@@ -662,7 +658,7 @@ export const AnimatedSidebarInset = forwardRef<
       ref={forwardedRef}
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex min-h-svh min-w-0 flex-1 flex-col bg-background",
+        "relative flex min-h-svh min-w-0 flex-1 flex-col",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-2xl md:peer-data-[variant=inset]:shadow-sm",
         className,
       )}
@@ -711,7 +707,7 @@ export const AnimatedSidebarFooter = forwardRef<
       ref={forwardedRef}
       data-slot="sidebar-footer"
       className={cn(
-        "flex shrink-0 flex-col gap-2 border-gray-200 border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+        "flex shrink-0 flex-col gap-2 border-0 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
         className,
       )}
     />

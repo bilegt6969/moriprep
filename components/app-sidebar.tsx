@@ -8,31 +8,31 @@ import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarRail,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-    AudioLinesIcon,
-    BarChart3,
-    BookOpenIcon,
-    FileText,
-    FrameIcon,
-    GalleryVerticalEndIcon,
-    LayoutDashboard,
-    MapIcon,
-    PieChartIcon,
-    Settings,
-    TerminalIcon,
+  AudioLinesIcon,
+  BarChart3,
+  BookOpenIcon,
+  FileText,
+  FrameIcon,
+  GalleryVerticalEndIcon,
+  LayoutDashboard,
+  MapIcon,
+  PieChartIcon,
+  Settings,
+  TerminalIcon,
 } from "lucide-react";
 
 // Apple-style icon configuration: slightly smaller, thinner strokes (matches SF Symbols)
 const iconProps = {
   size: 18,
   strokeWidth: 1.5,
-  className: "text-muted-foreground/80", // Softens the icon colors slightly
+  className: "text-neutral-900 dark:text-neutral-100",
 };
 
 const data = {
@@ -150,7 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-neutral-200/60 bg-neutral-100/50 backdrop-blur-xl shadow-none supports-[backdrop-filter]:bg-neutral-100/50 dark:bg-zinc-950/70 dark:border-zinc-800/60 rounded-r-2xl"
+      className="border-r-0 bg-transparent shadow-none dark:bg-transparent"
       {...props}
     >
       {/* Increased padding for an airy, uncrowded feel */}

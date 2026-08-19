@@ -139,20 +139,29 @@ function SkeletonFooter() {
   return (
     <footer className="flex items-center justify-between px-6 py-4 border-t border-gray-200 shrink-0 bg-white">
       {/* Left: Navigator & History */}
-      <div className="flex items-center gap-3">
-        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+      <div className="flex items-center gap-4">
+        <div className="w-24 h-10 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="w-32 h-10 bg-gray-100 rounded-lg animate-pulse" />
       </div>
-
-      {/* Right: Suite of Tools */}
+      {/* Right: Submit & Timer */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-20 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-28 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-24 h-9 bg-gray-200 rounded-full animate-pulse" />
+        <div className="w-24 h-10 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="w-20 h-10 bg-gray-100 rounded-lg animate-pulse" />
       </div>
     </footer>
+  );
+}
+
+function SkeletonLoader() {
+  return (
+    <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden">
+      <SkeletonHeader />
+      <div className="flex-1 flex overflow-hidden">
+        <SkeletonPassage />
+        <SkeletonQuestion />
+      </div>
+      <SkeletonFooter />
+    </div>
   );
 }
 
@@ -163,6 +172,7 @@ function RWPracticePageContent() {
   const domainsParam = searchParams.get("domains");
   const difficultyParam = searchParams.get("difficulty");
   const difficultiesParam = searchParams.get("difficulties");
+  const questionIdParam = searchParams.get("question_id");
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [filteredQuestions, setFilteredQuestions] = useState<any[]>([]);
@@ -470,6 +480,17 @@ function RWPracticePageContent() {
       filteredQuestions.length > 0 &&
       !selectedQuestion
     ) {
+      // If questionIdParam is provided, select that specific question
+      if (questionIdParam) {
+        const specificQuestion = filteredQuestions.find(
+          (q) => q.question_id === questionIdParam,
+        );
+        if (specificQuestion) {
+          setSelectedQuestion(specificQuestion);
+          return;
+        }
+      }
+      // Otherwise, select the first question
       setSelectedQuestion(filteredQuestions[0] || null);
     }
   }, [
@@ -480,6 +501,7 @@ function RWPracticePageContent() {
     filteredQuestions,
     selectedQuestion,
     isReturningToSelection,
+    questionIdParam,
   ]);
 
   useEffect(() => {
@@ -503,6 +525,25 @@ function RWPracticePageContent() {
   async function fetchQuestions() {
     try {
       const skillsParam = searchParams.get("skills");
+
+      // If questionIdParam is provided, fetch that specific question
+      if (questionIdParam) {
+        console.log("Fetching specific question:", questionIdParam);
+        const response = await fetch(
+          `/api/questions?question_id=${questionIdParam}`,
+        );
+        if (!response.ok) {
+          console.error("Failed to fetch question, status:", response.status);
+          throw new Error("Failed to fetch question");
+        }
+        const questionsData = await response.json();
+        console.log("Fetched question data:", questionsData);
+        setQuestions(questionsData);
+        setFilteredQuestions(questionsData);
+        setLoading(false);
+        setTotalQuestions(questionsData.length);
+        return;
+      }
 
       // When attempt/status filters are active, fetch ALL questions for client-side filtering
       const shouldFetchAll = statusFilter !== "all" || attemptFilter !== "all";
@@ -1168,21 +1209,7 @@ function RWPracticePageContent() {
   ]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
-        <SkeletonHeader />
-        <main className="flex flex-1 overflow-hidden relative">
-          <div className="w-1/2 border-r border-gray-200">
-            <SkeletonPassage />
-          </div>
-          <div className="w-1/2 bg-gray-50/30 flex flex-col">
-            <SkeletonQuestionHeader />
-            <SkeletonQuestion />
-          </div>
-        </main>
-        <SkeletonFooter />
-      </div>
-    );
+    return <SkeletonLoader />;
   }
 
   return (
@@ -1240,7 +1267,6 @@ function RWPracticePageContent() {
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  // FIX: Actually clear the highlights before closing the menu
                   clearHighlights();
                   setHighlightMenu({ visible: false, x: 0, y: 0 });
                 }}
@@ -2031,71 +2057,74 @@ function RWPracticePageContent() {
           </footer>
         </div>
       ) : (
-        /* Redirect to practice page if no configuration */
-        <div className="flex flex-col h-screen bg-white font-sans text-gray-900 items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-4">
-              Configure Your Practice
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Please configure your practice session from the main practice
-              page.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => router.push("/practice")}
-                className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
-              >
-                Go to Practice
-              </button>
-              {/* Try to use saved configuration if available */}
-              {hasSavedConfig && (
+        /* Show configuration message only if no specific question was requested */
+        !questionIdParam && (
+          <div className="flex flex-col h-screen bg-white font-sans text-gray-900 items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-4">
+                Configure Your Practice
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Please configure your practice session from the main practice
+                page.
+              </p>
+              <div className="flex gap-4 justify-center">
                 <button
-                  onClick={() => {
-                    const savedConfig = localStorage.getItem("practiceConfig");
-                    if (savedConfig) {
-                      try {
-                        const config = JSON.parse(savedConfig);
-                        const params = new URLSearchParams();
-                        if (config.difficulties?.length > 0) {
-                          params.set(
-                            "difficulties",
-                            config.difficulties.join(","),
-                          );
-                        }
-                        if (config.domains?.length > 0) {
-                          params.set("domains", config.domains.join(","));
-                        }
-                        if (config.skills?.length > 0) {
-                          params.set("skills", config.skills.join(","));
-                        }
-                        if (
-                          config.statusFilter &&
-                          config.statusFilter !== "all"
-                        ) {
-                          params.set("statusFilter", config.statusFilter);
-                        }
-                        if (
-                          config.attemptFilter &&
-                          config.attemptFilter !== "all"
-                        ) {
-                          params.set("attemptFilter", config.attemptFilter);
-                        }
-                        router.push(`/practice/rw?${params.toString()}`);
-                      } catch (e) {
-                        console.error("Error parsing saved config:", e);
-                        router.push("/practice");
-                      }
-                    }
-                  }}
-                  className="px-6 py-3 bg-white text-zinc-900 border border-zinc-900 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                  onClick={() => router.push("/practice")}
+                  className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
                 >
-                  Use Saved Config
+                  Go to Practice
                 </button>
-              )}
+                {/* Try to use saved configuration if available */}
+                {hasSavedConfig && (
+                  <button
+                    onClick={() => {
+                      const savedConfig =
+                        localStorage.getItem("practiceConfig");
+                      if (savedConfig) {
+                        try {
+                          const config = JSON.parse(savedConfig);
+                          const params = new URLSearchParams();
+                          if (config.difficulties?.length > 0) {
+                            params.set(
+                              "difficulties",
+                              config.difficulties.join(","),
+                            );
+                          }
+                          if (config.domains?.length > 0) {
+                            params.set("domains", config.domains.join(","));
+                          }
+                          if (config.skills?.length > 0) {
+                            params.set("skills", config.skills.join(","));
+                          }
+                          if (
+                            config.statusFilter &&
+                            config.statusFilter !== "all"
+                          ) {
+                            params.set("statusFilter", config.statusFilter);
+                          }
+                          if (
+                            config.attemptFilter &&
+                            config.attemptFilter !== "all"
+                          ) {
+                            params.set("attemptFilter", config.attemptFilter);
+                          }
+                          router.push(`/practice/rw?${params.toString()}`);
+                        } catch (e) {
+                          console.error("Error parsing saved config:", e);
+                          router.push("/practice");
+                        }
+                      }
+                    }}
+                    className="px-6 py-3 bg-white text-zinc-900 border border-zinc-900 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Use Saved Config
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )
       )}
     </>
   );

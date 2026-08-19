@@ -1,20 +1,37 @@
 "use client";
 
 import Navbar from "@/components/Heading/Navbar";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Footer } from "../components/Footer";
 
+// Apple-style spring physics - critically damped for default UI
+const springConfig = {
+  type: "spring" as const,
+  damping: 1.0,
+  stiffness: 400,
+  mass: 0.8,
+};
+
 const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: springConfig,
+  },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 },
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.12,
+      ...springConfig,
+    },
   },
 };
 
@@ -27,10 +44,18 @@ const bodyStyle = {
 };
 
 export default function JoinPage() {
+  const prefersReducedMotion = useReducedMotion();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div
       className="bg-white min-h-screen text-black font-sans selection:bg-neutral-200"
       style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
+      suppressHydrationWarning
     >
       <Navbar
         siteName="Mori Prep"
@@ -47,43 +72,49 @@ export default function JoinPage() {
         {/* 1. HERO SECTION */}
         <section className="container mx-auto px-6 md:px-12 max-w-5xl text-center mb-32">
           <motion.div
-            initial="hidden"
+            initial={isMounted ? "hidden" : "visible"}
             animate="visible"
-            variants={staggerContainer}
+            variants={prefersReducedMotion ? {} : staggerContainer}
           >
             <motion.p
-              variants={fadeUp}
+              variants={prefersReducedMotion ? {} : fadeUp}
               className="text-xs md:text-sm font-semibold tracking-widest uppercase mb-6 text-neutral-500"
               style={bodyStyle}
             >
               Join Our Team
             </motion.p>
             <motion.h1
-              variants={fadeUp}
+              variants={prefersReducedMotion ? {} : fadeUp}
               className="text-5xl md:text-7xl lg:text-[80px] font-medium leading-tight tracking-tight mb-8"
               style={headingStyle}
             >
               Develop open, <br className="hidden md:block" />
-              <span className="font-eb-garamond font-light tracking-tighter">
+              <span className="font-eb-garamond font-light tracking-tighter text-[1.1em]">
                 accessible
               </span>{" "}
               education
             </motion.h1>
             <motion.p
-              variants={fadeUp}
+              variants={prefersReducedMotion ? {} : fadeUp}
               className="text-lg md:text-xl text-neutral-600 max-w-2xl mx-auto mb-10 font-medium"
               style={bodyStyle}
             >
               We are a nonprofit educational initiative building Mongolia's
               first open Digital SAT platform.
             </motion.p>
-            <motion.div variants={fadeUp}>
-              <Link
-                href="/signup"
-                className="inline-block bg-black text-white px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+            <motion.div variants={prefersReducedMotion ? {} : fadeUp}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
               >
-                View open roles
-              </Link>
+                <Link
+                  href="/signup"
+                  className="inline-block bg-black text-white px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+                >
+                  View open roles
+                </Link>
+              </motion.div>
             </motion.div>
           </motion.div>
         </section>
@@ -91,10 +122,10 @@ export default function JoinPage() {
         {/* 2. INTRO STATEMENT */}
         <section className="container mx-auto px-6 md:px-12 max-w-4xl text-center mb-24">
           <motion.h2
-            initial="hidden"
+            initial={isMounted ? "hidden" : "visible"}
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            variants={fadeUp}
+            variants={prefersReducedMotion ? {} : fadeUp}
             className="text-2xl md:text-4xl font-medium leading-relaxed tracking-tight"
             style={headingStyle}
           >
@@ -106,10 +137,10 @@ export default function JoinPage() {
         {/* 3. CORE PRINCIPLES / TEXT COLUMNS */}
         <section className="container mx-auto px-6 md:px-12 max-w-3xl mb-32">
           <motion.div
-            initial="hidden"
+            initial={isMounted ? "hidden" : "visible"}
             whileInView="visible"
             viewport={{ once: true }}
-            variants={fadeUp}
+            variants={prefersReducedMotion ? {} : fadeUp}
             className="prose prose-lg text-neutral-800"
             style={bodyStyle}
           >
@@ -142,9 +173,11 @@ export default function JoinPage() {
         {/* 4. LARGE FEATURE IMAGE */}
         <section className="w-full max-w-[1400px] mx-auto px-4 md:px-8 mb-32">
           <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
+            initial={
+              isMounted ? { opacity: 0, scale: 0.98 } : { opacity: 1, scale: 1 }
+            }
             whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={prefersReducedMotion ? { duration: 0.3 } : springConfig}
             viewport={{ once: true }}
             className="w-full aspect-[21/9] bg-neutral-200 rounded-lg overflow-hidden"
           >
@@ -318,7 +351,7 @@ export default function JoinPage() {
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-neutral-400 group-hover:text-black transition-colors group-hover:translate-x-1 duration-300"
+                      className="text-neutral-400 group-hover:text-black transition-colors"
                     >
                       <path d="M5 12h14" />
                       <path d="m12 5 7 7-7 7" />
@@ -404,7 +437,7 @@ export default function JoinPage() {
         {/* 8. LARGE QUOTE */}
         <section className="container mx-auto px-6 md:px-12 max-w-4xl text-center mb-32">
           <blockquote
-            className="text-3xl md:text-5xl font-eb-garamond font-light leading-tight tracking-tighter mb-8"
+            className="text-3xl md:text-5xl font-eb-garamond font-light leading-tight tracking-tighter mb-8 text-[1.05em]"
             style={headingStyle}
           >
             "We believe that high-quality test prep is a fundamental right, and
@@ -427,12 +460,18 @@ export default function JoinPage() {
             >
               Shape the future of education
             </h2>
-            <Link
-              href="/signup"
-              className="inline-block bg-black text-white px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15 }}
             >
-              Apply Now
-            </Link>
+              <Link
+                href="/signup"
+                className="inline-block bg-black text-white px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
+              >
+                Apply Now
+              </Link>
+            </motion.div>
           </div>
         </section>
       </main>

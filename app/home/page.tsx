@@ -22,32 +22,102 @@ const spring = {
   damping: 35,
 };
 
-// --- Reusable Components ---
-const StatRow = ({
-  icon,
-  text,
-  label,
-}: {
-  icon: React.ReactNode;
-  text: string;
-  label?: string;
-}) => (
-  <div className="flex items-start gap-3.5 group">
-    <div className="w-[24px] h-[24px] shrink-0 flex items-center justify-center text-[#8e8e93] group-hover:text-[#2c2c2e] transition-colors mt-0.5">
-      {icon}
-    </div>
-    <div className="flex flex-col">
-      {label && (
-        <span className="text-[13px] font-medium text-[#8e8e93] mb-0.5">
-          {label}
-        </span>
-      )}
-      <span className="text-[17px] font-medium text-[#2c2c2e]">{text}</span>
-    </div>
-  </div>
+// =========================================================
+// Icons — single-weight, minimal, matching the reference UI
+// =========================================================
+const BellIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-[18px] h-[18px]"
+  >
+    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 01-3.46 0" />
+  </svg>
 );
 
-// --- Minimalist Icons matching the reference image style ---
+const ChevronDownIcon = ({ open }: { open: boolean }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`w-[16px] h-[16px] transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+const BarIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    className="w-[14px] h-[14px]"
+  >
+    <path d="M5 19V11M12 19V5M19 19v-7" />
+  </svg>
+);
+
+const FlameIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-[24px] h-[24px]">
+    <path d="M12.75 2.25c.35 3.1-1.02 5.1-2.6 6.83-1.6 1.75-3.4 3.9-3.4 7.17a5.25 5.25 0 0010.5 0c0-1.9-.72-3-1.35-3.9-.2 1.55-1 2.5-1.9 2.5-1.15 0-1.7-.95-1.5-2.15.35-2 2.35-3.35 2.35-6.3 0-1.5-.6-2.85-2.1-4.15z" />
+  </svg>
+);
+
+const EyeOffIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-[15px] h-[15px]"
+  >
+    <path d="M3 3l18 18M10.58 10.58a2 2 0 002.83 2.83M9.88 5.09A9.77 9.77 0 0112 5c5 0 9 4.5 9 7-0 .77-.9 1.98-2.36 3.16M6.6 6.6C4.4 7.9 3 9.8 3 12c0 2.5 4 7 9 7 1.13 0 2.2-.22 3.18-.6" />
+  </svg>
+);
+
+const EyeIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-[15px] h-[15px]"
+  >
+    <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const PencilIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="w-[13px] h-[13px]"
+  >
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </svg>
+);
+
+// Kept from the original build — now used across the stat rows below
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-[24px] h-[24px]">
     <path
@@ -78,6 +148,31 @@ const TrophyIcon = () => (
   </svg>
 );
 
+// Reusable icon + label + value row (kept from the original build, now in use)
+const StatRow = ({
+  icon,
+  text,
+  label,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  label?: string;
+}) => (
+  <div className="flex items-start gap-3.5 group">
+    <div className="w-[40px] h-[40px] shrink-0 rounded-xl bg-[#F7F7F8] flex items-center justify-center text-[#1D1D1F] group-hover:bg-[#FFC300]/15 transition-colors">
+      {icon}
+    </div>
+    <div className="flex flex-col">
+      {label && (
+        <span className="text-[13px] font-medium text-[#8e8e93] mb-0.5">
+          {label}
+        </span>
+      )}
+      <span className="text-[17px] font-semibold text-[#1D1D1F]">{text}</span>
+    </div>
+  </div>
+);
+
 export default function HomePage() {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -100,6 +195,18 @@ export default function HomePage() {
   const [weeklyQuestions, setWeeklyQuestions] = useState<number>(0);
   const [dailyGoal, setDailyGoal] = useState<number>(10);
   const [achievements, setAchievements] = useState<any[]>([]);
+
+  // UI-only state for the redesign — accordions + "hide score" toggle
+  const [openSections, setOpenSections] = useState<{
+    quickStart: boolean;
+    focus: boolean;
+  }>({
+    quickStart: true,
+    focus: true,
+  });
+  const [hideScore, setHideScore] = useState(false);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState<string>("");
 
   useEffect(() => {
     if (!auth) {
@@ -558,307 +665,599 @@ export default function HomePage() {
     }
   };
 
+  const handleGoalUpdate = async () => {
+    if (!auth?.currentUser || newGoal === "" || !db) return;
+    try {
+      const goalValue = parseInt(newGoal);
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        dailyGoal: goalValue,
+      });
+      setDailyGoal(goalValue);
+      setIsEditingGoal(false);
+      setNewGoal("");
+    } catch (error) {
+      console.error("Error updating daily goal:", error);
+    }
+  };
+
+  // All-domain breakdown (not just weak spots) — powers the "Your progress" table
+  const getDomainStats = () => {
+    if (!userAnswers.length) return [];
+
+    const domainStats: any = {};
+    userAnswers.forEach((answer) => {
+      const domain = answer.domain || "General";
+      if (!domainStats[domain]) {
+        domainStats[domain] = { correct: 0, total: 0 };
+      }
+      domainStats[domain].total++;
+      if (answer.isCorrect) {
+        domainStats[domain].correct++;
+      }
+    });
+
+    const total = userAnswers.length;
+    return Object.entries(domainStats)
+      .map(([domain, stats]: [string, any]) => ({
+        domain,
+        type: /math/i.test(domain) ? "Math" : "Reading & Writing",
+        accuracy: (stats.correct / stats.total) * 100,
+        share: (stats.total / total) * 100,
+        total: stats.total,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  };
+
+  // Daily question volume for the last 30 days — powers the "Practice activity" chart
+  const getPractice30DayData = () => {
+    const days: { date: string; count: number }[] = [];
+    const counts: Record<string, number> = {};
+
+    userAnswers.forEach((answer) => {
+      if (!answer.timestamp) return;
+      const key = new Date(answer.timestamp).toDateString();
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toDateString();
+      days.push({ date: key, count: counts[key] || 0 });
+    }
+
+    const total = days.reduce((sum, d) => sum + d.count, 0);
+    const max = Math.max(...days.map((d) => d.count), 1);
+    return { days, total, max };
+  };
+
+  const toggleSection = (key: "quickStart" | "focus") =>
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
   if (isLoading) {
     return (
-      <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-16">
-        <div className="max-w-[1000px] mx-auto w-full">
-          {/* Skeleton loading matching the redesigned layout */}
-          <div className="mb-16 md:mb-20">
-            <div className="h-12 md:h-16 bg-[#f5f5f5] rounded w-3/4 animate-pulse" />
-          </div>
-          <div className="w-full min-h-[280px] md:min-h-[320px] bg-[#f5f5f5] rounded-lg mb-16 md:mb-20 animate-pulse" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-16 md:mb-20">
+      <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-12">
+        <div className="max-w-[1000px] mx-auto w-full space-y-6">
+          <div className="h-[240px] bg-[#F5F5F5] rounded-[24px] animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i}>
-                <div className="h-4 bg-[#f5f5f5] rounded w-1/2 mb-2 animate-pulse" />
-                <div className="h-10 bg-[#f5f5f5] rounded w-3/4 animate-pulse" />
-              </div>
+              <div
+                key={i}
+                className="h-14 bg-[#F5F5F5] rounded-2xl animate-pulse"
+              />
             ))}
           </div>
+          <div className="h-64 bg-[#F5F5F5] rounded-2xl animate-pulse" />
         </div>
       </section>
     );
   }
 
   const userName = userData?.name || userData?.email?.split("@")[0] || "Guest";
+  const userInitial = userName?.charAt(0)?.toUpperCase() || "G";
   const currentScore =
     userData?.bestTotalScore ||
     (userData?.bestRwScore && userData?.bestMathScore
       ? userData.bestRwScore + userData.bestMathScore
       : "-");
+  const weakAreas = getWeakAreas();
+  const scoreTrend = getScoreTrend();
+  const domainStats = getDomainStats();
+  const practice30 = getPractice30DayData();
+  const accuracy =
+    userAnswers.length > 0
+      ? Math.round(
+          (userAnswers.filter((a) => a.isCorrect).length / userAnswers.length) *
+            100,
+        )
+      : 0;
 
   return (
-    <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-16">
+    <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-12">
       <div className="max-w-[1000px] mx-auto w-full">
-        {/* Greeting - Editorial typography with generous whitespace */}
+        {/* ---- Hero card ---- */}
         <motion.div
           initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.6 }}
-          className="mb-12 md:mb-16"
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.5 }}
+          className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#FFD84D] to-[#FFBE0B] p-6 md:p-10"
         >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-[#1D1D1F] leading-[1.1]">
-            {getGreeting()}, {userName}.
-          </h1>
-        </motion.div>
-
-        {/* Primary Study Area - Large editorial surface */}
-        <Link
-          href="/practice"
-          className="block group outline-none mb-12 md:mb-16"
-        >
-          <motion.div
-            whileHover={reduce ? undefined : { scale: 0.99 }}
-            whileTap={reduce ? undefined : { scale: 0.98 }}
-            transition={reduce ? { duration: 0 } : spring}
-            className="w-full min-h-[280px] md:min-h-[320px] bg-[#1c1c1e] p-8 md:p-12 flex flex-col justify-between relative"
-          >
+          <div className="flex items-start justify-between mb-8 md:mb-10">
             <div>
-              <span className="text-white/40 font-medium text-xs tracking-[0.2em] uppercase mb-4 block">
-                Practice
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight leading-[1.1]">
-                Resume your practice
-              </h2>
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
+                {getGreeting()}, {userName}.
+              </h1>
+              <p className="text-[15px] md:text-[16px] font-medium text-[#1D1D1F]/70 mt-2">
+                {getMotivationalMessage()} {getMotivationalSubtext()}
+              </p>
             </div>
-            <div className="flex justify-end">
-              <div
-                className={`w-12 h-12 md:w-14 md:h-14 bg-white text-[#1D1D1F] rounded-full flex items-center justify-center ${reduce ? "" : "group-hover:scale-105"} transition-transform duration-300`}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                aria-label="Notifications"
+                className="w-10 h-10 rounded-full bg-white/80 hover:bg-white transition-colors flex items-center justify-center text-[#1D1D1F]"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="translate-x-0.5"
-                >
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                <BellIcon />
+              </button>
+              <div className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-semibold text-[15px]">
+                {userInitial}
               </div>
             </div>
-          </motion.div>
-        </Link>
+          </div>
 
-        {/* Secondary Metrics - Typography-based row */}
-        <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.1 }}
-          className="mb-12 md:mb-16"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <div>
-              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
-                Streak
-              </p>
-              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
-                {practiceStreak}
-                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
-                  days
-                </span>
-              </p>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="flex gap-10 md:gap-14">
+              <div>
+                <p className="text-[13px] font-medium text-[#1D1D1F]/60 mb-1">
+                  Days to exam
+                </p>
+                {isEditingExamDate ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={newExamDate}
+                      onChange={(e) => setNewExamDate(e.target.value)}
+                      className="text-[14px] px-2 py-1 rounded-lg border border-[#1D1D1F]/20 bg-white/90 text-[#1D1D1F] focus:outline-none"
+                    />
+                    <button
+                      onClick={handleExamDateUpdate}
+                      className="text-[13px] font-semibold bg-[#1D1D1F] text-white px-3 py-1.5 rounded-lg"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingExamDate(false);
+                        setNewExamDate("");
+                      }}
+                      className="text-[13px] font-medium text-[#1D1D1F]/60"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[32px] md:text-[36px] font-bold text-[#1D1D1F] leading-none">
+                    {timeToExam?.days ?? "—"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-[13px] font-medium text-[#1D1D1F]/60 mb-1">
+                  Best score
+                </p>
+                {isEditingScore ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={newScore}
+                      onChange={(e) => setNewScore(e.target.value)}
+                      placeholder="1600"
+                      className="w-20 text-[14px] px-2 py-1 rounded-lg border border-[#1D1D1F]/20 bg-white/90 text-[#1D1D1F] focus:outline-none"
+                    />
+                    <button
+                      onClick={handleScoreUpdate}
+                      className="text-[13px] font-semibold bg-[#1D1D1F] text-white px-3 py-1.5 rounded-lg"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingScore(false);
+                        setNewScore("");
+                      }}
+                      className="text-[13px] font-medium text-[#1D1D1F]/60"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingScore(true)}
+                    className="flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[32px] md:text-[36px] font-bold text-[#1D1D1F] leading-none">
+                      {hideScore ? "••••" : currentScore}
+                    </span>
+                    <span className="text-[#1D1D1F]/40 group-hover:text-[#1D1D1F] transition-colors mb-1">
+                      <PencilIcon />
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
-                Questions
-              </p>
-              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
-                {totalQuestions}
-                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
-                  answered
-                </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
-                This Week
-              </p>
-              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
-                {weeklyQuestions}
-                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
-                  questions
-                </span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-2">
-                Daily Goal
-              </p>
-              <p className="text-3xl md:text-4xl font-semibold text-[#1D1D1F]">
-                {dailyGoal}
-                <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-1">
-                  questions
-                </span>
-              </p>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setHideScore((v) => !v)}
+                className="flex items-center gap-1.5 text-[13px] font-medium text-[#1D1D1F]/70 hover:text-[#1D1D1F] transition-colors"
+              >
+                {hideScore ? <EyeIcon /> : <EyeOffIcon />}
+                {hideScore ? "Show score" : "Hide score"}
+              </button>
+              {!isEditingExamDate && (
+                <button
+                  onClick={() => setIsEditingExamDate(true)}
+                  className="flex items-center gap-1 text-[13px] font-semibold bg-white/90 hover:bg-white transition-colors text-[#1D1D1F] px-3.5 py-2 rounded-full"
+                >
+                  <span className="text-[16px] leading-none">+</span> Set exam
+                  date
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
 
-        {/* Quick Start + Performance/Focus - Two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
-          {/* Quick Start - Minimal editorial list */}
+        {/* ---- Quick start row (kept as direct links, not buried in an accordion) ---- */}
+        <motion.div
+          initial={reduce ? { opacity: 1 } : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.4, delay: 0.05 }}
+          className="mt-6 flex flex-wrap gap-2"
+        >
+          {[
+            { title: "5-Minute Warmup", href: "/practice/rw" },
+            { title: "Full Session", href: "/practice/rw" },
+            { title: "Review History", href: "/history" },
+          ].map((item) => (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="flex items-center gap-2 bg-[#F7F7F8] hover:bg-[#EFEFF0] transition-colors rounded-full pl-4 pr-3 py-2.5"
+            >
+              <span className="text-[14px] font-medium text-[#1D1D1F]">
+                {item.title}
+              </span>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-[#8e8e93]"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ))}
+        </motion.div>
+
+        {/* ---- Accordion bars: Your progress (orange table) / Practice activity (blue chart) ---- */}
+        <div className="mt-4 space-y-3">
           <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            initial={reduce ? { opacity: 1 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.2 }
+              reduce ? { duration: 0 } : { duration: 0.4, delay: 0.1 }
             }
+            className="rounded-[20px] bg-[#FBD9AE] overflow-hidden"
           >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-              Quick Start
-            </p>
-            <div className="space-y-1">
-              <Link href="/practice/rw" className="group block">
-                <div
-                  className={`flex items-center justify-between py-4 border-b border-[#e5e5ea] ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
-                >
-                  <span className="text-[17px] font-medium text-[#1D1D1F]">
-                    5-Minute Warmup
-                  </span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
-              <Link href="/practice/rw" className="group block">
-                <div
-                  className={`flex items-center justify-between py-4 border-b border-[#e5e5ea] ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
-                >
-                  <span className="text-[17px] font-medium text-[#1D1D1F]">
-                    Full Session
-                  </span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
-              <Link href="/history" className="group block">
-                <div
-                  className={`flex items-center justify-between py-4 ${reduce ? "" : "group-hover:bg-[#f9f9f9]"} transition-colors px-2 -mx-2`}
-                >
-                  <span className="text-[17px] font-medium text-[#1D1D1F]">
-                    Review History
-                  </span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className={`text-[#8e8e93] ${reduce ? "" : "group-hover:text-[#1D1D1F]"} transition-colors`}
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
-            </div>
+            <button
+              onClick={() => toggleSection("quickStart")}
+              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
+            >
+              <span className="text-[16px] md:text-[18px] font-semibold text-[#9A4A0C]">
+                Your progress
+              </span>
+              <span className="w-9 h-9 rounded-xl border-2 border-[#9A4A0C]/50 bg-white/40 flex items-center justify-center text-[#9A4A0C]">
+                <ChevronDownIcon open={openSections.quickStart} />
+              </span>
+            </button>
+            {openSections.quickStart && (
+              <div className="px-5 md:px-6 pb-6">
+                {domainStats.length > 0 ? (
+                  <div>
+                    <div className="grid grid-cols-4 gap-2 pb-3 text-[12px] font-medium text-[#9A4A0C]/60">
+                      <span>Domain</span>
+                      <span>Type</span>
+                      <span>Accuracy</span>
+                      <span className="text-right">Share</span>
+                    </div>
+                    <div className="space-y-3.5">
+                      {domainStats.map((row) => (
+                        <div
+                          key={row.domain}
+                          className="grid grid-cols-4 gap-2 items-baseline"
+                        >
+                          <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C] truncate">
+                            {row.domain}
+                          </span>
+                          <span className="text-[14px] md:text-[15px] font-medium text-[#9A4A0C]/80">
+                            {row.type}
+                          </span>
+                          <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C]">
+                            {Math.round(row.accuracy)}
+                            <span className="text-[12px] font-normal">%</span>
+                          </span>
+                          <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C] text-right">
+                            {row.share.toFixed(1)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[14px] text-[#9A4A0C]/70">
+                    Answer a few questions to see your domain breakdown here.
+                  </p>
+                )}
+              </div>
+            )}
           </motion.div>
 
-          {/* Performance/Focus - Combined quieter section */}
           <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            initial={reduce ? { opacity: 1 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.3 }
+              reduce ? { duration: 0 } : { duration: 0.4, delay: 0.15 }
             }
+            className="rounded-[20px] bg-[#AEE2F4] overflow-hidden"
           >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-              Focus
-            </p>
-            <div className="border border-[#e5e5ea] rounded-lg p-6 md:p-8">
-              <div className="mb-6">
-                <p className="text-[17px] font-medium text-[#1D1D1F] mb-2">
-                  {getSuggestedFocus()}
-                </p>
-                <p className="text-sm text-[#8e8e93]">
-                  Based on your performance
-                </p>
-              </div>
-              {getWeakAreas().length > 0 && (
-                <div className="pt-6 border-t border-[#e5e5ea]">
-                  <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
-                    Areas to improve
-                  </p>
-                  <div className="space-y-3">
-                    {getWeakAreas().map((area, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="text-sm text-[#1D1D1F]">
-                          {area.domain}
-                        </span>
-                        <span className="text-sm font-medium text-[#8e8e93]">
-                          {Math.round(area.accuracy)}%
-                        </span>
+            <button
+              onClick={() => toggleSection("focus")}
+              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
+            >
+              <span className="text-[16px] md:text-[18px] font-semibold text-[#0C6E9A]">
+                Practice activity
+              </span>
+              <span className="w-9 h-9 rounded-xl border-2 border-[#0C6E9A]/50 bg-white/40 flex items-center justify-center text-[#0C6E9A]">
+                <ChevronDownIcon open={openSections.focus} />
+              </span>
+            </button>
+            {openSections.focus && (
+              <div className="px-5 md:px-6 pb-6">
+                <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-8">
+                  <div className="shrink-0">
+                    {isEditingGoal ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={newGoal}
+                          onChange={(e) => setNewGoal(e.target.value)}
+                          placeholder={String(dailyGoal)}
+                          className="w-20 text-[14px] px-2 py-1 rounded-lg border border-[#0C6E9A]/30 bg-white/90 text-[#0C6E9A] focus:outline-none"
+                        />
+                        <button
+                          onClick={handleGoalUpdate}
+                          className="text-[13px] font-semibold bg-[#0C6E9A] text-white px-3 py-1.5 rounded-lg"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsEditingGoal(false);
+                            setNewGoal("");
+                          }}
+                          className="text-[13px] font-medium text-[#0C6E9A]/60"
+                        >
+                          Cancel
+                        </button>
                       </div>
+                    ) : (
+                      <>
+                        <p className="text-[32px] md:text-[36px] font-bold text-[#0C6E9A] leading-none">
+                          {practice30.total}
+                        </p>
+                        <p className="text-[13px] font-medium text-[#0C6E9A]/60 mt-1">
+                          last 30 days
+                        </p>
+                        <button
+                          onClick={() => setIsEditingGoal(true)}
+                          className="flex items-center gap-1.5 mt-3 text-[13px] font-medium text-[#0C6E9A]"
+                        >
+                          <BarIcon /> Set goal
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1 h-24 flex items-end gap-[3px] min-w-0">
+                    {practice30.days.map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-t-sm bg-[#0C6E9A]"
+                        style={{
+                          height: `${Math.max((d.count / practice30.max) * 100, d.count > 0 ? 8 : 3)}%`,
+                          opacity: d.count > 0 ? 1 : 0.25,
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+                {weakAreas.length > 0 && (
+                  <div className="mt-5 pt-4 border-t border-[#0C6E9A]/15 flex items-center justify-between">
+                    <span className="text-[14px] text-[#0C6E9A]/80">
+                      {getSuggestedFocus()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </motion.div>
         </div>
 
-        {/* Performance Note + Score - Two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 md:mb-16">
-          {/* Performance Note - Short editorial */}
+        {/* ---- Metrics row ---- */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.5, delay: 0.15 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8"
+        >
+          <StatRow
+            icon={<FlameIcon />}
+            label="Streak"
+            text={`${practiceStreak} days`}
+          />
+          <StatRow
+            icon={<TargetIcon />}
+            label="Questions"
+            text={`${totalQuestions} answered`}
+          />
+          <StatRow
+            icon={<CalendarIcon />}
+            label="This week"
+            text={`${weeklyQuestions} questions`}
+          />
+          <StatRow
+            icon={<TrophyIcon />}
+            label="Daily goal"
+            text={`${dailyGoal} questions`}
+          />
+        </motion.div>
+
+        {/* ---- Recent activity (transactions style list) ---- */}
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.5, delay: 0.2 }}
+          className="mt-10"
+        >
+          <div className="flex items-baseline gap-2 mb-2">
+            <h2 className="text-[19px] font-semibold text-[#1D1D1F]">
+              Recent activity
+            </h2>
+            <sup className="text-[12px] font-semibold text-[#8e8e93]">
+              {totalQuestions}
+            </sup>
+          </div>
+          {userAnswers.length > 0 ? (
+            <div>
+              {userAnswers.slice(0, 5).map((answer) => (
+                <div
+                  key={answer.id}
+                  className="flex items-center justify-between py-3.5 border-b border-[#F0F0F0] last:border-0"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-semibold text-[13px] ${
+                        answer.isCorrect
+                          ? "bg-[#E4F8EA] text-[#1D8A3E]"
+                          : "bg-[#FDE9E7] text-[#D5271A]"
+                      }`}
+                    >
+                      {(answer.category || "Q").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium text-[#1D1D1F] truncate">
+                        {answer.category || "Question"}
+                      </p>
+                      <p className="text-[13px] text-[#8e8e93]">
+                        {answer.timestamp
+                          ? new Date(answer.timestamp).toLocaleDateString()
+                          : "Recently"}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[14px] font-semibold shrink-0 ml-3 ${
+                      answer.isCorrect ? "text-[#1D8A3E]" : "text-[#D5271A]"
+                    }`}
+                  >
+                    {answer.isCorrect ? "Correct" : "Incorrect"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-[#F7F7F8] rounded-2xl">
+              <p className="text-[#8e8e93] mb-1">No recent activity yet</p>
+              <Link
+                href="/practice"
+                className="text-sm font-semibold text-[#1D1D1F] underline underline-offset-2"
+              >
+                Start practicing
+              </Link>
+            </div>
+          )}
+        </motion.div>
+
+        {/* ---- Score breakdown + Personal note ---- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-10">
+          <motion.div
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.5, delay: 0.25 }
+            }
+          >
+            <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
+              Score
+            </p>
+            <div className="space-y-4 border border-[#ECECEC] rounded-2xl p-5">
+              <div className="flex items-baseline justify-between pb-3 border-b border-[#F0F0F0]">
+                <span className="text-[14px] text-[#8e8e93]">
+                  Reading & Writing
+                </span>
+                <span className="text-xl font-semibold text-[#1D1D1F]">
+                  {userData?.bestRwScore || "-"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pb-3 border-b border-[#F0F0F0]">
+                <span className="text-[14px] text-[#8e8e93]">Math</span>
+                <span className="text-xl font-semibold text-[#1D1D1F]">
+                  {userData?.bestMathScore || "-"}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[14px] font-medium text-[#1D1D1F]">
+                  Total
+                </span>
+                <span className="text-2xl font-bold text-[#1D1D1F]">
+                  {currentScore}
+                  <span className="text-[13px] font-normal text-[#8e8e93] ml-1">
+                    /1600
+                  </span>
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
           {userAnswers.length > 0 && (
             <motion.div
-              initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-              animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+              initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={
-                reduce ? { duration: 0 } : { duration: 0.6, delay: 0.4 }
+                reduce ? { duration: 0 } : { duration: 0.5, delay: 0.3 }
               }
             >
-              <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
-                Personal Note
+              <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
+                Personal note
               </p>
-              <div className="text-[15px] text-[#1D1D1F] leading-relaxed">
+              <div className="border border-[#ECECEC] rounded-2xl p-5 text-[14px] text-[#1D1D1F] leading-relaxed">
                 <p className="mb-2">
                   Your accuracy is{" "}
-                  <span className="font-semibold">
-                    {Math.round(
-                      (userAnswers.filter((a) => a.isCorrect).length /
-                        userAnswers.length) *
-                        100,
-                    )}
-                    %
-                  </span>
-                  .
+                  <span className="font-semibold">{accuracy}%</span>.
                 </p>
                 <p>
                   Focus next on{" "}
                   <span className="font-semibold">
-                    {getWeakAreas().length > 0
-                      ? getWeakAreas()[0]?.domain
+                    {weakAreas.length > 0
+                      ? weakAreas[0]?.domain
                       : "all domains"}
                   </span>
-                  , where your accuracy is currently{" "}
+                  , currently at{" "}
                   <span className="font-semibold">
-                    {getWeakAreas().length > 0
-                      ? Math.round(getWeakAreas()[0]?.accuracy)
+                    {weakAreas.length > 0
+                      ? Math.round(weakAreas[0]?.accuracy)
                       : 0}
                     %
                   </span>
@@ -866,77 +1265,40 @@ export default function HomePage() {
                 </p>
                 <Link
                   href="/practice/rw"
-                  className={`inline-block mt-4 text-sm font-medium text-[#0071E3] ${reduce ? "" : "hover:text-[#0077ED]"} transition-colors`}
+                  className="inline-block mt-4 text-[13px] font-semibold text-[#1D1D1F] underline underline-offset-2"
                 >
                   Continue practicing →
                 </Link>
               </div>
             </motion.div>
           )}
-
-          {/* Score - Editorial typography presentation */}
-          <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-            transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.5 }
-            }
-          >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-              Score
-            </p>
-            <div className="space-y-6">
-              <div className="flex items-baseline justify-between pb-4 border-b border-[#e5e5ea]">
-                <span className="text-[15px] text-[#8e8e93]">
-                  Reading & Writing
-                </span>
-                <span className="text-2xl md:text-3xl font-semibold text-[#1D1D1F]">
-                  {userData?.bestRwScore || "-"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pb-4 border-b border-[#e5e5ea]">
-                <span className="text-[15px] text-[#8e8e93]">Math</span>
-                <span className="text-2xl md:text-3xl font-semibold text-[#1D1D1F]">
-                  {userData?.bestMathScore || "-"}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pt-2">
-                <span className="text-[15px] font-medium text-[#1D1D1F]">
-                  Total
-                </span>
-                <span className="text-4xl md:text-5xl font-semibold text-[#1D1D1F]">
-                  {currentScore}
-                  <span className="text-lg md:text-xl font-normal text-[#8e8e93] ml-2">
-                    / 1600
-                  </span>
-                </span>
-              </div>
-            </div>
-          </motion.div>
         </div>
 
-        {/* Achievements - Compact secondary section */}
+        {/* ---- Achievements ---- */}
         {achievements.length > 0 && (
           <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.55 }
+              reduce ? { duration: 0 } : { duration: 0.5, delay: 0.35 }
             }
-            className="mb-12 md:mb-16"
+            className="mt-10"
           >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-4">
+            <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
               Achievements
             </p>
             <div className="flex gap-3 overflow-x-auto pb-2">
               {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  className="flex-shrink-0 border border-[#e5e5ea] rounded-lg p-3 min-w-[120px]"
+                  className="flex-shrink-0 border border-[#ECECEC] rounded-2xl p-4 min-w-[130px]"
                 >
-                  <div className="text-lg mb-1">{achievement.icon}</div>
-                  <div className="text-xs font-medium text-[#1D1D1F]">
+                  <div className="text-xl mb-1.5">{achievement.icon}</div>
+                  <div className="text-[13px] font-semibold text-[#1D1D1F]">
                     {achievement.name}
+                  </div>
+                  <div className="text-[11px] text-[#8e8e93] mt-0.5">
+                    {achievement.description}
                   </div>
                 </div>
               ))}
@@ -944,192 +1306,133 @@ export default function HomePage() {
           </motion.div>
         )}
 
-        {/* Study Plan + Recent Activity - Two column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-          {/* Study Plan - Editorial checklist */}
+        {/* ---- Study plan + Quick actions ---- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-10">
           <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.65 }
+              reduce ? { duration: 0 } : { duration: 0.5, delay: 0.4 }
             }
           >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-              Today's Plan
+            <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
+              Today's plan
             </p>
-            <div className="space-y-0">
+            <div>
               {getStudyPlan().map((item, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-4 py-4 border-b border-[#e5e5ea] last:border-0"
+                  className="flex items-center gap-4 py-3.5 border-b border-[#F0F0F0] last:border-0"
                 >
-                  <span className="text-xs font-medium text-[#8e8e93] w-6">
+                  <span className="text-[12px] font-semibold text-[#8e8e93] w-6">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div className="flex-1">
-                    <p className="text-[15px] font-medium text-[#1D1D1F]">
+                    <p className="text-[14px] font-medium text-[#1D1D1F]">
                       {item.title}
                     </p>
-                    <p className="text-sm text-[#8e8e93]">{item.duration}</p>
+                    <p className="text-[13px] text-[#8e8e93]">
+                      {item.duration}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </motion.div>
 
-          {/* Recent Activity - Simplified timeline */}
           <motion.div
-            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-            animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={
-              reduce ? { duration: 0 } : { duration: 0.6, delay: 0.7 }
+              reduce ? { duration: 0 } : { duration: 0.5, delay: 0.45 }
             }
           >
-            <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-              Recent Activity
+            <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
+              Quick actions
             </p>
-            {userAnswers.length > 0 ? (
-              <div className="space-y-0">
-                {userAnswers.slice(0, 5).map((answer, index) => (
-                  <div
-                    key={answer.id}
-                    className="flex items-start gap-4 py-4 border-b border-[#e5e5ea] last:border-0"
-                  >
-                    <div
-                      className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                        answer.isCorrect ? "bg-[#34c759]" : "bg-[#ff3b30]"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[15px] font-medium text-[#1D1D1F] truncate">
-                          {answer.category}
-                        </span>
-                        <span className="text-xs text-[#8e8e93] flex-shrink-0 ml-2">
-                          {answer.timestamp
-                            ? new Date(answer.timestamp).toLocaleDateString()
-                            : "Recently"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-[#8e8e93] line-clamp-1">
-                        {answer.question}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-[#8e8e93]">No recent activity yet</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Resources", href: "/resources" },
+                { label: "History", href: "/history" },
+                { label: "Analytics", href: "/practice/analytics" },
+                { label: "Settings", href: "/settings" },
+              ].map((action) => (
                 <Link
-                  href="/practice"
-                  className="text-sm font-medium text-[#0071E3] hover:text-[#0077ED] transition-colors"
+                  key={action.label}
+                  href={action.href}
+                  className="px-4 py-2 border border-[#ECECEC] rounded-full text-[13px] font-medium text-[#1D1D1F] hover:bg-[#F7F7F8] transition-colors"
                 >
-                  Start practicing
+                  {action.label}
                 </Link>
-              </div>
-            )}
+              ))}
+            </div>
           </motion.div>
         </div>
 
-        {/* Quick Actions - Compact navigation */}
+        {/* ---- Score trend ---- */}
         <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.75 }}
-          className="mb-8 md:mb-12"
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.5, delay: 0.5 }}
+          className="mt-10"
         >
-          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-            Quick Actions
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/resources"
-              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
-            >
-              Resources
-            </Link>
-            <Link
-              href="/history"
-              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
-            >
-              History
-            </Link>
-            <Link
-              href="/practice/analytics"
-              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
-            >
-              Analytics
-            </Link>
-            <Link
-              href="/settings"
-              className={`px-4 py-2 border border-[#e5e5ea] rounded-lg text-sm text-[#1D1D1F] ${reduce ? "" : "hover:bg-[#f9f9f9]"} transition-colors`}
-            >
-              Settings
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Score Trend */}
-        <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.8 }}
-          className="mb-8 md:mb-12"
-        >
-          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
-            Score Trend
+          <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
+            Score trend
           </p>
           {userAnswers.length > 0 ? (
-            <div className="bg-[#f5f5f5] rounded-2xl p-6">
+            <div className="bg-[#F7F7F8] rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[15px] font-medium text-[#1D1D1F]">
-                  Performance Over Time
+                <span className="text-[14px] font-semibold text-[#1D1D1F]">
+                  Performance over time
                 </span>
-                <span className="text-xs text-[#8e8e93]">Last 7 days</span>
+                <span className="text-[12px] text-[#8e8e93]">Last 7 days</span>
               </div>
-              <div className="h-24 flex items-end gap-1 mb-4">
-                {getScoreTrend().map((point, index) => (
+              <div className="h-24 flex items-end gap-1.5 mb-4">
+                {scoreTrend.map((point, index) => (
                   <div
                     key={index}
                     className="flex-1 flex flex-col items-center gap-1"
                   >
                     <div
-                      className="w-full bg-[#0071E3] rounded-t-sm transition-all duration-300"
+                      className="w-full bg-[#1D1D1F] rounded-t-sm transition-all duration-300"
                       style={{ height: `${Math.max(point.percentage, 10)}%` }}
                     />
-                    <span className="text-xs text-[#8e8e93]">
+                    <span className="text-[11px] text-[#8e8e93]">
                       {point.score}%
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-around pt-4 border-t border-[#e5e5ea]">
+              <div className="flex items-center justify-around pt-4 border-t border-[#E5E5EA]">
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-[#1D1D1F]">
-                    {getScoreTrend()[getScoreTrend().length - 1]?.score || 0}%
+                  <div className="text-[17px] font-bold text-[#1D1D1F]">
+                    {scoreTrend[scoreTrend.length - 1]?.score || 0}%
                   </div>
-                  <div className="text-xs text-[#8e8e93]">Latest</div>
+                  <div className="text-[11px] text-[#8e8e93]">Latest</div>
                 </div>
                 <div className="text-center">
                   <div
-                    className={`text-lg font-semibold ${getScoreImprovement() >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}
+                    className={`text-[17px] font-bold ${
+                      getScoreImprovement() >= 0
+                        ? "text-[#1D8A3E]"
+                        : "text-[#D5271A]"
+                    }`}
                   >
                     {getScoreImprovement() > 0 ? "+" : ""}
                     {getScoreImprovement()}%
                   </div>
-                  <div className="text-xs text-[#8e8e93]">Change</div>
+                  <div className="text-[11px] text-[#8e8e93]">Change</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-[#0071E3]">
+                  <div className="text-[17px] font-bold text-[#1D1D1F]">
                     {getAverageScore()}%
                   </div>
-                  <div className="text-xs text-[#8e8e93]">Average</div>
+                  <div className="text-[11px] text-[#8e8e93]">Average</div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 bg-[#f5f5f5] rounded-2xl">
+            <div className="text-center py-8 bg-[#F7F7F8] rounded-2xl">
               <p className="text-[#8e8e93]">
                 Practice more to see your score trend
               </p>
@@ -1137,44 +1440,44 @@ export default function HomePage() {
           )}
         </motion.div>
 
-        {/* Leaderboard Position */}
+        {/* ---- Leaderboard ---- */}
         <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.6, delay: 0.85 }}
-          className="mb-8 md:mb-12"
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.5, delay: 0.55 }}
+          className="mt-10"
         >
-          <p className="text-xs font-medium text-[#8e8e93] uppercase tracking-wider mb-6">
+          <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-wider mb-4">
             Leaderboard
           </p>
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-6 border border-amber-200">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-br from-[#FFF3D6] to-[#FFE3A8] rounded-2xl p-6 border border-[#F3DDA3]">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#FFC300] to-[#FF9F00] rounded-xl flex items-center justify-center">
                   <span className="text-2xl">🏆</span>
                 </div>
                 <div>
-                  <div className="text-[15px] font-medium text-[#1D1D1F]">
-                    Your Rank
+                  <div className="text-[15px] font-semibold text-[#1D1D1F]">
+                    Your rank
                   </div>
-                  <div className="text-xs text-[#8e8e93]">
-                    Global Leaderboard
+                  <div className="text-[12px] text-[#8e8e93]">
+                    Global leaderboard
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-amber-600">
+                <div className="text-3xl font-bold text-[#B8860B]">
                   #{getLeaderboardPosition()}
                 </div>
-                <div className="text-xs text-[#8e8e93]">
+                <div className="text-[12px] text-[#8e8e93]">
                   {getLeaderboardPercentile()}th percentile
                 </div>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-amber-200">
-              <div className="flex items-center justify-between text-sm">
+            <div className="mt-4 pt-4 border-t border-[#F3DDA3]">
+              <div className="flex items-center justify-between text-[13px]">
                 <span className="text-[#8e8e93]">Points needed to advance</span>
-                <span className="font-medium text-[#1D1D1F]">
+                <span className="font-semibold text-[#1D1D1F]">
                   {getPointsToNextRank()}
                 </span>
               </div>

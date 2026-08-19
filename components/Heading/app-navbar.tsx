@@ -193,9 +193,9 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
         ariaLabel="Mori Prep navigation"
         collapsible="icon"
         variant="sidebar"
-        className="bg-white border-gray-200"
+        className="bg-transparent border-0"
       >
-        <AnimatedSidebarHeader className="gap-3 bg-white p-3 pb-2">
+        <AnimatedSidebarHeader className="gap-3 p-3 pb-2">
           <div className="flex min-h-9 items-center gap-2.5 overflow-hidden px-1">
             <div className="grid size-12 shrink-0 place-items-center">
               <Image src="/morin.svg" alt="" width={48} height={48} />
@@ -303,7 +303,7 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
       </AnimatedSidebar>
 
       <AnimatedSidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-3 border-gray-200 border-b bg-white px-4">
+        <header className="flex h-16 shrink-0 items-center gap-3 px-4">
           <AnimatedSidebarTrigger className="text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <PanelLeft aria-hidden="true" className="size-4" />
           </AnimatedSidebarTrigger>
@@ -311,7 +311,7 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-medium text-foreground">{activeLabel}</p>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-neutral-50">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
         </div>
       </AnimatedSidebarInset>
