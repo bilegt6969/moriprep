@@ -199,9 +199,24 @@ function RWPracticePageContent() {
   const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
     new Set(),
   );
+  // Load answered questions from localStorage synchronously for immediate availability
+  const getInitialAnsweredQuestions = () => {
+    try {
+      const savedAnsweredQuestions = localStorage.getItem("answeredQuestions");
+      if (savedAnsweredQuestions) {
+        const parsed = JSON.parse(savedAnsweredQuestions);
+        console.log("Initial load from localStorage, size:", parsed.length);
+        return new Map(parsed);
+      }
+    } catch (e) {
+      console.error("Error loading initial answered questions:", e);
+    }
+    return new Map();
+  };
+
   const [answeredQuestions, setAnsweredQuestions] = useState<
     Map<string, { isCorrect: boolean; answer: string }>
-  >(new Map());
+  >(getInitialAnsweredQuestions());
 
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
     difficultiesParam
@@ -252,6 +267,7 @@ function RWPracticePageContent() {
   // Load answered questions from localStorage on mount or Firebase if user is authenticated
   useEffect(() => {
     const loadAnsweredQuestions = async () => {
+      console.log("Loading answered questions, user:", user);
       if (user) {
         try {
           // Load from userProgress collection for attempt/status filtering
@@ -266,6 +282,7 @@ function RWPracticePageContent() {
               where("userId", "==", user.uid),
             );
             const querySnapshot = await getDocs(q);
+            console.log("Firebase query returned docs:", querySnapshot.size);
 
             const answeredMap = new Map<
               string,
@@ -273,15 +290,22 @@ function RWPracticePageContent() {
             >();
             querySnapshot.forEach((doc: any) => {
               const data = doc.data();
+              console.log("Firebase doc data:", data);
               if (data.attempts && data.attempts.length > 0) {
                 const lastAttempt = data.attempts[data.attempts.length - 1];
-                answeredMap.set(data.questionId, {
+                // Use question_id to match the field name in questions
+                const questionId = data.question_id || data.questionId;
+                answeredMap.set(questionId, {
                   isCorrect: lastAttempt.isCorrect,
                   answer: lastAttempt.answer,
                 });
               }
             });
 
+            console.log(
+              "Setting answeredQuestions from Firebase, size:",
+              answeredMap.size,
+            );
             setAnsweredQuestions(answeredMap);
           }
         } catch (e) {
@@ -292,6 +316,10 @@ function RWPracticePageContent() {
           if (savedAnsweredQuestions) {
             try {
               const parsed = JSON.parse(savedAnsweredQuestions);
+              console.log(
+                "Setting answeredQuestions from localStorage, size:",
+                parsed.length,
+              );
               setAnsweredQuestions(new Map(parsed));
             } catch (e) {
               console.error(
@@ -308,6 +336,10 @@ function RWPracticePageContent() {
         if (savedAnsweredQuestions) {
           try {
             const parsed = JSON.parse(savedAnsweredQuestions);
+            console.log(
+              "Setting answeredQuestions from localStorage (no auth), size:",
+              parsed.length,
+            );
             setAnsweredQuestions(new Map(parsed));
           } catch (e) {
             console.error(
@@ -475,23 +507,27 @@ function RWPracticePageContent() {
   }, [selectedQuestion, user, isAuthLoaded]);
 
   useEffect(() => {
-    if (
-      !isReturningToSelection &&
-      filteredQuestions.length > 0 &&
-      !selectedQuestion
-    ) {
-      // If questionIdParam is provided, select that specific question
-      if (questionIdParam) {
-        const specificQuestion = filteredQuestions.find(
-          (q) => q.question_id === questionIdParam,
-        );
-        if (specificQuestion) {
-          setSelectedQuestion(specificQuestion);
-          return;
+    if (!isReturningToSelection && filteredQuestions.length > 0) {
+      // If the currently selected question is not in the filtered list, select the first one
+      if (
+        !selectedQuestion ||
+        !filteredQuestions.find(
+          (q) => q.question_id === selectedQuestion.question_id,
+        )
+      ) {
+        // If questionIdParam is provided, select that specific question
+        if (questionIdParam) {
+          const specificQuestion = filteredQuestions.find(
+            (q) => q.question_id === questionIdParam,
+          );
+          if (specificQuestion) {
+            setSelectedQuestion(specificQuestion);
+            return;
+          }
         }
+        // Otherwise, select the first question
+        setSelectedQuestion(filteredQuestions[0] || null);
       }
-      // Otherwise, select the first question
-      setSelectedQuestion(filteredQuestions[0] || null);
     }
   }, [
     domainsParam,
@@ -502,6 +538,7 @@ function RWPracticePageContent() {
     selectedQuestion,
     isReturningToSelection,
     questionIdParam,
+    attemptFilter,
   ]);
 
   useEffect(() => {
@@ -650,9 +687,21 @@ function RWPracticePageContent() {
 
     // Filter by attempt status (tried/not-tried)
     if (attemptFilter !== "all") {
+      console.log(
+        `Applying attempt filter: ${attemptFilter}, answeredQuestions size: ${answeredQuestions.size}`,
+      );
+      console.log(
+        "Answered question IDs:",
+        Array.from(answeredQuestions.keys()),
+      );
       filtered = filtered.filter((q) => {
         const attempted = answeredQuestions.has(q.question_id);
-        return attemptFilter === "tried" ? attempted : !attempted;
+        const shouldInclude =
+          attemptFilter === "tried" ? attempted : !attempted;
+        console.log(
+          `Question ${q.question_id}: attempted=${attempted}, attemptFilter=${attemptFilter}, shouldInclude=${shouldInclude}`,
+        );
+        return shouldInclude;
       });
     }
 
@@ -1451,7 +1500,7 @@ function RWPracticePageContent() {
             >
               <div
                 ref={passageRef}
-                className="max-w-3xl text-[16px] leading-[1.8] text-[#1C1C1E] font-serif"
+                className="max-w-3xl text-[20px] leading-[1.8] text-[#1C1C1E] font-serif"
               >
                 {selectedQuestion.has_graphic &&
                   selectedQuestion.graphics &&

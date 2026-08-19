@@ -32,7 +32,7 @@ import {
 const iconProps = {
   size: 18,
   strokeWidth: 1.5,
-  className: "text-neutral-900 dark:text-neutral-100",
+  className: "text-neutral-600 dark:text-neutral-400",
 };
 
 const data = {

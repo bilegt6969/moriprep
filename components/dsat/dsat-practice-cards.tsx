@@ -123,6 +123,7 @@ export function DSATPracticeCards() {
               className={`w-full ${area.color} rounded-[32px] p-8 md:p-10 relative overflow-hidden transition-transform duration-300 ${
                 !reduce && area.available ? "hover:scale-[1.01]" : ""
               }`}
+              suppressHydrationWarning
             >
               <div className="flex flex-col md:flex-row justify-between h-full gap-8 md:gap-4 relative z-10">
                 {/* Left Side: Headers and Stats */}
