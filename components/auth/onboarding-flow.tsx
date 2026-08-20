@@ -260,7 +260,49 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
     if (currentStep === 0) {
       return !!data.role;
     }
-    // For other steps, can always go next (validation handled by individual steps)
+
+    // For students: school (step 1)
+    if (currentStep === 1 && data.role === "student") {
+      return !!data.school && data.school.trim().length > 0;
+    }
+
+    // For students: graduation year (step 2)
+    if (currentStep === 2 && data.role === "student") {
+      return !!data.graduationYear;
+    }
+
+    // For SAT test dates (different step numbers based on role)
+    const satDatesStep = data.role === "student" ? 3 : 1;
+    if (currentStep === satDatesStep) {
+      return !!data.satTestDates && data.satTestDates.length > 0;
+    }
+
+    // For goal score (different step numbers based on role)
+    const goalScoreStep =
+      data.role === "student" ? 6 : data.role === "parent" ? 4 : 4;
+    if (currentStep === goalScoreStep) {
+      return (
+        !!data.goalScore && data.goalScore >= 400 && data.goalScore <= 1600
+      );
+    }
+
+    // For parents: child graduation year (step 1)
+    if (currentStep === 1 && data.role === "parent") {
+      return !!data.childGraduationYear;
+    }
+
+    // For tutors: students tutored (step 1)
+    if (currentStep === 1 && data.role === "tutor") {
+      return !!data.studentsTutored && data.studentsTutored.trim().length > 0;
+    }
+
+    // For teachers: school SAT students (step 1)
+    if (currentStep === 1 && data.role === "teacher") {
+      return (
+        !!data.schoolSatStudents && data.schoolSatStudents.trim().length > 0
+      );
+    }
+
     return true;
   };
 
@@ -434,15 +476,14 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
         <div className="w-full border-b border-neutral-100 px-6 py-4">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <img src="/morin.svg" alt="Mori Prep" className="h-5 w-auto" />
-                <span className="text-sm font-medium text-neutral-600">
-                  {getStepNumber()} of {getTotalSteps()}
-                </span>
-              </div>
-              <span className="text-sm text-neutral-400">
-                {Math.round((getStepNumber() / getTotalSteps()) * 100)}%
+              <span className="text-sm font-medium text-neutral-600">
+                {getStepNumber()} of {getTotalSteps()}
               </span>
+              <img
+                src="/morin.svg"
+                alt="Sainto Logo"
+                className="h-6 w-auto opacity-80"
+              />
             </div>
             <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
               <motion.div

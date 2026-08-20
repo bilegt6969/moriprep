@@ -107,7 +107,7 @@ export function GoalScore({
       className="text-center"
     >
       <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-neutral-900 mb-4">
-        What's your target SAT score?
+        What's your target SAT score? <span className="text-red-500">*</span>
       </h1>
       <p className="text-neutral-500 mb-12 max-w-lg mx-auto">
         An estimate works great if you're not sure yet. Click a bar to select

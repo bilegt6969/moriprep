@@ -51,7 +51,7 @@ export function SchoolSearch({
       className="text-center"
     >
       <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-neutral-900 mb-4">
-        Search for your school
+        Enter your school <span className="text-red-500">*</span>
       </h1>
       <p className="text-neutral-500 mb-8">
         This helps us personalize your experience based on your school.

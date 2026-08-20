@@ -652,8 +652,3 @@ body:has(.hide-footer-on-success) > :last-child {
   user-select: text !important;
   -webkit-user-select: text !important;
 }
-
-.passage-content p {
-  font-size: 1.25rem;
-  line-height: 1.75;
-}

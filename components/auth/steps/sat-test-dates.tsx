@@ -22,16 +22,54 @@ interface SatTestDatesProps {
   onBack: () => void;
 }
 
-const testDates = [
-  "December 7, 2023",
-  "March 9, 2024",
-  "May 4, 2024",
-  "June 1, 2024",
-  "August 24, 2024",
-  "October 5, 2024",
-  "November 2, 2024",
-  "December 7, 2024",
-];
+// Generate future SAT test dates dynamically
+const generateFutureSATDates = (): string[] => {
+  const dates: string[] = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // Official SAT test dates for 2026-2027
+  const satDates = [
+    { year: 2026, month: 7, day: 22 }, // August 22, 2026
+    { year: 2026, month: 8, day: 12 }, // September 12, 2026
+    { year: 2026, month: 9, day: 3 }, // October 3, 2026
+    { year: 2026, month: 10, day: 7 }, // November 7, 2026
+    { year: 2026, month: 11, day: 5 }, // December 5, 2026
+    { year: 2027, month: 2, day: 6 }, // March 6, 2027
+    { year: 2027, month: 4, day: 1 }, // May 1, 2027
+    { year: 2027, month: 5, day: 5 }, // June 5, 2027
+  ];
+
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // Only include future dates
+  for (const satDate of satDates) {
+    const testDate = new Date(satDate.year, satDate.month, satDate.day);
+
+    if (testDate > now) {
+      dates.push(
+        `${monthNames[satDate.month]} ${satDate.day}, ${satDate.year}`,
+      );
+    }
+  }
+
+  return dates;
+};
+
+const testDates = generateFutureSATDates();
 
 export function SatTestDates({
   data,
@@ -75,7 +113,7 @@ export function SatTestDates({
       className="text-center"
     >
       <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-neutral-900 mb-4">
-        When are you taking the SAT?
+        When are you taking the SAT? <span className="text-red-500">*</span>
       </h1>
       <p className="text-neutral-500 mb-8">
         Select all dates you're considering

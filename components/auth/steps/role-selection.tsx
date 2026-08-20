@@ -85,7 +85,7 @@ export function RoleSelection({
         transition={{ duration: 0.5, ease: customEase }}
         className="text-4xl md:text-5xl font-medium tracking-tight text-neutral-900 mb-4"
       >
-        Who are you?
+        Who are you? <span className="text-red-500">*</span>
       </motion.h1>
 
       <motion.p

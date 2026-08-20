@@ -1,38 +1,38 @@
 "use client";
 
 import {
-    saveAnsweredQuestions,
-    saveUserProgress,
-    updateUserStats,
+  saveAnsweredQuestions,
+  saveUserProgress,
+  updateUserStats,
 } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    BellOff,
-    Bookmark,
-    CheckCircle2,
-    ChevronDown,
-    ChevronLeft,
-    Clock,
-    Command,
-    Copy,
-    Flag,
-    Highlighter,
-    History,
-    Info,
-    List,
-    Maximize2,
-    Moon,
-    MoreVertical,
-    Pause,
-    Play,
-    Shuffle,
-    Trash2,
-    Underline as UnderlineIcon,
-    X,
+  AlertCircle,
+  BellOff,
+  Bookmark,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Command,
+  Copy,
+  Flag,
+  Highlighter,
+  History,
+  Info,
+  List,
+  Maximize2,
+  Moon,
+  MoreVertical,
+  Pause,
+  Play,
+  Shuffle,
+  Trash2,
+  Underline as UnderlineIcon,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -118,18 +118,18 @@ function SkeletonQuestion() {
 
 function SkeletonQuestionHeader() {
   return (
-    <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-      {/* Left: Number & Mark for Review */}
-      <div className="flex items-center gap-4">
-        <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-        <div className="w-28 h-5 bg-gray-200 rounded animate-pulse" />
-      </div>
-
-      {/* Right: Action Buttons */}
-      <div className="flex items-center gap-4">
-        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-20 h-9 bg-gray-200 rounded-full animate-pulse" />
-        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+    <div className="px-6 md:px-8 py-4 bg-white sticky top-0 z-10">
+      <div className="flex items-center justify-between gap-2 bg-gray-100 rounded-full px-2 py-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-8 h-8 bg-gray-300/70 rounded-lg animate-pulse shrink-0" />
+          <div className="w-32 h-9 bg-gray-300/70 rounded-full animate-pulse hidden sm:block" />
+          <div className="w-9 h-9 bg-gray-300/70 rounded-full animate-pulse sm:hidden" />
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-9 h-9 bg-gray-300/70 rounded-full animate-pulse" />
+          <div className="w-9 h-9 bg-gray-300/70 rounded-full animate-pulse" />
+          <div className="w-9 h-9 bg-gray-300/70 rounded-full animate-pulse" />
+        </div>
       </div>
     </div>
   );
@@ -156,9 +156,15 @@ function SkeletonLoader() {
   return (
     <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden">
       <SkeletonHeader />
-      <div className="flex-1 flex overflow-hidden">
-        <SkeletonPassage />
-        <SkeletonQuestion />
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="w-full md:w-1/2 overflow-hidden bg-gray-50">
+          <SkeletonPassage />
+        </div>
+        <div className="hidden md:block w-px bg-gray-200 shrink-0" />
+        <div className="w-full md:w-1/2 overflow-hidden flex flex-col">
+          <SkeletonQuestionHeader />
+          <SkeletonQuestion />
+        </div>
       </div>
       <SkeletonFooter />
     </div>
@@ -260,9 +266,18 @@ function RWPracticePageContent() {
   const [leftPaneWidth, setLeftPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
+
+  // Track viewport size for responsive split-pane vs stacked layout
+  useEffect(() => {
+    const checkViewport = () => setIsMobile(window.innerWidth < 768);
+    checkViewport();
+    window.addEventListener("resize", checkViewport);
+    return () => window.removeEventListener("resize", checkViewport);
+  }, []);
 
   // Load answered questions from localStorage on mount or Firebase if user is authenticated
   useEffect(() => {
@@ -881,6 +896,7 @@ function RWPracticePageContent() {
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isMobile) return;
     setIsResizing(true);
     e.preventDefault();
   };
@@ -1331,9 +1347,9 @@ function RWPracticePageContent() {
           )}
 
           {/* Top Header Bar strictly matching Screenshot 2026-07-22 at 17.54.13.jpg */}
-          <header className="flex items-center justify-between px-6 py-3 shrink-0 bg-white z-40 relative">
+          <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 shrink-0 bg-white z-40 relative border-b border-gray-100">
             {/* Left: Go back & Directions */}
-            <div className="flex items-center gap-6 w-1/3 relative">
+            <div className="flex items-center gap-4 sm:gap-6 w-auto sm:w-1/3 relative">
               <button
                 onClick={handleGoBack}
                 className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors"
@@ -1365,7 +1381,7 @@ function RWPracticePageContent() {
             </div>
 
             {/* Center: Timer aligned to match screenshot */}
-            <div className="flex flex-col items-center justify-center w-1/3">
+            <div className="order-3 sm:order-none flex flex-col items-center justify-center w-full sm:w-1/3 pt-2 sm:pt-0">
               <div className="text-[20px] font-bold tracking-wide text-black mb-1.5 h-7 flex items-center">
                 {isTimerHidden ? (
                   <Clock size={20} className="text-gray-400" />
@@ -1412,7 +1428,7 @@ function RWPracticePageContent() {
             </div>
 
             {/* Right: Tools & Badges */}
-            <div className="flex items-center justify-end gap-3 w-1/3 relative">
+            <div className="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/3 relative">
               <button
                 onClick={() => setIsHighlightActive(!isHighlightActive)}
                 className={`flex flex-col items-center justify-center rounded-[20px] px-6 py-2 transition-colors ${isHighlightActive ? "bg-cyan-100/50 text-cyan-400" : "text-gray-500 hover:text-black hover:bg-gray-50"}`}
@@ -1491,16 +1507,16 @@ function RWPracticePageContent() {
           </header>
 
           {/* Main Split Content */}
-          <main className="flex flex-1 overflow-hidden relative">
+          <main className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
             {/* Left Pane: Reading Material */}
             <div
-              style={{ width: `${leftPaneWidth}%` }}
-              className={`passage-content p-10 md:p-12 overflow-y-auto bg-gray-50 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+              style={!isMobile ? { width: `${leftPaneWidth}%` } : undefined}
+              className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-10 md:p-12 overflow-y-auto bg-gray-50 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
               onClick={handleWordDoubleClick}
             >
               <div
                 ref={passageRef}
-                className="max-w-3xl text-[20px] leading-[1.8] text-[#1C1C1E] font-serif"
+                className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] font-serif"
               >
                 {selectedQuestion.has_graphic &&
                   selectedQuestion.graphics &&
@@ -1527,168 +1543,176 @@ function RWPracticePageContent() {
               </div>
             </div>
 
-            {/* Draggable Divider */}
-            <div
-              className="w-0 relative flex flex-col items-center justify-center z-10"
-              onMouseDown={handleMouseDown}
-            >
-              <div className="absolute top-0 bottom-0 border-l border-gray-200" />
-              <div className="absolute w-4 h-8 bg-gray-100 border border-gray-200 rounded-sm flex flex-col items-center justify-center gap-[2px] shadow-sm cursor-col-resize text-gray-400 hover:text-gray-500 transition-colors">
-                <div className="flex gap-[2px]">
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                </div>
-                <div className="flex gap-[2px]">
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                </div>
-                <div className="flex gap-[2px]">
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
-                </div>
+            {/* Divider: draggable hairline on desktop, static rule on mobile */}
+            {isMobile ? (
+              <div className="h-px w-full bg-gray-200 shrink-0" />
+            ) : (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                className="group hidden md:flex w-3 relative flex-col items-center justify-center shrink-0 z-10 cursor-col-resize"
+                onMouseDown={handleMouseDown}
+              >
+                <div
+                  className={`absolute inset-y-0 left-1/2 -translate-x-1/2 w-px transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-200 group-hover:bg-gray-300"}`}
+                />
+                <div
+                  className={`relative w-1 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 group-hover:bg-gray-400"}`}
+                />
               </div>
-            </div>
+            )}
 
             {/* Right Pane: Question and Answers */}
             <div
-              style={{ width: `${100 - leftPaneWidth}%` }}
-              className="overflow-y-auto bg-white flex flex-col relative border-l border-gray-100"
+              style={
+                !isMobile ? { width: `${100 - leftPaneWidth}%` } : undefined
+              }
+              className="w-full md:w-auto overflow-y-auto bg-white flex flex-col relative"
             >
-              {/* Question Header Bar matching screenshot */}
-              <div className="flex items-center justify-between px-8 py-4 bg-white sticky top-0 z-10">
-                <div className="flex items-center gap-4">
-                  <div className="bg-black text-white w-8 h-8 rounded-lg text-[15px] font-bold flex items-center justify-center shadow-sm">
-                    {filteredQuestions.findIndex(
-                      (q) => q.question_id === selectedQuestion.question_id,
-                    ) + 1}
+              {/* Question Header Bar matching target screenshot: number badge + gray pill container */}
+              <div className="px-6 md:px-8 py-4 bg-white sticky top-0 z-10">
+                <div className="flex items-center justify-between gap-2 bg-gray-100 rounded-full px-2 py-2">
+                  <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                    <div className="bg-black text-white w-8 h-8 rounded-lg text-[15px] font-bold flex items-center justify-center shrink-0">
+                      {filteredQuestions.findIndex(
+                        (q) => q.question_id === selectedQuestion.question_id,
+                      ) + 1}
+                    </div>
+
+                    <button
+                      onClick={toggleMarkForReview}
+                      className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-2 rounded-full whitespace-nowrap ${markedQuestions.has(selectedQuestion.question_id) ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-200"}`}
+                    >
+                      <Bookmark
+                        size={16}
+                        strokeWidth={2.5}
+                        className={
+                          markedQuestions.has(selectedQuestion.question_id)
+                            ? "text-white fill-white shrink-0"
+                            : "text-gray-600 shrink-0"
+                        }
+                      />
+                      <span className="hidden sm:inline">Mark for Review</span>
+                    </button>
                   </div>
 
-                  <button
-                    onClick={toggleMarkForReview}
-                    className={`flex items-center gap-2 text-sm font-semibold transition-colors ${markedQuestions.has(selectedQuestion.question_id) ? "text-gray-900" : "text-gray-500 hover:text-black"}`}
-                  >
-                    <Bookmark
-                      size={16}
-                      strokeWidth={2.5}
-                      className={
-                        markedQuestions.has(selectedQuestion.question_id)
-                          ? "text-gray-900 fill-gray-900"
-                          : "text-gray-400"
-                      }
-                    />
-                    Mark for Review
-                  </button>
-                </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button className="w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-200">
+                      <Copy size={16} strokeWidth={2} />
+                    </button>
 
-                <div className="flex items-center gap-4 text-gray-500">
-                  <button className="w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-50">
-                    <Copy size={16} strokeWidth={2} />
-                  </button>
-                  <button className="flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors px-3 py-2 rounded-full hover:bg-gray-50">
-                    <Flag size={16} strokeWidth={2} /> Report
-                  </button>
-                  <button
-                    onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center relative shadow-sm transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "bg-black text-white hover:bg-gray-800"}`}
-                  >
-                    <span className="font-sans font-bold text-xs">S</span>
-                    <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
-                  </button>
+                    <button className="hidden sm:flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors px-3 py-2 rounded-full hover:bg-gray-200">
+                      <Flag size={16} strokeWidth={2} /> Report
+                    </button>
+                    <button className="sm:hidden w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-200">
+                      <Flag size={16} strokeWidth={2} />
+                    </button>
+
+                    <button
+                      onClick={() => setIsCrossOutMode(!isCrossOutMode)}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center relative transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "text-gray-900 hover:bg-gray-200"}`}
+                    >
+                      <span className="font-sans font-bold text-xs">S</span>
+                      <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Question Area */}
               <div
                 ref={questionRef}
-                className={`p-8 md:p-12 pt-8 pb-8 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                className={`p-6 sm:p-8 md:p-12 pt-6 sm:pt-8 pb-8 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
                 onMouseUp={handleTextSelection}
                 onClick={handleWordDoubleClick}
               >
-                {selectedQuestion.prompt && (
-                  <div className="mb-8 text-[16px] font-serif text-[#1C1C1E] leading-relaxed">
-                    {selectedQuestion.prompt}
-                  </div>
-                )}
-
-                {/* Answers List */}
-                <div className="space-y-4">
-                  {Object.entries(selectedQuestion.choices).map(
-                    ([key, value]) => {
-                      const isSelected = selectedAnswer === key;
-                      const isHighlighted = highlightedAnswer === key;
-                      const isEliminated = eliminatedChoices.has(key);
-                      const isCorrectAnswer =
-                        key === selectedQuestion.correct_answer;
-
-                      let borderClass = "border-gray-300";
-                      let bgClass = "bg-white";
-                      let textClass = isEliminated
-                        ? "text-gray-400 line-through"
-                        : "text-[#1C1C1E]";
-
-                      if (showExplanation) {
-                        if (isCorrectAnswer) {
-                          borderClass = "border-green-500 bg-green-50/20";
-                        } else if (isSelected) {
-                          borderClass = "border-red-500 bg-red-50/20";
-                        }
-                      } else if (isHighlighted) {
-                        borderClass = "border-sky-400";
-                        bgClass = "bg-white";
-                      } else if (!isEliminated) {
-                        borderClass = "border-gray-400 hover:border-gray-500";
-                      } else {
-                        borderClass = "border-gray-200 bg-gray-50/30";
-                      }
-
-                      return (
-                        <div
-                          key={key}
-                          onClick={() => handleAnswerHighlight(key)}
-                          className={`group relative flex items-center gap-4 px-5 py-4 rounded-xl border-[1px] cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
-                        >
-                          <div
-                            className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-400 text-white" : showExplanation && isCorrectAnswer ? "bg-green-500 text-white" : showExplanation && isSelected ? "bg-red-500 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-[1.5px] border-gray-300 text-gray-400" : "border-[1.5px] border-gray-400 text-[#1C1C1E]"}`}
-                          >
-                            {key}
-                          </div>
-
-                          <span
-                            className={`text-[15px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                          >
-                            {value}
-                          </span>
-
-                          {isHighlighted && !showExplanation && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAnswerSubmit();
-                              }}
-                              className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-400 hover:bg-sky-500 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                            >
-                              Check
-                            </button>
-                          )}
-
-                          {isCrossOutMode && (
-                            <button
-                              onClick={(e) => toggleElimination(e, key)}
-                              disabled={showExplanation}
-                              className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
-                            >
-                              <div
-                                className={`relative flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-400 text-gray-500 group-hover:border-gray-600 group-hover:text-gray-600"}`}
-                              >
-                                {key}
-                                <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
-                              </div>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    },
+                <div className="max-w-3xl mx-auto md:mx-0">
+                  {selectedQuestion.prompt && (
+                    <div className="mb-8 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] leading-relaxed">
+                      {selectedQuestion.prompt}
+                    </div>
                   )}
+
+                  {/* Answers List */}
+                  <div className="space-y-4">
+                    {Object.entries(selectedQuestion.choices).map(
+                      ([key, value]) => {
+                        const isSelected = selectedAnswer === key;
+                        const isHighlighted = highlightedAnswer === key;
+                        const isEliminated = eliminatedChoices.has(key);
+                        const isCorrectAnswer =
+                          key === selectedQuestion.correct_answer;
+
+                        let borderClass = "border-gray-300";
+                        let bgClass = "bg-white";
+                        let textClass = isEliminated
+                          ? "text-gray-400 line-through"
+                          : "text-[#1C1C1E]";
+
+                        if (showExplanation) {
+                          if (isCorrectAnswer) {
+                            borderClass = "border-green-500 bg-green-50/20";
+                          } else if (isSelected) {
+                            borderClass = "border-red-500 bg-red-50/20";
+                          }
+                        } else if (isHighlighted) {
+                          borderClass = "border-sky-400";
+                          bgClass = "bg-white";
+                        } else if (!isEliminated) {
+                          borderClass = "border-gray-400 hover:border-gray-500";
+                        } else {
+                          borderClass = "border-gray-200 bg-gray-50/30";
+                        }
+
+                        return (
+                          <div
+                            key={key}
+                            onClick={() => handleAnswerHighlight(key)}
+                            className={`group relative flex items-center gap-4 px-5 py-4 rounded-xl border-[1px] cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
+                          >
+                            <div
+                              className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-400 text-white" : showExplanation && isCorrectAnswer ? "bg-green-500 text-white" : showExplanation && isSelected ? "bg-red-500 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-[1.5px] border-gray-300 text-gray-400" : "border-[1.5px] border-gray-400 text-[#1C1C1E]"}`}
+                            >
+                              {key}
+                            </div>
+
+                            <span
+                              className={`text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                            >
+                              {value}
+                            </span>
+
+                            {isHighlighted && !showExplanation && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAnswerSubmit();
+                                }}
+                                className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-400 hover:bg-sky-500 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                              >
+                                Check
+                              </button>
+                            )}
+
+                            {isCrossOutMode && (
+                              <button
+                                onClick={(e) => toggleElimination(e, key)}
+                                disabled={showExplanation}
+                                className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
+                              >
+                                <div
+                                  className={`relative flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-400 text-gray-500 group-hover:border-gray-600 group-hover:text-gray-600"}`}
+                                >
+                                  {key}
+                                  <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1851,9 +1875,9 @@ function RWPracticePageContent() {
           </AnimatePresence>
 
           {/* Bottom Footer Navigation matching screenshot perfectly */}
-          <footer className="flex items-center justify-between px-6 py-4 border-t border-gray-200 shrink-0 bg-white relative z-50">
+          <footer className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 shrink-0 bg-white relative z-50">
             {/* Left: Question Navigator & Reload */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQuestionBank(!showQuestionBank)}
                 className="flex items-center gap-2 text-white bg-black px-4 py-2 rounded-full text-sm font-semibold transition-colors hover:bg-gray-800"
@@ -1885,7 +1909,7 @@ function RWPracticePageContent() {
             </div>
 
             {/* Right: Suite of Tools */}
-            <div className="flex items-center gap-3 relative">
+            <div className="flex items-center gap-2 sm:gap-3 relative overflow-x-auto max-w-full no-scrollbar">
               <button
                 onClick={() => setShowInfo(!showInfo)}
                 className="info-btn p-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full transition-colors shadow-sm"
@@ -1939,7 +1963,7 @@ function RWPracticePageContent() {
 
             {/* Info Menu Popup */}
             {showInfo && (
-              <div className="info-menu absolute bottom-20 right-[350px] w-64 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-4 z-50">
+              <div className="info-menu absolute bottom-20 right-4 sm:right-[350px] w-[calc(100vw-2rem)] max-w-64 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-4 z-50">
                 <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">
                   Question Details
                 </h4>
@@ -1970,7 +1994,7 @@ function RWPracticePageContent() {
 
             {/* History Popup */}
             {showHistory && (
-              <div className="absolute bottom-20 left-20 w-[400px] max-h-[500px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden">
+              <div className="absolute bottom-20 left-4 sm:left-20 right-4 sm:right-auto w-auto sm:w-[400px] max-w-[calc(100vw-2rem)] max-h-[500px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-bold text-gray-900">Previous attempts</h4>
                   <button
@@ -2039,7 +2063,7 @@ function RWPracticePageContent() {
 
             {/* Question Bank Popup */}
             {showQuestionBank && (
-              <div className="absolute bottom-20 left-6 w-[600px] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden">
+              <div className="absolute bottom-20 left-4 sm:left-6 right-4 sm:right-auto w-auto sm:w-[600px] max-w-[calc(100vw-2rem)] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-bold text-gray-900">Question Bank</h4>
                   <div className="flex items-center gap-4 text-xs">
@@ -2058,7 +2082,7 @@ function RWPracticePageContent() {
                   </div>
                 </div>
                 <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
-                  <div className="grid grid-cols-10 gap-2">
+                  <div className="grid grid-cols-6 sm:grid-cols-10 gap-2">
                     {filteredQuestions.map((question, index) => {
                       const answerData = answeredQuestions.get(
                         question.question_id,

@@ -57,7 +57,7 @@ export function GraduationYear({
       className="text-center"
     >
       <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-neutral-900 mb-12">
-        What year are you graduating?
+        What year are you graduating? <span className="text-red-500">*</span>
       </h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-xl mx-auto mb-6">

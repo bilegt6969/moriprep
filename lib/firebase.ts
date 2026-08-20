@@ -8,6 +8,7 @@ import {
     getAuth,
     GoogleAuthProvider,
     setPersistence,
+    updateProfile,
 } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import {
@@ -20,6 +21,7 @@ import {
     serverTimestamp,
     setDoc,
 } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -66,6 +68,7 @@ if (app) {
 }
 
 const db: Firestore | null = app ? getFirestore(app, "(default)") : null;
+const storage = app ? getStorage(app) : null;
 
 export {
     addDoc,
@@ -74,9 +77,14 @@ export {
     db as db,
     doc,
     getDoc,
+    getDownloadURL,
     googleProvider as googleProvider,
     onSnapshot,
+    ref,
     serverTimestamp,
-    setDoc
+    setDoc,
+    storage,
+    updateProfile,
+    uploadBytes
 };
 

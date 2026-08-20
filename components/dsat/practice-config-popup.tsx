@@ -77,6 +77,7 @@ export function PracticeConfigPopup({
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
+  const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
   // Load saved configuration from localStorage on mount
   useEffect(() => {
@@ -95,6 +96,7 @@ export function PracticeConfigPopup({
         console.error("Error parsing saved config:", e);
       }
     }
+    setIsConfigLoaded(true);
   }, []);
 
   // Save configuration to localStorage whenever it changes
@@ -117,6 +119,9 @@ export function PracticeConfigPopup({
 
   // Real-time filtering count from API with client-side attempt/status filtering
   useEffect(() => {
+    // Don't fetch until config is loaded from localStorage
+    if (!isConfigLoaded) return;
+
     const fetchFilteredCount = async () => {
       setIsLoadingCount(true);
       try {
@@ -137,19 +142,30 @@ export function PracticeConfigPopup({
           params.append("skill", selectedSkills.join(","));
         }
 
+        // If we need to apply attempt/status filters, fetch full questions
+        // Otherwise, just fetch count for performance
+        const needsFullQuestions =
+          attemptFilter === "tried" ||
+          attemptFilter === "not-tried" ||
+          statusFilter === "correct" ||
+          statusFilter === "incorrect";
+
+        if (needsFullQuestions) {
+          params.append("limit", "10000"); // Fetch all matching questions
+        } else {
+          params.append("count_only", "true");
+        }
+
         const response = await fetch(`/api/questions?${params.toString()}`);
         if (response.ok) {
-          const questions = await response.json();
+          const data = await response.json();
 
-          // Apply client-side attempt and status filters
-          let filtered = questions;
+          let filteredCount = 0;
 
-          if (
-            attemptFilter === "tried" ||
-            attemptFilter === "not-tried" ||
-            statusFilter === "correct" ||
-            statusFilter === "incorrect"
-          ) {
+          if (needsFullQuestions) {
+            // data is an array of questions
+            const questions = Array.isArray(data) ? data : [];
+
             // Fetch user progress from Firebase
             const { auth, db } = await import("@/lib/firebase");
             const currentUser = auth?.currentUser;
@@ -176,18 +192,20 @@ export function PracticeConfigPopup({
 
               // Apply attempt filter
               if (attemptFilter === "tried") {
-                filtered = filtered.filter((q: any) =>
+                filteredCount = questions.filter((q: any) =>
                   userProgressMap.has(q.question_id),
-                );
+                ).length;
               } else if (attemptFilter === "not-tried") {
-                filtered = filtered.filter(
+                filteredCount = questions.filter(
                   (q: any) => !userProgressMap.has(q.question_id),
-                );
+                ).length;
+              } else {
+                filteredCount = questions.length;
               }
 
               // Apply status filter
               if (statusFilter === "correct") {
-                filtered = filtered.filter((q: any) => {
+                filteredCount = questions.filter((q: any) => {
                   const progress = userProgressMap.get(q.question_id);
                   if (
                     !progress ||
@@ -198,9 +216,9 @@ export function PracticeConfigPopup({
                   return progress.attempts.some(
                     (attempt: any) => attempt.isCorrect === true,
                   );
-                });
+                }).length;
               } else if (statusFilter === "incorrect") {
-                filtered = filtered.filter((q: any) => {
+                filteredCount = questions.filter((q: any) => {
                   const progress = userProgressMap.get(q.question_id);
                   if (
                     !progress ||
@@ -215,7 +233,7 @@ export function PracticeConfigPopup({
                     (attempt: any) => attempt.isCorrect === true,
                   );
                   return hasIncorrect && !hasCorrect;
-                });
+                }).length;
               }
             } else {
               // User not authenticated or db not available, can't apply attempt/status filters
@@ -224,12 +242,17 @@ export function PracticeConfigPopup({
                 statusFilter === "correct" ||
                 statusFilter === "incorrect"
               ) {
-                filtered = [];
+                filteredCount = 0;
+              } else {
+                filteredCount = questions.length;
               }
             }
+          } else {
+            // data is { count: number }
+            filteredCount = data.count || 0;
           }
 
-          setFilteredCount(filtered.length);
+          setFilteredCount(filteredCount);
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);
@@ -246,6 +269,7 @@ export function PracticeConfigPopup({
     selectedSkills,
     statusFilter,
     attemptFilter,
+    isConfigLoaded,
   ]);
 
   const availableSkills =
