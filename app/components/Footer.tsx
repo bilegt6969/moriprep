@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-white w-full py-12 md:py-16 px-4 md:px-6 lg:px-10 flex justify-center font-sans">
+    <footer className="bg-white w-full py-12 md:py-16 px-4 md:px-6 lg:px-10 flex justify-center font-sans border-t-2 border-[#f2f0ed]">
       <div className="max-w-6xl w-full flex flex-col gap-10 md:gap-12 md:flex-row md:justify-between md:items-start">
         {/* Top row on mobile: Logo + Socials side by side */}
         <div className="flex items-center justify-between md:block md:flex-shrink-0 md:pt-[2px]">

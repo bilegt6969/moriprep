@@ -121,6 +121,8 @@ export default function DetailsThatMatter() {
           grid-template-columns: 1fr 1fr;
           gap: 64px;
           justify-items: center;
+          border-top: 2px solid #f2f0ed;
+          padding-top: 96px;
         }
 
         .details__heading {

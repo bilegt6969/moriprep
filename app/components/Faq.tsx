@@ -27,8 +27,8 @@ export function Faq() {
   ];
 
   return (
-    <section className="px-4 py-16 md:px-6 lg:px-10">
-      <div className="mx-auto max-w-6xl">
+    <section className="px-4 pt-16 pb-8 md:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl border-t-2 border-[#f2f0ed]">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-12 pt-[6.5rem] pb-[5.75rem]">
           {/* Header Section */}
           <div>
@@ -50,29 +50,6 @@ export function Faq() {
                 />
               ))}
             </div>
-
-            {/* See More Link */}
-            <a
-              href="/faqs"
-              className="group -mx-3 mt-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[17px] font-medium tracking-[-0.44px] text-[#FF5310] transition-colors duration-200 hover:bg-[#FF5310]/10"
-            >
-              See More FAQs
-              <svg
-                width="18"
-                height="15"
-                viewBox="0 0 18 15"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="transition-transform duration-200 group-hover:translate-x-1"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M9.94417 0.373474L17.2534 7.49997L9.94417 14.6265L8.7225 13.3735L13.8492 8.37497H0L0 6.62497L13.8492 6.62497L8.7225 1.62647L9.94417 0.373474Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </a>
           </div>
         </div>
       </div>

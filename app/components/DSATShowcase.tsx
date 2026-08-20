@@ -116,7 +116,7 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
 }) => {
   return (
     <section className="w-full overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 py-12 md:grid-cols-2 md:gap-x-[5.75rem] md:px-6 lg:px-10">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 py-12 md:grid-cols-2 md:gap-x-[5.75rem] md:px-6 lg:px-10 pt-12 border-t-2 border-[#f2f0ed]">
         {/* Text Content Column */}
         <div
           className={`flex flex-col gap-4 ${reversed ? "md:order-2" : "md:order-1"}`}

@@ -23,7 +23,7 @@ import {
 } from "@/components/motion/animated-sidebar";
 import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
 import { auth as firebaseAuth } from "@/lib/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   BarChart3,
   BookOpen,
@@ -42,11 +42,12 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const HomeIcon = () => (
+const HomeIcon = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 256 256"
     fill="currentColor"
+    className={className}
   >
     <path
       d="M48 105
@@ -66,16 +67,8 @@ const HomeIcon = () => (
 );
 
 const navigationItems = [
-  {
-    label: "Home",
-    href: "/home",
-    icon: HomeIcon,
-  },
-  {
-    label: "Test",
-    href: "/practice",
-    icon: LayoutGrid,
-  },
+  { label: "Home", href: "/home", icon: HomeIcon },
+  { label: "Test", href: "/practice", icon: LayoutGrid },
   {
     label: "Lessons",
     icon: BookOpen,
@@ -85,46 +78,15 @@ const navigationItems = [
       { label: "Reading & Writing", href: "/resources/rw" },
     ],
   },
-  {
-    label: "Resources",
-    href: "/resources",
-    icon: FileText,
-  },
-  {
-    label: "History",
-    href: "/history",
-    icon: History,
-  },
-  {
-    label: "Leaderboard",
-    href: "/leaderboard",
-    icon: Trophy,
-  },
-  {
-    label: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-  },
-] satisfies {
-  label: string;
-  href?: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  hasSubmenu?: boolean;
-  subItems?: { label: string; href: string }[];
-}[];
+  { label: "Resources", href: "/resources", icon: FileText },
+  { label: "History", href: "/history", icon: History },
+  { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
+];
 
-// Shown under the "Settings" group label at the bottom of the sidebar.
 const settingsItems = [
-  {
-    label: "General settings",
-    href: "/settings",
-    icon: Settings,
-  },
-] satisfies {
-  label: string;
-  href: string;
-  icon?: React.ComponentType<{ className?: string }>;
-}[];
+  { label: "General settings", href: "/settings", icon: Settings },
+];
 
 function isPathActive(pathname: string, href?: string) {
   if (!href) return false;
@@ -134,16 +96,16 @@ function isPathActive(pathname: string, href?: string) {
 export function AppNavbar({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
   const pathname = usePathname();
+
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(() => {
     const parent = navigationItems.find((item) =>
       item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
     );
     return parent?.label ?? null;
   });
-  const [user, setUser] = useState<any>(null);
 
-  // Keep the parent submenu open when the active route lives inside it,
-  // e.g. landing on /resources/math directly from a bookmark or refresh.
+  const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     const parent = navigationItems.find((item) =>
       item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
@@ -153,23 +115,14 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!firebaseAuth) return;
-
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
-      setUser(currentUser);
-    });
-
+    const unsubscribe = onAuthStateChanged(firebaseAuth, setUser);
     return () => unsubscribe();
   }, []);
 
   const handleSignOut = () => {
-    if (firebaseAuth) {
-      signOut(firebaseAuth);
-    }
+    if (firebaseAuth) signOut(firebaseAuth);
   };
 
-  // Derive the page title (shown in the top bar) from the current route
-  // instead of tracking it by hand in click handlers, so it stays correct
-  // on direct links, refreshes, and browser back/forward.
   const activeLabel = useMemo(() => {
     for (const item of navigationItems) {
       if (item.subItems) {
@@ -183,8 +136,7 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
     const activeSetting = settingsItems.find((item) =>
       isPathActive(pathname, item.href),
     );
-    if (activeSetting) return activeSetting.label;
-    return "Home";
+    return activeSetting?.label ?? "Home";
   }, [pathname]);
 
   return (
@@ -193,21 +145,29 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
         ariaLabel="Mori Prep navigation"
         collapsible="icon"
         variant="sidebar"
-        className="bg-transparent border-0"
+        // Apple's signature #f5f5f7 background with ultra-subtle border
+        className="bg-[#f5f5f7]/80 border-r border-black/[0.04] backdrop-blur-3xl"
       >
-        <AnimatedSidebarHeader className="gap-3 p-3 pb-2">
-          <div className="flex min-h-9 items-center gap-2.5 overflow-hidden px-1">
-            <div className="grid size-12 shrink-0 place-items-center">
-              <Image src="/morin.svg" alt="" width={48} height={48} />
+        <AnimatedSidebarHeader className="px-5 pt-6 pb-4">
+          <div className="flex h-8 items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Image
+                src="/morin.svg"
+                alt="Mori Prep"
+                width={110}
+                height={26}
+                className="h-6 w-auto object-contain shrink-0 drop-shadow-sm"
+                priority
+              />
             </div>
-            <AnimatedSidebarClose className="ml-auto text-muted-foreground hover:bg-neutral-100 md:hidden">
+            <AnimatedSidebarClose className="grid size-7 place-items-center rounded-full text-zinc-400 hover:text-zinc-900 hover:bg-black/[0.05] transition-colors md:hidden">
               <X aria-hidden="true" className="size-4" />
             </AnimatedSidebarClose>
           </div>
         </AnimatedSidebarHeader>
 
-        <AnimatedSidebarContent className="px-2 pt-1">
-          <AnimatedSidebarGroup className="pb-2">
+        <AnimatedSidebarContent className="px-3 pt-2">
+          <AnimatedSidebarGroup className="pb-4">
             <AnimatedSidebarGroupContent>
               <AnimatedSidebarMenu>
                 {navigationItems.map((item) => {
@@ -224,14 +184,15 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
                           <AnimatedSidebarMenuButton
                             isActive={isActive}
                             ariaExpanded={openSubmenu === item.label}
-                            icon={
-                              item.icon && typeof item.icon === "function" ? (
-                                <item.icon className="size-4" />
-                              ) : undefined
-                            }
+                            icon={item.icon && <item.icon className="size-4" />}
+                            className={`transition-all rounded-[10px] px-3 ${
+                              isActive
+                                ? "bg-black/[0.04] text-zinc-900 font-semibold"
+                                : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-black/[0.03]"
+                            }`}
                             onSelect={() =>
-                              setOpenSubmenu(
-                                openSubmenu === item.label ? null : item.label,
+                              setOpenSubmenu((prev) =>
+                                prev === item.label ? null : item.label,
                               )
                             }
                           >
@@ -248,6 +209,11 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
                                     subItem.href,
                                   )}
                                   href={subItem.href}
+                                  className={`text-[13px] px-3 transition-colors ${
+                                    isPathActive(pathname, subItem.href)
+                                      ? "text-zinc-900 font-semibold"
+                                      : "text-zinc-500 hover:text-zinc-900"
+                                  }`}
                                 >
                                   {subItem.label}
                                 </AnimatedSidebarMenuSubButton>
@@ -258,12 +224,13 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
                       ) : (
                         <AnimatedSidebarMenuButton
                           isActive={isActive}
-                          icon={
-                            item.icon ? (
-                              <item.icon className="size-4" />
-                            ) : undefined
-                          }
+                          icon={item.icon && <item.icon className="size-4" />}
                           href={item.href}
+                          className={`transition-all rounded-[10px] px-3 ${
+                            isActive
+                              ? "bg-black/[0.04] text-zinc-900 font-semibold"
+                              : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-black/[0.03]"
+                          }`}
                         >
                           {item.label}
                         </AnimatedSidebarMenuButton>
@@ -276,7 +243,9 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
           </AnimatedSidebarGroup>
 
           <AnimatedSidebarGroup className="mt-auto">
-            <AnimatedSidebarGroupLabel>Settings</AnimatedSidebarGroupLabel>
+            <AnimatedSidebarGroupLabel className="text-[11px] font-semibold text-zinc-400 tracking-widest uppercase px-3 mb-1">
+              Settings
+            </AnimatedSidebarGroupLabel>
             <AnimatedSidebarGroupContent>
               <AnimatedSidebarMenu>
                 {settingsItems.map((item) => (
@@ -285,6 +254,7 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
                       isActive={isPathActive(pathname, item.href)}
                       icon={<item.icon className="size-4" />}
                       href={item.href}
+                      className="text-zinc-500 font-medium hover:text-zinc-900 hover:bg-black/[0.03] transition-all rounded-[10px] px-3"
                     >
                       {item.label}
                     </AnimatedSidebarMenuButton>
@@ -295,23 +265,27 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
           </AnimatedSidebarGroup>
         </AnimatedSidebarContent>
 
-        <AnimatedSidebarFooter className="border-none p-3">
+        {/* Removed harsh top border for a clean fade approach */}
+        <AnimatedSidebarFooter className="p-4 pt-2">
           <ProfileMenu user={user} onSignOut={handleSignOut} />
         </AnimatedSidebarFooter>
 
         <AnimatedSidebarRail />
       </AnimatedSidebar>
 
-      <AnimatedSidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-3 px-4">
-          <AnimatedSidebarTrigger className="text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-            <PanelLeft aria-hidden="true" className="size-4" />
+      {/* Main Content Area */}
+      <AnimatedSidebarInset className="bg-white">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-4 px-6 border-b border-black/[0.03] bg-white/70 backdrop-blur-2xl">
+          <AnimatedSidebarTrigger className="text-zinc-400 transition-colors hover:text-zinc-900">
+            <PanelLeft aria-hidden="true" className="size-[18px]" />
           </AnimatedSidebarTrigger>
-          <div className="h-5 w-px bg-gray-200" />
-          <p className="text-sm font-medium text-foreground">{activeLabel}</p>
+          <div className="h-3 w-[1px] bg-zinc-200" />
+          <p className="text-[14px] font-semibold text-zinc-800 tracking-tight">
+            {activeLabel}
+          </p>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-8 bg-zinc-50/20">
           {children}
         </div>
       </AnimatedSidebarInset>
@@ -319,18 +293,11 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Small helper so this file doesn't need to import `cn` from the design
-// system just for one conditional class list — replace with your own
-// `cn`/`clsx` util if you already have one in scope.
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
 function ProfileMenu({
   user,
   onSignOut,
 }: {
-  user: any;
+  user: User | null;
   onSignOut: () => void;
 }) {
   const { open, isMobile } = useAnimatedSidebar();
@@ -338,12 +305,16 @@ function ProfileMenu({
   const collapsed = !isMobile && !open;
   const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuId = "profile-dropdown-menu";
 
   useEffect(() => {
     if (!menuOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setMenuOpen(false);
       }
     };
@@ -367,18 +338,18 @@ function ProfileMenu({
     return (
       <a
         href="/sign-in"
-        className="flex items-center gap-3 rounded-xl px-1.5 py-1.5 transition-colors hover:bg-neutral-50"
+        className="flex items-center gap-3 rounded-[12px] px-2 py-2 transition-colors hover:bg-black/[0.04]"
       >
-        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-gray-200 text-gray-500 text-xs font-semibold">
+        <div className="grid size-[34px] shrink-0 place-items-center rounded-full bg-zinc-200/50 text-zinc-500 text-xs font-semibold">
           ?
         </div>
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium text-foreground">
+            <span className="block truncate text-[13px] font-semibold text-zinc-900 tracking-tight">
               Not signed in
             </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              Sign in to access features
+            <span className="block truncate text-[11px] font-medium text-zinc-500">
+              Sign in to sync progress
             </span>
           </div>
         )}
@@ -394,27 +365,33 @@ function ProfileMenu({
       <AnimatePresence>
         {menuOpen && !collapsed && (
           <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            id={menuId}
+            role="menu"
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
-            transition={{ duration: 0.16, ease: EASE_OUT }}
-            className="absolute bottom-full left-0 mb-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-lg"
+            transition={{ duration: 0.15, ease: EASE_OUT }}
+            // macOS style soft shadow and blur
+            className="absolute bottom-[calc(100%+8px)] left-0 w-60 overflow-hidden rounded-[14px] border border-black/[0.04] bg-white/85 backdrop-blur-2xl p-1 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
           >
             <a
               href="/settings"
-              className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-gray-700 transition-colors hover:bg-neutral-50"
+              role="menuitem"
+              className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-black/[0.04]"
               onClick={() => setMenuOpen(false)}
             >
-              <Settings className="size-4" aria-hidden="true" />
+              <Settings className="size-4 text-zinc-500" aria-hidden="true" />
               Settings
             </a>
+            <div className="my-1 h-px w-full bg-black/[0.04]" />
             <button
               type="button"
+              role="menuitem"
               onClick={() => {
                 setMenuOpen(false);
                 onSignOut();
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[13px] font-medium text-red-500 transition-colors hover:bg-red-50"
             >
               <LogOut className="size-4" aria-hidden="true" />
               Sign out
@@ -430,32 +407,33 @@ function ProfileMenu({
         transition={SPRING_PRESS}
         aria-haspopup="menu"
         aria-expanded={menuOpen}
-        className="flex w-full items-center gap-3 rounded-xl px-1.5 py-1.5 text-left transition-colors hover:bg-neutral-50"
+        aria-controls={menuOpen ? menuId : undefined}
+        className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2 text-left transition-colors hover:bg-black/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
       >
         {photoURL ? (
           <img
             src={photoURL}
             alt="Profile"
-            className="size-8 shrink-0 rounded-full object-cover"
+            className="size-[34px] shrink-0 rounded-full object-cover border border-black/[0.04]"
           />
         ) : (
-          <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#FC4C01] text-white text-xs font-semibold">
+          <div className="grid size-[34px] shrink-0 place-items-center rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 text-white text-[11px] font-semibold">
             {initial}
           </div>
         )}
         {!collapsed && (
           <>
             <div className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-foreground">
+              <span className="block truncate text-[13px] font-semibold text-zinc-900 tracking-tight">
                 {user.displayName || "User"}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
+              <span className="block truncate text-[11px] font-medium text-zinc-500">
                 {user.email || "user@moriprep.xyz"}
               </span>
             </div>
             <ChevronsUpDown
               aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
+              className="size-[14px] shrink-0 text-zinc-400"
             />
           </>
         )}

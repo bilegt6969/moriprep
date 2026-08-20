@@ -1,8 +1,9 @@
 "use client";
 
-import Footer from "components/Heading/Footer";
 import Navbar from "components/Heading/Navbar";
 import React from "react";
+import CTA from "../components/CTA";
+import { Footer } from "../components/Footer";
 
 export default function ContactPage() {
   return (
@@ -150,7 +151,8 @@ export default function ContactPage() {
           animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
-      <Footer siteName="Mori Prep" />
+      <CTA />
+      <Footer />
     </>
   );
 }

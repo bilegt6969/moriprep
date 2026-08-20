@@ -4,6 +4,7 @@ import Navbar from "@/components/Heading/Navbar";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import CTA from "../components/CTA";
 import { Footer } from "../components/Footer";
 
 // Apple-style spring physics - critically damped for default UI
@@ -450,32 +451,9 @@ export default function JoinPage() {
             — The Mori Prep Team
           </cite>
         </section>
-
-        {/* 9. BOTTOM CTA BOX */}
-        <section className="container mx-auto px-4 md:px-6 max-w-6xl mb-12">
-          <div className="bg-[#f7f7f8] py-24 px-6 text-center rounded-2xl">
-            <h2
-              className="text-3xl md:text-4xl font-medium tracking-tight mb-8"
-              style={headingStyle}
-            >
-              Shape the future of education
-            </h2>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Link
-                href="/signup"
-                className="inline-block bg-black text-white px-8 py-3.5 rounded-full font-medium text-sm tracking-wide hover:bg-neutral-800 transition-colors"
-              >
-                Apply Now
-              </Link>
-            </motion.div>
-          </div>
-        </section>
       </main>
 
+      <CTA />
       <Footer />
     </div>
   );

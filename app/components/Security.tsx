@@ -64,7 +64,7 @@ export const SecurityFeatureSection: FC<FeatureSectionProps> = ({
 }) => {
   return (
     <section
-      className={`mx-auto max-w-6xl px-4 md:px-6 lg:px-10 py-16 md:py-24 ${className}`}
+      className={`mx-auto max-w-6xl px-4 md:px-6 lg:px-10 pt-16 md:pt-24 pb-16 md:pb-24 border-t-2 border-[#f2f0ed] ${className}`}
     >
       <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         {/* Left Column: Image Illustration */}

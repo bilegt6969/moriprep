@@ -24,8 +24,8 @@ const BLOG_POSTS = [
 export default function LatestFromMoriPrep() {
   return (
     // Outer section with the specific padding and max-width logic from the CSS
-    <section className="pt-[7.75rem]">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-10">
+    <section>
+      <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 pt-[7.75rem] border-t-2 border-[#f2f0ed]">
         {/* Heading with precise typography values */}
         <h1 className="font-medium text-[44px] leading-[48px] tracking-[-1.35px] text-[#121212] m-0">
           The latest from Bytecode & Mori Prep

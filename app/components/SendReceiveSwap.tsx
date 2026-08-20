@@ -26,8 +26,8 @@ const itemVariants = {
 
 export function SendReceiveSwap() {
   return (
-    <section className="pb-[6rem] pt-[6.375rem]">
-      <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-10">
+    <section>
+      <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-10 pt-[6.375rem] pb-[6rem] border-t-2 border-[#f2f0ed]">
         {/* Section Header */}
         <motion.h1
           className="font-sans text-[44px] font-medium leading-[48px] tracking-[-1.35px] text-[#343433]"
