@@ -1,5 +1,11 @@
 import { db } from "@/lib/firebase";
-import { Attempt, DSATQuestion, UserProgress, UserStats } from "@/types/dsat";
+import {
+    Attempt,
+    DSATQuestion,
+    QuestionReport,
+    UserProgress,
+    UserStats,
+} from "@/types/dsat";
 import {
     arrayUnion,
     collection,
@@ -214,4 +220,24 @@ export async function getAnsweredQuestions(
     console.error("Error fetching answered questions:", error);
     return new Map();
   }
+}
+
+export async function saveQuestionReport(
+  userId: string,
+  questionId: string,
+  reportType: string,
+  details: string,
+): Promise<void> {
+  if (!db) return;
+
+  const reportRef = doc(collection(db, "questionReports"));
+  const report: QuestionReport = {
+    userId,
+    questionId,
+    reportType,
+    details,
+    createdAt: new Date(),
+  };
+
+  await setDoc(reportRef, report);
 }

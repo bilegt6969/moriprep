@@ -76,3 +76,11 @@ export interface PracticeSession {
   endTime?: Date;
   score?: number;
 }
+
+export interface QuestionReport {
+  userId: string;
+  questionId: string;
+  reportType: string;
+  details: string;
+  createdAt: Date;
+}

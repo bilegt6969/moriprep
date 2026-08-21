@@ -2,6 +2,7 @@
 
 import {
   saveAnsweredQuestions,
+  saveQuestionReport,
   saveUserProgress,
   updateUserStats,
 } from "@/lib/dsat/questions";
@@ -11,7 +12,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
-  BellOff,
   Bookmark,
   CheckCircle2,
   ChevronDown,
@@ -25,6 +25,7 @@ import {
   Info,
   List,
   Maximize2,
+  Minimize2,
   Moon,
   MoreVertical,
   Pause,
@@ -43,10 +44,55 @@ const springTransition = {
   damping: 30,
 };
 
+// Reusable skeleton content blocks (no outer padding — parent supplies it).
+// Shared between the initial full-page loader and the brief per-question
+// "reloading" flicker so both stay visually in sync with the real layout.
+function PassageSkeletonBlock() {
+  return (
+    <div className="max-w-3xl mx-auto md:mx-0 space-y-5">
+      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse w-9/12" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+      <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
+    </div>
+  );
+}
+
+function QuestionSkeletonBlock() {
+  return (
+    <div className="max-w-3xl mx-auto md:mx-0">
+      <div className="mb-6 space-y-3">
+        <div className="h-4 bg-gray-200 rounded animate-pulse" />
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
+      </div>
+
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 bg-white"
+          >
+            <div className="w-7 h-7 bg-gray-200 rounded-full animate-pulse shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Skeleton Loading Components
 function SkeletonHeader() {
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 shrink-0 bg-white z-40 relative sticky top-0">
+    <header className="flex items-center justify-between px-6 py-2.5 border-b border-gray-200 shrink-0 bg-white z-40 relative sticky top-0">
       {/* Left: Go back & Directions */}
       <div className="flex items-center gap-6 w-1/3">
         <div className="w-20 h-5 bg-gray-200 rounded animate-pulse" />
@@ -64,8 +110,8 @@ function SkeletonHeader() {
 
       {/* Right: Tools & Badges */}
       <div className="flex items-center justify-end gap-3 w-1/3">
-        <div className="w-16 h-12 bg-gray-200 rounded-[20px] animate-pulse" />
-        <div className="w-12 h-12 bg-gray-200 rounded-[20px] animate-pulse" />
+        <div className="w-16 h-10 bg-gray-200 rounded-2xl animate-pulse" />
+        <div className="w-12 h-10 bg-gray-200 rounded-2xl animate-pulse" />
         <div className="w-16 h-8 bg-gray-200 rounded-full animate-pulse ml-2" />
       </div>
     </header>
@@ -74,52 +120,24 @@ function SkeletonHeader() {
 
 function SkeletonPassage() {
   return (
-    <div className="p-10 md:p-12">
-      <div className="max-w-3xl space-y-5">
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-9/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
-      </div>
+    <div className="p-6 sm:p-8 md:p-10">
+      <PassageSkeletonBlock />
     </div>
   );
 }
 
 function SkeletonQuestion() {
   return (
-    <div className="p-8 md:p-12 pt-8 pb-8">
-      <div className="mb-8 space-y-3">
-        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-10/12" />
-      </div>
-
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center gap-4 px-5 py-4 rounded-xl border border-gray-200 bg-white"
-          >
-            <div className="w-7 h-7 bg-gray-200 rounded-full animate-pulse shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-11/12" />
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6">
+      <QuestionSkeletonBlock />
     </div>
   );
 }
 
 function SkeletonQuestionHeader() {
   return (
-    <div className="px-6 md:px-8 py-4 bg-white sticky top-0 z-10">
-      <div className="flex items-center justify-between gap-2 bg-gray-100 rounded-full px-2 py-2">
+    <div className="px-6 md:px-8 py-3 bg-white sticky top-0 z-10 border-b border-gray-200">
+      <div className="flex items-center justify-between gap-2 bg-gray-100 border-2 border-gray-200 rounded-full px-2 py-1.5">
         <div className="flex items-center gap-1 sm:gap-2">
           <div className="w-8 h-8 bg-gray-300/70 rounded-lg animate-pulse shrink-0" />
           <div className="w-32 h-9 bg-gray-300/70 rounded-full animate-pulse hidden sm:block" />
@@ -137,16 +155,17 @@ function SkeletonQuestionHeader() {
 
 function SkeletonFooter() {
   return (
-    <footer className="flex items-center justify-between px-6 py-4 border-t border-gray-200 shrink-0 bg-white">
+    <footer className="flex items-center justify-between px-6 py-3 border-t border-gray-200 shrink-0 bg-white">
       {/* Left: Navigator & History */}
       <div className="flex items-center gap-4">
-        <div className="w-24 h-10 bg-gray-100 rounded-lg animate-pulse" />
-        <div className="w-32 h-10 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="w-24 h-10 bg-gray-100 rounded-full animate-pulse" />
+        <div className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
       </div>
       {/* Right: Submit & Timer */}
       <div className="flex items-center gap-3">
-        <div className="w-24 h-10 bg-gray-100 rounded-lg animate-pulse" />
-        <div className="w-20 h-10 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="w-24 h-9 bg-gray-100 rounded-full animate-pulse" />
+        <div className="w-20 h-9 bg-gray-100 rounded-full animate-pulse" />
+        <div className="w-20 h-9 bg-gray-100 rounded-full animate-pulse" />
       </div>
     </footer>
   );
@@ -154,13 +173,12 @@ function SkeletonFooter() {
 
 function SkeletonLoader() {
   return (
-    <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden">
+    <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white font-sans text-gray-900 overflow-hidden">
       <SkeletonHeader />
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        <div className="w-full md:w-1/2 overflow-hidden bg-gray-50">
+        <div className="w-full md:w-1/2 overflow-hidden bg-white md:border-r md:border-gray-200">
           <SkeletonPassage />
         </div>
-        <div className="hidden md:block w-px bg-gray-200 shrink-0" />
         <div className="w-full md:w-1/2 overflow-hidden flex flex-col">
           <SkeletonQuestionHeader />
           <SkeletonQuestion />
@@ -187,6 +205,7 @@ function RWPracticePageContent() {
   const [hasMore, setHasMore] = useState(true);
   const [currentOffset, setCurrentOffset] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  const [actualTotalQuestions, setActualTotalQuestions] = useState(0);
   const BATCH_SIZE = 24; // Load 2 dozen at a time
   const [selectedQuestion, setSelectedQuestion] = useState<DSATQuestion | null>(
     null,
@@ -262,14 +281,57 @@ function RWPracticePageContent() {
   const [isRemixMode, setIsRemixMode] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [isReturningToSelection, setIsReturningToSelection] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [selectedReportOption, setSelectedReportOption] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [leftPaneWidth, setLeftPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isQuestionLoading, setIsQuestionLoading] = useState(false);
 
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
+
+  // Handle fullscreen toggle
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      });
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // Handle dark mode toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    if (!isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   // Track viewport size for responsive split-pane vs stacked layout
   useEffect(() => {
@@ -278,6 +340,16 @@ function RWPracticePageContent() {
     window.addEventListener("resize", checkViewport);
     return () => window.removeEventListener("resize", checkViewport);
   }, []);
+
+  // Brief skeleton flicker whenever the active question changes, so
+  // switching questions (Next/Previous/Remix/question bank) feels like a
+  // deliberate reload rather than an abrupt content swap.
+  useEffect(() => {
+    if (!selectedQuestion) return;
+    setIsQuestionLoading(true);
+    const timer = setTimeout(() => setIsQuestionLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [selectedQuestion?.question_id]);
 
   // Load answered questions from localStorage on mount or Firebase if user is authenticated
   useEffect(() => {
@@ -325,44 +397,74 @@ function RWPracticePageContent() {
           }
         } catch (e) {
           console.error("Error loading answered questions from Firebase:", e);
-          // Fallback to localStorage
-          const savedAnsweredQuestions =
-            localStorage.getItem("answeredQuestions");
-          if (savedAnsweredQuestions) {
+          // Fallback to localStorage (user-specific)
+          const answeredMap = new Map<
+            string,
+            { isCorrect: boolean; answer: string }
+          >();
+          // Iterate through all localStorage keys to find attempts for this user
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`attempts_${user.uid}_`)) {
+              const questionId = key.replace(`attempts_${user.uid}_`, "");
+              try {
+                const attempts = JSON.parse(localStorage.getItem(key) || "[]");
+                if (attempts.length > 0) {
+                  const lastAttempt = attempts[attempts.length - 1];
+                  answeredMap.set(questionId, {
+                    isCorrect: lastAttempt.isCorrect,
+                    answer: lastAttempt.answer,
+                  });
+                }
+              } catch (e) {
+                console.error(
+                  "Error parsing attempts for question:",
+                  questionId,
+                  e,
+                );
+              }
+            }
+          }
+          console.log(
+            "Setting answeredQuestions from localStorage (fallback), size:",
+            answeredMap.size,
+          );
+          setAnsweredQuestions(answeredMap);
+        }
+      } else {
+        // Load from localStorage for non-authenticated users (guest)
+        const answeredMap = new Map<
+          string,
+          { isCorrect: boolean; answer: string }
+        >();
+        // Iterate through all localStorage keys to find attempts for guest
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("attempts_guest_")) {
+            const questionId = key.replace("attempts_guest_", "");
             try {
-              const parsed = JSON.parse(savedAnsweredQuestions);
-              console.log(
-                "Setting answeredQuestions from localStorage, size:",
-                parsed.length,
-              );
-              setAnsweredQuestions(new Map(parsed));
+              const attempts = JSON.parse(localStorage.getItem(key) || "[]");
+              if (attempts.length > 0) {
+                const lastAttempt = attempts[attempts.length - 1];
+                answeredMap.set(questionId, {
+                  isCorrect: lastAttempt.isCorrect,
+                  answer: lastAttempt.answer,
+                });
+              }
             } catch (e) {
               console.error(
-                "Error loading answered questions from localStorage:",
+                "Error parsing attempts for question:",
+                questionId,
                 e,
               );
             }
           }
         }
-      } else {
-        // Load from localStorage for non-authenticated users
-        const savedAnsweredQuestions =
-          localStorage.getItem("answeredQuestions");
-        if (savedAnsweredQuestions) {
-          try {
-            const parsed = JSON.parse(savedAnsweredQuestions);
-            console.log(
-              "Setting answeredQuestions from localStorage (no auth), size:",
-              parsed.length,
-            );
-            setAnsweredQuestions(new Map(parsed));
-          } catch (e) {
-            console.error(
-              "Error loading answered questions from localStorage:",
-              e,
-            );
-          }
-        }
+        console.log(
+          "Setting answeredQuestions from localStorage (no auth), size:",
+          answeredMap.size,
+        );
+        setAnsweredQuestions(answeredMap);
       }
     };
 
@@ -502,10 +604,11 @@ function RWPracticePageContent() {
     // Clear highlights when moving to a new question
     clearHighlights();
 
-    // Fetch attempt history from localStorage as fallback
+    // Fetch attempt history from localStorage as fallback (user-specific)
     if (selectedQuestion) {
+      const userId = user?.uid || "guest";
       const storedAttempts = localStorage.getItem(
-        `attempts_${selectedQuestion.question_id}`,
+        `attempts_${userId}_${selectedQuestion.question_id}`,
       );
       if (storedAttempts) {
         try {
@@ -615,6 +718,7 @@ function RWPracticePageContent() {
         if (countResponse.ok) {
           const countData = await countResponse.json();
           setTotalQuestions(countData.count || 0);
+          setActualTotalQuestions(countData.count || 0);
         }
       }
 
@@ -756,7 +860,8 @@ function RWPracticePageContent() {
 
       if (selectedQuestion) {
         const timeSpent = Date.now() - questionStartTime;
-        // Save to localStorage as fallback
+        // Save to localStorage as fallback (user-specific)
+        const userId = user?.uid || "guest";
         const newAttempt: Attempt = {
           answer: highlightedAnswer,
           isCorrect,
@@ -765,12 +870,12 @@ function RWPracticePageContent() {
         };
 
         const storedAttempts = localStorage.getItem(
-          `attempts_${selectedQuestion.question_id}`,
+          `attempts_${userId}_${selectedQuestion.question_id}`,
         );
         const attempts = storedAttempts ? JSON.parse(storedAttempts) : [];
         attempts.push(newAttempt);
         localStorage.setItem(
-          `attempts_${selectedQuestion.question_id}`,
+          `attempts_${userId}_${selectedQuestion.question_id}`,
           JSON.stringify(attempts),
         );
         setQuestionAttempts(attempts);
@@ -1280,11 +1385,11 @@ function RWPracticePageContent() {
   return (
     <>
       {selectedQuestion ? (
-        <div className="flex flex-col h-screen bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
+        <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
           {/* Highlighter Tool Popover */}
           {highlightMenu.visible && (
             <div
-              className="fixed z-[100] flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
+              className="fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
               style={{
                 top: highlightMenu.y,
                 left: highlightMenu.x,
@@ -1347,7 +1452,7 @@ function RWPracticePageContent() {
           )}
 
           {/* Top Header Bar strictly matching Screenshot 2026-07-22 at 17.54.13.jpg */}
-          <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 shrink-0 bg-white z-40 relative border-b border-gray-100">
+          <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-2.5 shrink-0 bg-white z-40 relative border-b-2 border-gray-200">
             {/* Left: Go back & Directions */}
             <div className="flex items-center gap-4 sm:gap-6 w-auto sm:w-1/3 relative">
               <button
@@ -1431,7 +1536,7 @@ function RWPracticePageContent() {
             <div className="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/3 relative">
               <button
                 onClick={() => setIsHighlightActive(!isHighlightActive)}
-                className={`flex flex-col items-center justify-center rounded-[20px] px-6 py-2 transition-colors ${isHighlightActive ? "bg-cyan-100/50 text-cyan-400" : "text-gray-500 hover:text-black hover:bg-gray-50"}`}
+                className={`flex flex-col items-center justify-center rounded-2xl px-5 py-1.5 transition-colors ${isHighlightActive ? "bg-cyan-100/50 text-cyan-400" : "text-gray-500 hover:text-black hover:bg-gray-50"}`}
               >
                 <Highlighter
                   size={16}
@@ -1441,7 +1546,7 @@ function RWPracticePageContent() {
                   }
                 />
                 <span
-                  className="text-[10px] font-bold tracking-wide mt-1"
+                  className="text-[10px] font-bold tracking-wide mt-0.5"
                   style={{ color: isHighlightActive ? "#2DD4BF" : "" }}
                 >
                   Highlight
@@ -1451,7 +1556,7 @@ function RWPracticePageContent() {
               <div className="relative">
                 <button
                   onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className="more-btn flex flex-col items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 rounded-[20px] px-3 py-2 transition-colors"
+                  className="more-btn flex flex-col items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 rounded-2xl px-3 py-1.5 transition-colors"
                 >
                   <MoreVertical size={16} strokeWidth={2.5} />
                   <span className="text-[10px] font-bold tracking-wide mt-1">
@@ -1461,25 +1566,26 @@ function RWPracticePageContent() {
                 {showMoreMenu && (
                   <div className="more-menu absolute top-14 right-0 w-64 bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 py-2 z-50">
                     <button
-                      onClick={() =>
-                        document.documentElement.requestFullscreen()
-                      }
+                      onClick={toggleFullscreen}
                       className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <Maximize2 size={18} className="text-gray-400" />{" "}
-                      Fullscreen
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors">
-                      <BellOff size={18} className="text-gray-400" /> Show
-                      Preppy popups
+                      {isFullscreen ? (
+                        <Minimize2 size={18} className="text-gray-400" />
+                      ) : (
+                        <Maximize2 size={18} className="text-gray-400" />
+                      )}
+                      {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                     </button>
                     <button className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors">
                       <Command size={18} className="text-gray-400" /> Keyboard
                       shortcuts
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button
+                      onClick={toggleDarkMode}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <Moon size={18} className="text-gray-400" /> Switch to
-                      dark mode
+                      {isDarkMode ? " light mode" : " dark mode"}
                     </button>
                     <button className="w-full flex items-center gap-3 px-4 py-3 text-[15px] text-gray-700 hover:bg-gray-50 transition-colors">
                       <AlertCircle size={18} className="text-gray-400" /> Bug
@@ -1490,13 +1596,13 @@ function RWPracticePageContent() {
               </div>
 
               <div className="flex items-center gap-2 ml-2">
-                <div className="flex items-center gap-1.5 border border-gray-100 rounded-full px-3 py-1.5 bg-white shadow-sm">
+                <div className="flex items-center gap-1.5 rounded-full px-3 py-1 bg-white">
                   <span className="text-sm font-semibold text-gray-700">
                     #{selectedQuestion?.question_id || "N/A"}
                   </span>
                 </div>
                 {selectedQuestion?.difficulty && (
-                  <div className="flex items-center gap-1.5 border border-gray-100 rounded-full px-3 py-1.5 bg-white shadow-sm">
+                  <div className="flex items-center gap-1.5 rounded-full px-3 py-1 bg-white">
                     <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       {selectedQuestion.difficulty}
                     </span>
@@ -1511,36 +1617,40 @@ function RWPracticePageContent() {
             {/* Left Pane: Reading Material */}
             <div
               style={!isMobile ? { width: `${leftPaneWidth}%` } : undefined}
-              className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-10 md:p-12 overflow-y-auto bg-gray-50 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+              className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto bg-white ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
               onClick={handleWordDoubleClick}
             >
-              <div
-                ref={passageRef}
-                className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] font-serif"
-              >
-                {selectedQuestion.has_graphic &&
-                  selectedQuestion.graphics &&
-                  selectedQuestion.graphics.length > 0 && (
-                    <div className="my-4">
-                      {selectedQuestion.graphics.map((graphic, idx) => (
-                        <div key={idx} className="mb-6">
-                          {graphic.image_path && (
-                            <img
-                              src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
-                              alt="Question graphic"
-                              className="max-w-full h-auto rounded-lg border border-gray-200"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  "none";
-                              }}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                {memoizedPassage}
-              </div>
+              {isQuestionLoading ? (
+                <PassageSkeletonBlock />
+              ) : (
+                <div
+                  ref={passageRef}
+                  className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] font-serif"
+                >
+                  {selectedQuestion.has_graphic &&
+                    selectedQuestion.graphics &&
+                    selectedQuestion.graphics.length > 0 && (
+                      <div className="my-4">
+                        {selectedQuestion.graphics.map((graphic, idx) => (
+                          <div key={idx} className="mb-6">
+                            {graphic.image_path && (
+                              <img
+                                src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
+                                alt="Question graphic"
+                                className="max-w-full h-auto rounded-lg border border-gray-200"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  {memoizedPassage}
+                </div>
+              )}
             </div>
 
             {/* Divider: draggable hairline on desktop, static rule on mobile */}
@@ -1554,10 +1664,10 @@ function RWPracticePageContent() {
                 onMouseDown={handleMouseDown}
               >
                 <div
-                  className={`absolute inset-y-0 left-1/2 -translate-x-1/2 w-px transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-200 group-hover:bg-gray-300"}`}
+                  className={`absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-200 group-hover:bg-gray-300"}`}
                 />
                 <div
-                  className={`relative w-1 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 group-hover:bg-gray-400"}`}
+                  className={`relative w-2 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 group-hover:bg-gray-400"}`}
                 />
               </div>
             )}
@@ -1570,10 +1680,10 @@ function RWPracticePageContent() {
               className="w-full md:w-auto overflow-y-auto bg-white flex flex-col relative"
             >
               {/* Question Header Bar matching target screenshot: number badge + gray pill container */}
-              <div className="px-6 md:px-8 py-4 bg-white sticky top-0 z-10">
-                <div className="flex items-center justify-between gap-2 bg-gray-100 rounded-full px-2 py-2">
+              <div className="px-6 md:px-8 py-3 bg-white sticky top-0 z-10">
+                <div className="flex items-center justify-between gap-2 bg-gray-100 border-2 border-gray-200 rounded-full px-2 py-1.5">
                   <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                    <div className="bg-black text-white w-8 h-8 rounded-lg text-[15px] font-bold flex items-center justify-center shrink-0">
+                    <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
                       {filteredQuestions.findIndex(
                         (q) => q.question_id === selectedQuestion.question_id,
                       ) + 1}
@@ -1581,7 +1691,7 @@ function RWPracticePageContent() {
 
                     <button
                       onClick={toggleMarkForReview}
-                      className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-2 rounded-full whitespace-nowrap ${markedQuestions.has(selectedQuestion.question_id) ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-200"}`}
+                      className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-1.5 rounded-full border-2 whitespace-nowrap ${markedQuestions.has(selectedQuestion.question_id) ? "bg-gray-900 border-gray-900 text-white" : "border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-200"}`}
                     >
                       <Bookmark
                         size={16}
@@ -1597,20 +1707,58 @@ function RWPracticePageContent() {
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <button className="w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-200">
+                    <button
+                      onClick={() => {
+                        if (selectedQuestion) {
+                          const passageText = selectedQuestion.passage || "";
+                          const questionText = selectedQuestion.question || "";
+                          const choices = Object.entries(
+                            selectedQuestion.choices || {},
+                          )
+                            .map(([key, value]) => `${key}. ${value}`)
+                            .join("\n");
+                          const fullText = `${questionText}\n\n${choices}`;
+                          navigator.clipboard
+                            .writeText(fullText)
+                            .then(() => {
+                              setToastMessage("Copied to clipboard");
+                              setShowCopyToast(true);
+                              setTimeout(() => setShowCopyToast(false), 2000);
+                            })
+                            .catch((err) => {
+                              console.error("Clipboard write failed:", err);
+                            });
+                        }
+                      }}
+                      className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
+                    >
                       <Copy size={16} strokeWidth={2} />
                     </button>
 
-                    <button className="hidden sm:flex items-center gap-1.5 text-sm font-semibold hover:text-gray-800 transition-colors px-3 py-2 rounded-full hover:bg-gray-200">
+                    <button
+                      onClick={() => {
+                        setSelectedReportOption("");
+                        setReportDetails("");
+                        setShowReportModal(true);
+                      }}
+                      className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-200"
+                    >
                       <Flag size={16} strokeWidth={2} /> Report
                     </button>
-                    <button className="sm:hidden w-9 h-9 flex items-center justify-center hover:text-gray-800 transition-colors rounded-full hover:bg-gray-200">
+                    <button
+                      onClick={() => {
+                        setSelectedReportOption("");
+                        setReportDetails("");
+                        setShowReportModal(true);
+                      }}
+                      className="sm:hidden w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
+                    >
                       <Flag size={16} strokeWidth={2} />
                     </button>
 
                     <button
                       onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center relative transition-colors ${isCrossOutMode ? "bg-sky-400 text-white" : "text-gray-900 hover:bg-gray-200"}`}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${isCrossOutMode ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 hover:border-gray-300 hover:bg-gray-200"}`}
                     >
                       <span className="font-sans font-bold text-xs">S</span>
                       <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
@@ -1622,98 +1770,103 @@ function RWPracticePageContent() {
               {/* Question Area */}
               <div
                 ref={questionRef}
-                className={`p-6 sm:p-8 md:p-12 pt-6 sm:pt-8 pb-8 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
                 onMouseUp={handleTextSelection}
                 onClick={handleWordDoubleClick}
               >
-                <div className="max-w-3xl mx-auto md:mx-0">
-                  {selectedQuestion.prompt && (
-                    <div className="mb-8 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] leading-relaxed">
-                      {selectedQuestion.prompt}
-                    </div>
-                  )}
-
-                  {/* Answers List */}
-                  <div className="space-y-4">
-                    {Object.entries(selectedQuestion.choices).map(
-                      ([key, value]) => {
-                        const isSelected = selectedAnswer === key;
-                        const isHighlighted = highlightedAnswer === key;
-                        const isEliminated = eliminatedChoices.has(key);
-                        const isCorrectAnswer =
-                          key === selectedQuestion.correct_answer;
-
-                        let borderClass = "border-gray-300";
-                        let bgClass = "bg-white";
-                        let textClass = isEliminated
-                          ? "text-gray-400 line-through"
-                          : "text-[#1C1C1E]";
-
-                        if (showExplanation) {
-                          if (isCorrectAnswer) {
-                            borderClass = "border-green-500 bg-green-50/20";
-                          } else if (isSelected) {
-                            borderClass = "border-red-500 bg-red-50/20";
-                          }
-                        } else if (isHighlighted) {
-                          borderClass = "border-sky-400";
-                          bgClass = "bg-white";
-                        } else if (!isEliminated) {
-                          borderClass = "border-gray-400 hover:border-gray-500";
-                        } else {
-                          borderClass = "border-gray-200 bg-gray-50/30";
-                        }
-
-                        return (
-                          <div
-                            key={key}
-                            onClick={() => handleAnswerHighlight(key)}
-                            className={`group relative flex items-center gap-4 px-5 py-4 rounded-xl border-[1px] cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
-                          >
-                            <div
-                              className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-400 text-white" : showExplanation && isCorrectAnswer ? "bg-green-500 text-white" : showExplanation && isSelected ? "bg-red-500 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-[1.5px] border-gray-300 text-gray-400" : "border-[1.5px] border-gray-400 text-[#1C1C1E]"}`}
-                            >
-                              {key}
-                            </div>
-
-                            <span
-                              className={`text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                            >
-                              {value}
-                            </span>
-
-                            {isHighlighted && !showExplanation && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAnswerSubmit();
-                                }}
-                                className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-400 hover:bg-sky-500 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                              >
-                                Check
-                              </button>
-                            )}
-
-                            {isCrossOutMode && (
-                              <button
-                                onClick={(e) => toggleElimination(e, key)}
-                                disabled={showExplanation}
-                                className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
-                              >
-                                <div
-                                  className={`relative flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-400 text-gray-500 group-hover:border-gray-600 group-hover:text-gray-600"}`}
-                                >
-                                  {key}
-                                  <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
-                                </div>
-                              </button>
-                            )}
-                          </div>
-                        );
-                      },
+                {isQuestionLoading ? (
+                  <QuestionSkeletonBlock />
+                ) : (
+                  <div className="max-w-3xl mx-auto md:mx-0">
+                    {selectedQuestion.prompt && (
+                      <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] leading-relaxed">
+                        {selectedQuestion.prompt}
+                      </div>
                     )}
+
+                    {/* Answers List */}
+                    <div className="space-y-3">
+                      {Object.entries(selectedQuestion.choices).map(
+                        ([key, value]) => {
+                          const isSelected = selectedAnswer === key;
+                          const isHighlighted = highlightedAnswer === key;
+                          const isEliminated = eliminatedChoices.has(key);
+                          const isCorrectAnswer =
+                            key === selectedQuestion.correct_answer;
+
+                          let borderClass = "border-gray-400";
+                          let bgClass = "bg-white";
+                          let textClass = isEliminated
+                            ? "text-gray-400 line-through"
+                            : "text-[#1C1C1E]";
+
+                          if (showExplanation) {
+                            if (isCorrectAnswer) {
+                              borderClass = "border-green-600 bg-green-50/20";
+                            } else if (isSelected) {
+                              borderClass = "border-red-600 bg-red-50/20";
+                            }
+                          } else if (isHighlighted) {
+                            borderClass = "border-sky-500";
+                            bgClass = "bg-white";
+                          } else if (!isEliminated) {
+                            borderClass =
+                              "border-gray-600 hover:border-gray-900";
+                          } else {
+                            borderClass = "border-gray-300 bg-gray-50/40";
+                          }
+
+                          return (
+                            <div
+                              key={key}
+                              onClick={() => handleAnswerHighlight(key)}
+                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
+                            >
+                              <div
+                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-500 text-white" : showExplanation && isCorrectAnswer ? "bg-green-600 text-white" : showExplanation && isSelected ? "bg-red-600 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-2 border-gray-300 text-gray-400" : "border-2 border-gray-600 text-[#1C1C1E]"}`}
+                              >
+                                {key}
+                              </div>
+
+                              <span
+                                className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                              >
+                                {value}
+                              </span>
+
+                              {isHighlighted && !showExplanation && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAnswerSubmit();
+                                  }}
+                                  className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                >
+                                  Check
+                                </button>
+                              )}
+
+                              {isCrossOutMode && (
+                                <button
+                                  onClick={(e) => toggleElimination(e, key)}
+                                  disabled={showExplanation}
+                                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
+                                >
+                                  <div
+                                    className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-500 text-gray-600 group-hover:border-gray-800 group-hover:text-gray-800"}`}
+                                  >
+                                    {key}
+                                    <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
+                                  </div>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </main>
@@ -1725,26 +1878,25 @@ function RWPracticePageContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                // Changed from absolute z-30 to fixed z-[100] to sit above the footer
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+                className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-100 p-4 sm:p-6"
                 onClick={() => setShowExplanation(false)}
               >
                 <motion.div
-                  initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                  initial={{ scale: 0.92, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                  transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                  exit={{ scale: 0.92, opacity: 0, y: 20 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-[32px] shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
+                  className="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-8 py-5 bg-white">
+                  <div className="flex items-center justify-between px-6 py-4 bg-white/50 border-b border-gray-100/60">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm">
                         <Info
-                          size={16}
+                          size={18}
                           className="text-gray-600"
-                          strokeWidth={2.5}
+                          strokeWidth={2}
                         />
                       </div>
                       <h2 className="text-[17px] font-semibold text-gray-900 tracking-tight">
@@ -1753,14 +1905,14 @@ function RWPracticePageContent() {
                     </div>
                     <button
                       onClick={() => setShowExplanation(false)}
-                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center"
+                      className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all active:scale-95 flex items-center justify-center border border-gray-200/60"
                     >
-                      <X size={16} strokeWidth={2.5} />
+                      <X size={18} strokeWidth={2} />
                     </button>
                   </div>
 
                   {/* Content Area */}
-                  <div className="p-8 overflow-y-auto">
+                  <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col gap-4 mb-8">
                       {/* Conditional logic: Did the user answer this, and was it wrong? */}
                       {answeredQuestions.has(selectedQuestion.question_id) &&
@@ -1875,7 +2027,7 @@ function RWPracticePageContent() {
           </AnimatePresence>
 
           {/* Bottom Footer Navigation matching screenshot perfectly */}
-          <footer className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 shrink-0 bg-white relative z-50">
+          <footer className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-2.5 sm:py-3 border-t-2 border-gray-200 shrink-0 bg-white relative z-50">
             {/* Left: Question Navigator & Reload */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button
@@ -1889,7 +2041,7 @@ function RWPracticePageContent() {
                       (q) => q.question_id === selectedQuestion.question_id,
                     ) + 1,
                   )}{" "}
-                  of {Math.max(1, totalQuestions)}
+                  of {Math.max(1, actualTotalQuestions)}
                 </span>
                 <ChevronDown
                   size={16}
@@ -1901,7 +2053,7 @@ function RWPracticePageContent() {
               {user && questionAttempts.length > 0 && (
                 <button
                   onClick={() => setShowHistory(!showHistory)}
-                  className="p-2 border border-gray-200 rounded-full text-gray-500 hover:bg-gray-50 transition-colors shadow-sm"
+                  className="p-2.5 bg-white border border-gray-200/60 rounded-full text-gray-600 hover:text-black hover:border-gray-300 hover:bg-gray-50/80 transition-all active:scale-95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
                 >
                   <History size={16} strokeWidth={2} />
                 </button>
@@ -1912,17 +2064,17 @@ function RWPracticePageContent() {
             <div className="flex items-center gap-2 sm:gap-3 relative overflow-x-auto max-w-full no-scrollbar">
               <button
                 onClick={() => setShowInfo(!showInfo)}
-                className="info-btn p-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full transition-colors shadow-sm"
+                className="info-btn p-2 text-gray-500 hover:text-gray-800 border-2 border-gray-300 hover:border-gray-400 rounded-full transition-colors"
               >
                 <Info size={16} strokeWidth={2} />
               </button>
 
               <button
                 onClick={handleRemix}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors shadow-sm ${
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-colors ${
                   isRemixMode
-                    ? "bg-pink-500 text-white hover:bg-pink-600"
-                    : "bg-pink-50 text-pink-500 hover:bg-pink-100"
+                    ? "bg-pink-500 border-pink-600 text-white hover:bg-pink-600"
+                    : "bg-pink-50 border-pink-200 text-pink-500 hover:border-pink-400 hover:bg-pink-100"
                 }`}
               >
                 <Shuffle size={16} strokeWidth={2.5} /> Remix
@@ -1930,7 +2082,7 @@ function RWPracticePageContent() {
 
               <button
                 onClick={() => setShowExplanation(!showExplanation)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-full text-sm font-bold transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-white border-2 border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 rounded-full text-sm font-bold transition-colors"
               >
                 <List size={16} strokeWidth={2.5} /> Explanation
               </button>
@@ -1942,7 +2094,7 @@ function RWPracticePageContent() {
                     (q) => q.question_id === selectedQuestion.question_id,
                   ) === 0
                 }
-                className="px-5 py-2 bg-white border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-50 rounded-full text-sm font-bold disabled:opacity-50 transition-colors shadow-sm"
+                className="px-5 py-1.5 bg-white border-2 border-gray-300 text-gray-700 hover:text-black hover:border-gray-400 hover:bg-gray-50 rounded-full text-sm font-bold disabled:opacity-50 transition-colors"
               >
                 Previous
               </button>
@@ -1955,7 +2107,7 @@ function RWPracticePageContent() {
                   ) ===
                   filteredQuestions.length - 1
                 }
-                className="px-5 py-2 bg-white border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-50 rounded-full text-sm font-bold disabled:opacity-50 transition-colors shadow-sm"
+                className="px-5 py-1.5 bg-white border-2 border-gray-300 text-gray-700 hover:text-black hover:border-gray-400 hover:bg-gray-50 rounded-full text-sm font-bold disabled:opacity-50 transition-colors"
               >
                 Next
               </button>
@@ -2083,7 +2235,7 @@ function RWPracticePageContent() {
                 </div>
                 <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
                   <div className="grid grid-cols-6 sm:grid-cols-10 gap-2">
-                    {filteredQuestions.map((question, index) => {
+                    {questions.map((question, index) => {
                       const answerData = answeredQuestions.get(
                         question.question_id,
                       );
@@ -2199,6 +2351,151 @@ function RWPracticePageContent() {
           </div>
         )
       )}
+
+      {/* Copy Toast */}
+      <AnimatePresence>
+        {showCopyToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/90 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg z-200"
+          >
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Report Modal */}
+      <AnimatePresence>
+        {showReportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-100 p-4 sm:p-6"
+            onClick={() => setShowReportModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] w-full max-w-md overflow-hidden flex flex-col border border-white/20"
+            >
+              <div className="flex items-center justify-between px-6 py-4 bg-white/50 border-b border-gray-100/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-50 to-orange-50 flex items-center justify-center shadow-sm">
+                    <Flag size={18} className="text-red-500" strokeWidth={2} />
+                  </div>
+                  <h2 className="text-[17px] font-semibold text-gray-900 tracking-tight">
+                    Report Question
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all active:scale-95 flex items-center justify-center border border-gray-200/60"
+                >
+                  <X size={18} strokeWidth={2} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  What issue would you like to report?
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[
+                    "Wrong answer",
+                    "Unclear question",
+                    "Typo or error",
+                    "Other",
+                  ].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setSelectedReportOption(option)}
+                      className={`w-full text-left px-4 py-3 rounded-lg border transition-colors text-sm ${
+                        selectedReportOption === option
+                          ? "border-red-500 bg-red-50 text-red-700"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            selectedReportOption === option
+                              ? "border-red-500 bg-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {selectedReportOption === option && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                          )}
+                        </div>
+                        {option}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Please provide more details..."
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-gray-400 focus:outline-none resize-none text-sm text-gray-700 placeholder-gray-400"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3 px-6 py-4 bg-white/50 border-t border-gray-100/60">
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!selectedReportOption) {
+                      setToastMessage("Please select a report type");
+                      setShowCopyToast(true);
+                      setTimeout(() => setShowCopyToast(false), 2000);
+                      return;
+                    }
+
+                    if (user && selectedQuestion) {
+                      try {
+                        await saveQuestionReport(
+                          user.uid,
+                          selectedQuestion.question_id,
+                          selectedReportOption,
+                          reportDetails,
+                        );
+                        setShowReportModal(false);
+                        setToastMessage("Report submitted");
+                        setShowCopyToast(true);
+                        setTimeout(() => setShowCopyToast(false), 2000);
+                      } catch (error) {
+                        console.error("Error submitting report:", error);
+                        setToastMessage("Failed to submit report");
+                        setShowCopyToast(true);
+                        setTimeout(() => setShowCopyToast(false), 2000);
+                      }
+                    } else {
+                      setToastMessage("Please sign in to report");
+                      setShowCopyToast(true);
+                      setTimeout(() => setShowCopyToast(false), 2000);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-full text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
