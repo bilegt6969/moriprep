@@ -117,7 +117,7 @@ export function PracticeConfigPopup({
     attemptFilter,
   ]);
 
-  // Real-time filtering count from API with client-side attempt/status filtering
+  // Real-time filtering count from Firebase stats API with client-side attempt/status filtering
   useEffect(() => {
     // Don't fetch until config is loaded from localStorage
     if (!isConfigLoaded) return;
@@ -125,25 +125,7 @@ export function PracticeConfigPopup({
     const fetchFilteredCount = async () => {
       setIsLoadingCount(true);
       try {
-        const params = new URLSearchParams();
-
-        // Add difficulties as comma-separated
-        if (selectedDifficulties.length > 0) {
-          params.append("difficulty", selectedDifficulties.join(","));
-        }
-
-        // Add domains as comma-separated
-        if (selectedDomains.length > 0) {
-          params.append("domain", selectedDomains.join(","));
-        }
-
-        // Add skills as comma-separated
-        if (selectedSkills.length > 0) {
-          params.append("skill", selectedSkills.join(","));
-        }
-
-        // If we need to apply attempt/status filters, fetch full questions
-        // Otherwise, just fetch count for performance
+        // If we need to apply attempt/status filters, we still need to fetch full questions
         const needsFullQuestions =
           attemptFilter === "tried" ||
           attemptFilter === "not-tried" ||
@@ -151,19 +133,22 @@ export function PracticeConfigPopup({
           statusFilter === "incorrect";
 
         if (needsFullQuestions) {
-          params.append("limit", "10000"); // Fetch all matching questions
-        } else {
-          params.append("count_only", "true");
-        }
+          // Fall back to the old method for attempt/status filters
+          const params = new URLSearchParams();
+          if (selectedDifficulties.length > 0) {
+            params.append("difficulty", selectedDifficulties.join(","));
+          }
+          if (selectedDomains.length > 0) {
+            params.append("domain", selectedDomains.join(","));
+          }
+          if (selectedSkills.length > 0) {
+            params.append("skill", selectedSkills.join(","));
+          }
+          params.append("limit", "10000");
 
-        const response = await fetch(`/api/questions?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
-
-          let filteredCount = 0;
-
-          if (needsFullQuestions) {
-            // data is an array of questions
+          const response = await fetch(`/api/questions?${params.toString()}`);
+          if (response.ok) {
+            const data = await response.json();
             const questions = Array.isArray(data) ? data : [];
 
             // Fetch user progress from Firebase
@@ -191,6 +176,7 @@ export function PracticeConfigPopup({
               });
 
               // Apply attempt filter
+              let filteredCount = 0;
               if (attemptFilter === "tried") {
                 filteredCount = questions.filter((q: any) =>
                   userProgressMap.has(q.question_id),
@@ -235,24 +221,66 @@ export function PracticeConfigPopup({
                   return hasIncorrect && !hasCorrect;
                 }).length;
               }
+
+              setFilteredCount(filteredCount);
             } else {
-              // User not authenticated or db not available, can't apply attempt/status filters
+              // User not authenticated or db not available
               if (
                 attemptFilter === "tried" ||
                 statusFilter === "correct" ||
                 statusFilter === "incorrect"
               ) {
-                filteredCount = 0;
+                setFilteredCount(0);
               } else {
-                filteredCount = questions.length;
+                setFilteredCount(questions.length);
               }
             }
-          } else {
-            // data is { count: number }
-            filteredCount = data.count || 0;
+          }
+        } else {
+          // Use Firebase stats for fast count when no attempt/status filters
+          const params = new URLSearchParams();
+
+          // For now, if multiple domains/skills are selected, we need to sum them up
+          // This is a simplification - ideally we'd handle this better in the API
+          if (selectedDomains.length === 1 && selectedSkills.length === 1) {
+            params.append("domain", selectedDomains[0]);
+            params.append("skill", selectedSkills[0]);
+          } else if (selectedDomains.length === 1) {
+            params.append("domain", selectedDomains[0]);
+          } else if (selectedSkills.length === 1) {
+            params.append("skill", selectedSkills[0]);
+          } else if (selectedDifficulties.length === 1) {
+            params.append("difficulty", selectedDifficulties[0]);
           }
 
-          setFilteredCount(filteredCount);
+          const response = await fetch(
+            `/api/question-stats?${params.toString()}`,
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setFilteredCount(data.count || 0);
+          } else {
+            // Fallback to old method if stats API fails
+            const oldParams = new URLSearchParams();
+            if (selectedDifficulties.length > 0) {
+              oldParams.append("difficulty", selectedDifficulties.join(","));
+            }
+            if (selectedDomains.length > 0) {
+              oldParams.append("domain", selectedDomains.join(","));
+            }
+            if (selectedSkills.length > 0) {
+              oldParams.append("skill", selectedSkills.join(","));
+            }
+            oldParams.append("count_only", "true");
+
+            const oldResponse = await fetch(
+              `/api/questions?${oldParams.toString()}`,
+            );
+            if (oldResponse.ok) {
+              const oldData = await oldResponse.json();
+              setFilteredCount(oldData.count || 0);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);
