@@ -225,6 +225,7 @@ function QuestionDetailPageContent({
               highlightedAnswer,
               isCorrect,
               timeSpent,
+              question,
             );
             await updateUserStats(user.uid, isCorrect, timeSpent);
           } catch (error) {

@@ -12,6 +12,7 @@ import {
     doc,
     getDoc,
     getDocs,
+    increment,
     query,
     setDoc,
     updateDoc,
@@ -49,12 +50,129 @@ export async function getQuestionById(
   return questions[0] || null;
 }
 
+// Sanitize field names for Firestore (replace all non-alphanumeric with underscores)
+function sanitizeFieldName(name: string): string {
+  return name
+    .replace(/[^a-zA-Z0-9]/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+// Update user question stats for practice configuration (real-time incremental updates)
+async function updateUserQuestionStats(
+  userId: string,
+  question: DSATQuestion,
+  isCorrect: boolean,
+): Promise<void> {
+  if (!db) return;
+
+  const userStatsRef = doc(db, "userQuestionStats", userId);
+  const docSnap = await getDoc(userStatsRef);
+
+  const sanitizedDomain = question.domain
+    ? sanitizeFieldName(question.domain)
+    : null;
+  const sanitizedSkill = question.skill
+    ? sanitizeFieldName(question.skill)
+    : null;
+  const sanitizedDifficulty = question.difficulty
+    ? sanitizeFieldName(question.difficulty)
+    : null;
+
+  if (docSnap.exists()) {
+    // Incrementally update existing stats
+    const updateData: any = {
+      totalAnswered: increment(1),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (isCorrect) {
+      updateData.totalCorrect = increment(1);
+    } else {
+      updateData.totalIncorrect = increment(1);
+    }
+
+    // Update domain stats
+    if (sanitizedDomain) {
+      updateData[`domainCounts.${sanitizedDomain}.answered`] = increment(1);
+      if (isCorrect) {
+        updateData[`domainCounts.${sanitizedDomain}.correct`] = increment(1);
+      } else {
+        updateData[`domainCounts.${sanitizedDomain}.incorrect`] = increment(1);
+      }
+    }
+
+    // Update skill stats
+    if (sanitizedSkill) {
+      updateData[`skillCounts.${sanitizedSkill}.answered`] = increment(1);
+      if (isCorrect) {
+        updateData[`skillCounts.${sanitizedSkill}.correct`] = increment(1);
+      } else {
+        updateData[`skillCounts.${sanitizedSkill}.incorrect`] = increment(1);
+      }
+    }
+
+    // Update difficulty stats
+    if (sanitizedDifficulty) {
+      updateData[`difficultyCounts.${sanitizedDifficulty}.answered`] =
+        increment(1);
+      if (isCorrect) {
+        updateData[`difficultyCounts.${sanitizedDifficulty}.correct`] =
+          increment(1);
+      } else {
+        updateData[`difficultyCounts.${sanitizedDifficulty}.incorrect`] =
+          increment(1);
+      }
+    }
+
+    await updateDoc(userStatsRef, updateData);
+  } else {
+    // Create new user stats document
+    const newStats: any = {
+      totalAnswered: 1,
+      totalCorrect: isCorrect ? 1 : 0,
+      totalIncorrect: isCorrect ? 0 : 1,
+      domainCounts: {},
+      skillCounts: {},
+      difficultyCounts: {},
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (sanitizedDomain) {
+      newStats.domainCounts[sanitizedDomain] = {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+        incorrect: isCorrect ? 0 : 1,
+      };
+    }
+
+    if (sanitizedSkill) {
+      newStats.skillCounts[sanitizedSkill] = {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+        incorrect: isCorrect ? 0 : 1,
+      };
+    }
+
+    if (sanitizedDifficulty) {
+      newStats.difficultyCounts[sanitizedDifficulty] = {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+        incorrect: isCorrect ? 0 : 1,
+      };
+    }
+
+    await setDoc(userStatsRef, newStats);
+  }
+}
+
 export async function saveUserProgress(
   userId: string,
   questionId: string,
   answer: string,
   isCorrect: boolean,
   timeSpent: number,
+  question?: DSATQuestion,
 ): Promise<void> {
   if (!db) return;
 
@@ -87,6 +205,11 @@ export async function saveUserProgress(
 
   // Update user stats
   await updateUserStats(userId, isCorrect, timeSpent);
+
+  // Update user question stats for practice configuration
+  if (question) {
+    await updateUserQuestionStats(userId, question, isCorrect);
+  }
 }
 
 export async function getQuestionAttempts(

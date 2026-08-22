@@ -1,39 +1,39 @@
 "use client";
 
 import {
-  saveAnsweredQuestions,
-  saveQuestionReport,
-  saveUserProgress,
-  updateUserStats,
+    saveAnsweredQuestions,
+    saveQuestionReport,
+    saveUserProgress,
+    updateUserStats,
 } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertCircle,
-  Bookmark,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Command,
-  Copy,
-  Flag,
-  Highlighter,
-  History,
-  Info,
-  List,
-  Maximize2,
-  Minimize2,
-  Moon,
-  MoreVertical,
-  Pause,
-  Play,
-  Shuffle,
-  Trash2,
-  Underline as UnderlineIcon,
-  X,
+    AlertCircle,
+    Bookmark,
+    CheckCircle2,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Command,
+    Copy,
+    Flag,
+    Highlighter,
+    History,
+    Info,
+    List,
+    Maximize2,
+    Minimize2,
+    Moon,
+    MoreVertical,
+    Pause,
+    Play,
+    Shuffle,
+    Trash2,
+    Underline as UnderlineIcon,
+    X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -889,6 +889,7 @@ function RWPracticePageContent() {
               highlightedAnswer,
               isCorrect,
               timeSpent,
+              selectedQuestion,
             );
             await updateUserStats(user.uid, isCorrect, timeSpent);
           } catch (error) {
