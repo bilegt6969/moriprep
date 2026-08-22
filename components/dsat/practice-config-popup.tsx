@@ -124,27 +124,42 @@ export function PracticeConfigPopup({
 
     const fetchFilteredCount = async () => {
       setIsLoadingCount(true);
+
+      // Default to 1688 (total RW questions)
+      let totalAvailable = 1688;
+
       try {
-        // Get current user
+        // Only fetch when specific domain or skill filter is applied
+        // For difficulties, only fetch if not all 3 are selected
+        const shouldFetchFiltered =
+          selectedDomains.length === 1 ||
+          selectedSkills.length === 1 ||
+          (selectedDifficulties.length > 0 && selectedDifficulties.length < 3);
+
+        if (shouldFetchFiltered) {
+          const globalParams = new URLSearchParams();
+          if (selectedDomains.length === 1) {
+            globalParams.append("domain", selectedDomains[0]);
+          } else if (selectedSkills.length === 1) {
+            globalParams.append("skill", selectedSkills[0]);
+          } else if (
+            selectedDifficulties.length > 0 &&
+            selectedDifficulties.length < 3
+          ) {
+            globalParams.append("difficulty", selectedDifficulties.join(","));
+          }
+
+          const globalResponse = await fetch(
+            `/api/question-stats?${globalParams.toString()}`,
+          );
+          const globalData = await globalResponse.json();
+          totalAvailable = globalData.count || globalData.total || 1688;
+        }
+
+        // Get current user for user-specific stats
         const { auth } = await import("@/lib/firebase");
         const currentUser = auth?.currentUser;
         const userId = currentUser?.uid;
-
-        // Fetch global stats for total available questions
-        const globalParams = new URLSearchParams();
-        if (selectedDomains.length === 1) {
-          globalParams.append("domain", selectedDomains[0]);
-        } else if (selectedSkills.length === 1) {
-          globalParams.append("skill", selectedSkills[0]);
-        } else if (selectedDifficulties.length > 0) {
-          globalParams.append("difficulty", selectedDifficulties.join(","));
-        }
-
-        const globalResponse = await fetch(
-          `/api/question-stats?${globalParams.toString()}`,
-        );
-        const globalData = await globalResponse.json();
-        const totalAvailable = globalData.count || 0;
 
         // If user is authenticated, fetch user-specific stats
         if (userId) {
@@ -154,7 +169,10 @@ export function PracticeConfigPopup({
             userParams.append("domain", selectedDomains[0]);
           } else if (selectedSkills.length === 1) {
             userParams.append("skill", selectedSkills[0]);
-          } else if (selectedDifficulties.length > 0) {
+          } else if (
+            selectedDifficulties.length > 0 &&
+            selectedDifficulties.length < 3
+          ) {
             userParams.append("difficulty", selectedDifficulties.join(","));
           }
 
@@ -183,39 +201,12 @@ export function PracticeConfigPopup({
 
           setFilteredCount(filteredCount);
         } else {
-          // User not authenticated, just use global stats
-          if (
-            attemptFilter === "tried" ||
-            statusFilter === "correct" ||
-            statusFilter === "incorrect"
-          ) {
-            setFilteredCount(0);
-          } else {
-            setFilteredCount(totalAvailable);
-          }
+          setFilteredCount(totalAvailable);
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);
-        // Fallback to old method if stats API fails
-        const oldParams = new URLSearchParams();
-        if (selectedDifficulties.length > 0) {
-          oldParams.append("difficulty", selectedDifficulties.join(","));
-        }
-        if (selectedDomains.length > 0) {
-          oldParams.append("domain", selectedDomains.join(","));
-        }
-        if (selectedSkills.length > 0) {
-          oldParams.append("skill", selectedSkills.join(","));
-        }
-        oldParams.append("count_only", "true");
-
-        const oldResponse = await fetch(
-          `/api/questions?${oldParams.toString()}`,
-        );
-        if (oldResponse.ok) {
-          const oldData = await oldResponse.json();
-          setFilteredCount(oldData.count || 0);
-        }
+        // Fallback to default
+        setFilteredCount(1688);
       } finally {
         setIsLoadingCount(false);
       }

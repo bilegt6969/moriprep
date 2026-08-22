@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     console.log("Fetched question stats from Firebase");
 
     // If no filters, return full stats
-    if (!domain && !skill && !difficulty) {
+    if (!domain && !skill && difficulties.length === 0) {
       return NextResponse.json(stats);
     }
 
@@ -139,11 +139,6 @@ export async function GET(request: NextRequest) {
         const sanitizedDiff = sanitizeFieldName(diff);
         return sum + (stats?.difficultyCounts?.[sanitizedDiff] || 0);
       }, 0);
-    }
-
-    // If no specific filter matched, return total
-    if (count === 0 && !domain && !skill && difficulties.length === 0) {
-      count = stats?.total || 0;
     }
 
     return NextResponse.json({ count });
