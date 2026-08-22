@@ -1,6 +1,14 @@
 import { db, doc, getDoc } from "@/lib/firebase";
 import { NextRequest, NextResponse } from "next/server";
 
+// Sanitize field names to match the script
+function sanitizeFieldName(name: string): string {
+  return name
+    .replace(/[^a-zA-Z0-9]/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!db) {
@@ -29,9 +37,9 @@ export async function GET(request: NextRequest) {
           totalAnswered: 0,
           totalCorrect: 0,
           totalIncorrect: 0,
-          domains: {},
-          skills: {},
-          difficulties: {},
+          domainCounts: {},
+          skillCounts: {},
+          difficultyCounts: {},
         });
       }
 
@@ -43,57 +51,50 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(userStats);
       }
 
-      // Calculate filtered count based on filters
+      // Calculate filtered count based on filters using sanitized keys
       let answered = 0;
       let correct = 0;
       let incorrect = 0;
 
       if (domain && skill) {
-        // Get stats for specific domain + skill combination
-        const skillStats = userStats?.skills?.[skill] || {
-          answered: 0,
-          correct: 0,
-          incorrect: 0,
-        };
-        answered = skillStats.answered;
-        correct = skillStats.correct;
-        incorrect = skillStats.incorrect;
+        const sanitizedSkill = sanitizeFieldName(skill);
+        const skillData = userStats?.skillCounts?.[sanitizedSkill];
+        if (skillData) {
+          answered = skillData.answered;
+          correct = skillData.correct;
+          incorrect = skillData.incorrect;
+        }
       } else if (domain) {
-        // Get stats for specific domain
-        const domainStats = userStats?.domains?.[domain] || {
-          answered: 0,
-          correct: 0,
-          incorrect: 0,
-        };
-        answered = domainStats.answered;
-        correct = domainStats.correct;
-        incorrect = domainStats.incorrect;
+        const sanitizedDomain = sanitizeFieldName(domain);
+        const domainData = userStats?.domainCounts?.[sanitizedDomain];
+        if (domainData) {
+          answered = domainData.answered;
+          correct = domainData.correct;
+          incorrect = domainData.incorrect;
+        }
       } else if (skill) {
-        // Get stats for specific skill (global)
-        const skillStats = userStats?.skills?.[skill] || {
-          answered: 0,
-          correct: 0,
-          incorrect: 0,
-        };
-        answered = skillStats.answered;
-        correct = skillStats.correct;
-        incorrect = skillStats.incorrect;
+        const sanitizedSkill = sanitizeFieldName(skill);
+        const skillData = userStats?.skillCounts?.[sanitizedSkill];
+        if (skillData) {
+          answered = skillData.answered;
+          correct = skillData.correct;
+          incorrect = skillData.incorrect;
+        }
       } else if (difficulty) {
-        // Get stats for specific difficulty
-        const difficultyStats = userStats?.difficulties?.[difficulty] || {
-          answered: 0,
-          correct: 0,
-          incorrect: 0,
-        };
-        answered = difficultyStats.answered;
-        correct = difficultyStats.correct;
-        incorrect = difficultyStats.incorrect;
+        const sanitizedDifficulty = sanitizeFieldName(difficulty);
+        const difficultyData =
+          userStats?.difficultyCounts?.[sanitizedDifficulty];
+        if (difficultyData) {
+          answered = difficultyData.answered;
+          correct = difficultyData.correct;
+          incorrect = difficultyData.incorrect;
+        }
       }
 
       return NextResponse.json({ answered, correct, incorrect });
     }
 
-    // Fetch stats from Firebase
+    // Fetch global stats from Firebase
     const statsRef = doc(db, "questionStats", "summary");
     const statsDoc = await getDoc(statsRef);
 
@@ -113,21 +114,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(stats);
     }
 
-    // Calculate filtered count based on filters
+    // Calculate filtered count based on filters using sanitized keys
     let count = 0;
 
     if (domain && skill) {
-      // Get count for specific domain + skill combination
-      count = stats?.domainSkills?.[domain]?.[skill] || 0;
+      const sanitizedSkill = sanitizeFieldName(skill);
+      count = stats?.skillCounts?.[sanitizedSkill] || 0;
     } else if (domain) {
-      // Get count for specific domain
-      count = stats?.domains?.[domain] || 0;
+      const sanitizedDomain = sanitizeFieldName(domain);
+      count = stats?.domainCounts?.[sanitizedDomain] || 0;
     } else if (skill) {
-      // Get count for specific skill (global)
-      count = stats?.skills?.[skill] || 0;
+      const sanitizedSkill = sanitizeFieldName(skill);
+      count = stats?.skillCounts?.[sanitizedSkill] || 0;
     } else if (difficulty) {
-      // Get count for specific difficulty
-      count = stats?.difficulties?.[difficulty] || 0;
+      const sanitizedDifficulty = sanitizeFieldName(difficulty);
+      count = stats?.difficultyCounts?.[sanitizedDifficulty] || 0;
     }
 
     return NextResponse.json({ count });
