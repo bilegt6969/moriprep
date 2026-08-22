@@ -34,7 +34,7 @@ const practiceAreas = [
     id: "reading-writing",
     title: "Reading & Writing",
     greeting: "Ready to practice?",
-    questions: "1,492",
+    questions: "Loading...",
     focus: "4 Domains",
     description: "Our system adapts to your reading comprehension level.",
     color: "bg-[#FFC800]", // Matching the yellow from the reference
@@ -60,9 +60,28 @@ export function DSATPracticeCards() {
   const reduce = useReducedMotion();
   const [isConfigPopupOpen, setIsConfigPopupOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [totalQuestions, setTotalQuestions] = useState<number>(0);
+  const [practiceAreas, setPracticeAreas] = useState(practiceAreas);
 
   useEffect(() => {
     setIsMounted(true);
+    // Fetch total questions from Firebase stats
+    fetch("/api/question-stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.total) {
+          setTotalQuestions(data.total);
+          // Update the practice areas with the actual count
+          setPracticeAreas((prev) => {
+            const updated = [...prev];
+            updated[0].questions = data.total.toLocaleString();
+            return updated;
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching question stats:", error);
+      });
   }, []);
 
   const handleStartPractice = (config: any) => {
