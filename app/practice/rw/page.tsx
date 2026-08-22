@@ -2243,7 +2243,7 @@ function RWPracticePageContent() {
                 </div>
                 <div className="overflow-y-auto max-h-[320px] custom-scrollbar">
                   <div className="grid grid-cols-6 sm:grid-cols-10 gap-2">
-                    {questions.map((question, index) => {
+                    {filteredQuestions.map((question, index) => {
                       const answerData = answeredQuestions.get(
                         question.question_id,
                       );
