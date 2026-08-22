@@ -123,9 +123,7 @@ export function PracticeConfigPopup({
     if (!isConfigLoaded) return;
 
     const fetchFilteredCount = async () => {
-      setIsLoadingCount(true);
-
-      // Default to 1688 (total RW questions)
+      // Default to 1688 (total RW questions) - don't show loading state
       let totalAvailable = 1688;
 
       try {
@@ -136,7 +134,19 @@ export function PracticeConfigPopup({
           selectedSkills.length === 1 ||
           (selectedDifficulties.length > 0 && selectedDifficulties.length < 3);
 
+        console.log(
+          "fetchFilteredCount - shouldFetchFiltered:",
+          shouldFetchFiltered,
+          "domains:",
+          selectedDomains,
+          "skills:",
+          selectedSkills,
+          "difficulties:",
+          selectedDifficulties,
+        );
+
         if (shouldFetchFiltered) {
+          setIsLoadingCount(true);
           const globalParams = new URLSearchParams();
           if (selectedDomains.length === 1) {
             globalParams.append("domain", selectedDomains[0]);
@@ -153,6 +163,7 @@ export function PracticeConfigPopup({
             `/api/question-stats?${globalParams.toString()}`,
           );
           const globalData = await globalResponse.json();
+          console.log("Global stats response:", globalData);
           totalAvailable = globalData.count || globalData.total || 1688;
         }
 
@@ -180,6 +191,7 @@ export function PracticeConfigPopup({
             `/api/question-stats?${userParams.toString()}`,
           );
           const userData = await userResponse.json();
+          console.log("User stats response:", userData);
 
           let filteredCount = 0;
 
@@ -199,8 +211,13 @@ export function PracticeConfigPopup({
             filteredCount = userData.incorrect || 0;
           }
 
+          console.log("Setting filteredCount to:", filteredCount);
           setFilteredCount(filteredCount);
         } else {
+          console.log(
+            "User not authenticated, setting filteredCount to:",
+            totalAvailable,
+          );
           setFilteredCount(totalAvailable);
         }
       } catch (error) {
