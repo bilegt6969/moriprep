@@ -29,7 +29,7 @@ const slideUp = {
 };
 
 // Updated data structure to match the new dashboard aesthetic
-const practiceAreas = [
+const initialPracticeAreas = [
   {
     id: "reading-writing",
     title: "Reading & Writing",
@@ -61,7 +61,7 @@ export function DSATPracticeCards() {
   const [isConfigPopupOpen, setIsConfigPopupOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
-  const [practiceAreas, setPracticeAreas] = useState(practiceAreas);
+  const [practiceAreas, setPracticeAreas] = useState(initialPracticeAreas);
 
   useEffect(() => {
     setIsMounted(true);

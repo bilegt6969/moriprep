@@ -136,8 +136,8 @@ export function PracticeConfigPopup({
           globalParams.append("domain", selectedDomains[0]);
         } else if (selectedSkills.length === 1) {
           globalParams.append("skill", selectedSkills[0]);
-        } else if (selectedDifficulties.length === 1) {
-          globalParams.append("difficulty", selectedDifficulties[0]);
+        } else if (selectedDifficulties.length > 0) {
+          globalParams.append("difficulty", selectedDifficulties.join(","));
         }
 
         const globalResponse = await fetch(
@@ -154,8 +154,8 @@ export function PracticeConfigPopup({
             userParams.append("domain", selectedDomains[0]);
           } else if (selectedSkills.length === 1) {
             userParams.append("skill", selectedSkills[0]);
-          } else if (selectedDifficulties.length === 1) {
-            userParams.append("difficulty", selectedDifficulties[0]);
+          } else if (selectedDifficulties.length > 0) {
+            userParams.append("difficulty", selectedDifficulties.join(","));
           }
 
           const userResponse = await fetch(

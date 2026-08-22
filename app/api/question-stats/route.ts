@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const userId = searchParams.get("userId");
 
+    // Handle multiple difficulties (comma-separated)
+    const difficulties = difficulty
+      ? difficulty.split(",").map((d) => d.trim())
+      : [];
+
     // If userId is provided, fetch user-specific stats
     if (userId) {
       const userStatsRef = doc(db, "userQuestionStats", userId);
@@ -80,15 +85,17 @@ export async function GET(request: NextRequest) {
           correct = skillData.correct;
           incorrect = skillData.incorrect;
         }
-      } else if (difficulty) {
-        const sanitizedDifficulty = sanitizeFieldName(difficulty);
-        const difficultyData =
-          userStats?.difficultyCounts?.[sanitizedDifficulty];
-        if (difficultyData) {
-          answered = difficultyData.answered;
-          correct = difficultyData.correct;
-          incorrect = difficultyData.incorrect;
-        }
+      } else if (difficulties.length > 0) {
+        // Sum counts for multiple difficulties
+        difficulties.forEach((diff) => {
+          const sanitizedDiff = sanitizeFieldName(diff);
+          const diffData = userStats?.difficultyCounts?.[sanitizedDiff];
+          if (diffData) {
+            answered += diffData.answered;
+            correct += diffData.correct;
+            incorrect += diffData.incorrect;
+          }
+        });
       }
 
       return NextResponse.json({ answered, correct, incorrect });
@@ -126,9 +133,17 @@ export async function GET(request: NextRequest) {
     } else if (skill) {
       const sanitizedSkill = sanitizeFieldName(skill);
       count = stats?.skillCounts?.[sanitizedSkill] || 0;
-    } else if (difficulty) {
-      const sanitizedDifficulty = sanitizeFieldName(difficulty);
-      count = stats?.difficultyCounts?.[sanitizedDifficulty] || 0;
+    } else if (difficulties.length > 0) {
+      // Sum counts for multiple difficulties
+      count = difficulties.reduce((sum, diff) => {
+        const sanitizedDiff = sanitizeFieldName(diff);
+        return sum + (stats?.difficultyCounts?.[sanitizedDiff] || 0);
+      }, 0);
+    }
+
+    // If no specific filter matched, return total
+    if (count === 0 && !domain && !skill && difficulties.length === 0) {
+      count = stats?.total || 0;
     }
 
     return NextResponse.json({ count });
