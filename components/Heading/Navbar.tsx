@@ -39,6 +39,7 @@ export default function Navbar({
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
 
   const isLargeScreen = useMediaQuery("(min-width: 1024px)");
   const isMobile = !isLargeScreen;
@@ -161,14 +162,20 @@ export default function Navbar({
                       "inset 0 1px 2px rgba(0,0,0,0.08), inset 0 -1px 2px rgba(0,0,0,0.04)",
                   }}
                 >
-                  <Image
-                    src="/morin.svg"
-                    alt={siteName}
-                    width={200}
-                    height={43}
-                    className="h-4 w-auto max-w-[5.5rem] object-contain object-left opacity-60 sm:h-[1rem] sm:max-w-[6rem]"
-                    priority
-                  />
+                  <div className="relative h-4 w-auto max-w-[5.5rem] sm:h-[1rem] sm:max-w-[6rem]">
+                    {!logoLoaded && (
+                      <div className="absolute inset-0 bg-neutral-200 rounded animate-pulse" />
+                    )}
+                    <Image
+                      src="/morin.svg"
+                      alt={siteName}
+                      width={200}
+                      height={43}
+                      className={`h-4 w-auto max-w-[5.5rem] object-contain object-left opacity-60 sm:h-[1rem] sm:max-w-[6rem] transition-opacity duration-300 ${logoLoaded ? "opacity-100" : "opacity-0"}`}
+                      priority
+                      onLoad={() => setLogoLoaded(true)}
+                    />
+                  </div>
                 </Link>
                 <Menu
                   categories={categories}

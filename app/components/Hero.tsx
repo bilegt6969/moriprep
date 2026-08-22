@@ -10,8 +10,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
     },
   },
 };
@@ -84,7 +84,7 @@ const LogoTicker = memo(() => {
             type: "spring",
             stiffness: 100,
             damping: 15,
-            delay: 0.5,
+            delay: 0.8,
           }}
           className="text-[9px] sm:text-[11px] md:text-xs font-medium tracking-tight text-neutral-400 text-center mb-2"
         >
@@ -318,6 +318,15 @@ export function Hero() {
         className="absolute bottom-0 left-0 right-0 z-10 w-full pointer-events-none flex justify-center"
       >
         {/* Placeholder Skeleton */}
+        {!imgLoaded && (
+          <div
+            className="block mx-auto
+            w-[150%] max-w-[150%] h-[35vh] bg-neutral-100
+            sm:w-[90%] sm:max-w-none sm:h-auto sm:aspect-[375/280] md:max-w-375
+            animate-pulse
+          "
+          />
+        )}
         <img
           src="/home/68e8f533b2d110c6d06c6afd_Group%201261154922%20(2).avif"
           alt="Illustration"
@@ -327,7 +336,7 @@ export function Hero() {
             w-[150%] max-w-[150%] h-[35vh] object-cover object-top translate-y-[15%]
             /* Tablet/Desktop: Restores the standard behavior and proportions */
             sm:w-[90%] sm:max-w-none sm:h-auto sm:object-contain sm:translate-y-[6%] md:max-w-375
-            opacity-100
+            ${imgLoaded ? "opacity-100" : "opacity-0 absolute"}
           `}
         />
         <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 bg-linear-to-t from-white/90 from-30% via-white/80 via-60% to-transparent pointer-events-none" />
