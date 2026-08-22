@@ -28,56 +28,24 @@ const fadeInUp = {
 
 const blogPosts = [
   {
-    id: "why-family-accounts",
-    title: "The Crypto Wallet Problem – Why We Created Family Accounts",
+    id: "closing-dsat-information-gap",
+    title: "Closing the DSAT Information Gap in Mongolia",
     excerpt:
-      "Traditional wallets rely on seed phrases and private keys, but this approach has fundamental flaws. Losing access to your bank account because you misplaced a single piece of information would be unthinkable—yet in crypto, this remains a common reality. Most users struggle with managing seed phrases and private keys, often resorting to insecure storage methods like screenshots or digital notes.",
-    date: "13 May, 2025",
-    categories: ["News", "Wallet"],
+      "Mongolian students are not lacking ability. They are lacking equal access to information. And Mori Prep is Bytecode's attempt to remove money as the bridge across that gap. Learn how we're building a non-profit SAT preparation infrastructure to ensure financial status never stands between a Mongolian student and world-class higher education.",
+    date: "13 May, 2026",
+    categories: ["News", "Education"],
   },
   {
-    id: "family-accounts",
-    title: "Making Family Simpler & Safer",
+    id: "integrating-college-board-question-bank",
+    title: "Integrating the Official College Board Question Bank",
     excerpt:
-      "We're thrilled to announce a major upgrade to Family—designed to make onboarding and navigating Ethereum simpler and safer than ever. Born from our own need for seamless yet secure crypto experiences, these features offer the easiest path to getting onchain.",
-    date: "2 April, 2025",
-    categories: ["News", "Wallet"],
-  },
-  {
-    id: "launch",
-    title: "Avara Launches Family: The Feature-Rich Crypto Wallet",
-    excerpt:
-      "With features for beginners and experienced users alike, Family makes interacting with web3 secure, effortless and fun.",
-    date: "11 November, 2024",
-    categories: ["News", "Wallet"],
-  },
-  {
-    id: "avara",
-    title: "Family Acquired by Avara (Aave Companies)",
-    excerpt:
-      "I'm thrilled to announce that Los Feliz Engineering (LFE)—the company behind Family and previously, Honk—has been acquired by Avara, formerly known as Aave Companies.",
-    date: "16 November, 2023",
-    categories: ["News"],
-  },
-  {
-    id: "unveiling-previews",
-    title: "Unveiling Previews in Family, Powered by Blowfish",
-    excerpt:
-      "We're excited to share a major feature addition to Family, Previews. Enabled by our collaboration with Blowfish, Previews offers an unprecedented level of user control and transparency when navigating the world of Ethereum.",
-    date: "16 August, 2023",
-    categories: ["News", "Wallet"],
-  },
-  {
-    id: "the-merge",
-    title: "The Merge",
-    excerpt:
-      "The Merge is finally here. While the Ethereum community celebrates the coming of the Merge, some people are still wondering how we got here, what the Merge actually is, and what it all means for the future of Ethereum. Let's jump right in.",
-    date: "15 Sep, 2022",
-    categories: ["News"],
+      "How we brought thousands of official Digital SAT practice questions, multi-stage adaptive testing logic, and curated prep resources under one seamless, 100% free dashboard built for student success.",
+    date: "2 April, 2026",
+    categories: ["News", "Education"],
   },
 ];
 
-const filters = ["All", "News", "Wallet"];
+const filters = ["All", "News", "Education"];
 
 export default function BlogPage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -96,7 +64,7 @@ export default function BlogPage() {
               Blog
             </h1>
             <p className="text-[15px] leading-[22px] tracking-[-0.13px] text-[#848281]">
-              The latest news from Family
+              The latest news from bytecode | mori Prep Family
             </p>
           </div>
 

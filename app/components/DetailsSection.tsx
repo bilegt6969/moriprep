@@ -352,7 +352,7 @@ function PanelSkeleton({ kind }: { kind: string }) {
         }
 
         .sk-pill {
-          width: 190px;
+          width: 240px; /* Matched to new visual size */
           height: 48px;
           border-radius: 999px;
         }
@@ -369,12 +369,13 @@ function PanelSkeleton({ kind }: { kind: string }) {
           width: 100%;
           max-width: 320px;
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
+          /* minmax(0, 1fr) ensures columns don't blowout from content */
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
         }
         .sk-tile {
-          aspect-ratio: 1;
-          border-radius: 16px;
+          height: 90px;
+          border-radius: 14px;
         }
       `}</style>
     </div>
@@ -408,7 +409,6 @@ function PanelVisual({ kind }: { kind: string }) {
 
 /* ---- 1. Track Your Progress: A 4-state infinite card stack with physical departures --- */
 
-// Added a 4th card to make the bottom-entry rotation buttery smooth
 const STUDY_CARDS = [
   {
     id: 0,
@@ -458,7 +458,6 @@ function MonitorVisual() {
         const isNextNext = i === (active + 2) % 4;
         const isPrev = i === (active - 1 + 4) % 4;
 
-        // Assign spring-like physics states based on position in queue
         let y = 0,
           scale = 1,
           opacity = 1,
@@ -483,7 +482,7 @@ function MonitorVisual() {
           y = -28;
           scale = 1.05;
           opacity = 0;
-          zIndex = 4; // Flies up and out!
+          zIndex = 4;
         }
 
         return (
@@ -527,7 +526,6 @@ function MonitorVisual() {
           box-shadow:
             0 8px 24px rgba(0, 0, 0, 0.06),
             0 2px 6px rgba(0, 0, 0, 0.04);
-          /* Premium spring transition */
           transition:
             transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
             opacity 0.7s ease;
@@ -595,9 +593,13 @@ function ProtectVisual() {
 
   return (
     <div className="analysis">
+      {/* 
+        FIXED: Increased width values to accommodate the longer text 
+        so it isn't clipped/cut off during or after the transition.
+      */}
       <div
         className={`analysis__pill${complete ? " analysis__pill--complete" : ""}`}
-        style={{ width: complete ? "185px" : "220px" }}
+        style={{ width: complete ? "240px" : "215px" }}
       >
         <div className="analysis__icon-wrap">
           <span className={`analysis__spinner ${complete ? "hidden" : ""}`} />
@@ -651,7 +653,6 @@ function ProtectVisual() {
           border-radius: 999px;
           background: rgba(55, 132, 244, 0.12);
           overflow: hidden;
-          /* Smoothly animate the hardcoded width */
           transition:
             width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
             background 0.7s ease;
@@ -726,7 +727,6 @@ function ProtectVisual() {
           color: var(--blue, #3784f4);
           transform: translate3d(0, 0, 0);
         }
-        /* Slot machine sliding effect */
         .analysis__label--analyzing.hidden {
           opacity: 0;
           transform: translate3d(0, -12px, 0);
@@ -770,7 +770,6 @@ function OrganiseVisual() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      // Toggle down the list smoothly
       setStarred((s) => (s === 0 ? 1 : s === 1 ? null : 0));
     }, 2000);
     return () => clearInterval(id);
@@ -867,7 +866,6 @@ function OrganiseVisual() {
           padding: 4px;
           display: flex;
           cursor: default;
-          /* Extremely bouncy star */
           transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .organise__star--on {
@@ -916,7 +914,6 @@ function ClarityVisual() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      // Allow them to waterfall out, then waterfall back in
       setVisible(false);
       setTimeout(() => setVisible(true), 800);
     }, 4500);
@@ -926,7 +923,6 @@ function ClarityVisual() {
   return (
     <div className="clarity">
       {GROUPS.map((g, i) => {
-        // Stagger in forwards, stagger out backwards
         const delay = visible ? i * 50 : (GROUPS.length - 1 - i) * 30;
         return (
           <div
@@ -948,22 +944,24 @@ function ClarityVisual() {
           width: 100%;
           max-width: 320px;
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
+          /* FIXED: minmax(0, 1fr) forces the columns to not expand past available space */
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
         }
         .clarity__tile {
           background: var(--card-bg, #fff);
-          border-radius: 16px;
-          padding: 14px 12px;
+          border-radius: 14px;
+          padding: 12px 10px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-          /* Physics for the waterfall effect */
           transition:
             opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
             transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
           will-change: transform, opacity;
+          /* Ensure text wraps nicely inside the constrained tiles */
+          word-break: break-word;
         }
         .clarity__tile--out {
           opacity: 0;
@@ -974,18 +972,19 @@ function ClarityVisual() {
           transform: translate3d(0, 0, 0) scale(1);
         }
         .clarity__dot {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
         }
         .clarity__name {
-          font-size: 14px;
+          font-size: 13px;
+          line-height: 1.2;
           font-weight: 600;
           color: var(--heading, #1a1a1a);
-          margin-top: 4px;
+          margin-top: 2px;
         }
         .clarity__count {
-          font-size: 12px;
+          font-size: 11px;
           color: var(--body-muted, #8a8785);
         }
       `}</style>

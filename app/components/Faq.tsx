@@ -29,7 +29,7 @@ export function Faq() {
   return (
     <section className="px-4 pt-16 pb-8 md:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl border-t-2 border-[#f2f0ed]">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-12 pt-[6.5rem] pb-[5.75rem]">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] items-start gap-12 pt-26 pb-26">
           {/* Header Section */}
           <div>
             <h1 className="font-sans text-[44px] font-medium leading-[48px] tracking-[-1.35px] text-[#121212]">
@@ -78,9 +78,11 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
       </button>
 
       <div className="flex-1">
-        <h4 className="font-sans text-lg font-medium text-[#121212]">
-          {question}
-        </h4>
+        <button onClick={() => setIsOpen(!isOpen)} className="text-left w-full">
+          <h4 className="font-sans text-lg font-medium text-[#121212] hover:text-[#747484] transition-colors">
+            {question}
+          </h4>
+        </button>
         <div
           className={`grid transition-all duration-300 ease-in-out ${
             isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
