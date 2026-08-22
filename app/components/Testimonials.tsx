@@ -4,7 +4,7 @@ import Link from "next/link";
 // Dynamic blog data for Mori Prep / Bytecode initiatives
 const BLOG_POSTS = [
   {
-    slug: "closing-the-dsat-gap",
+    slug: "closing-dsat-information-gap",
     title: "Closing the DSAT Information Gap in Mongolia",
     date: "13 May, 2026",
     excerpt:
@@ -12,7 +12,7 @@ const BLOG_POSTS = [
     image: "/blog/closing-gap.png",
   },
   {
-    slug: "official-question-bank-integration",
+    slug: "integrating-college-board-question-bank",
     title: "Integrating the Official College Board Question Bank",
     date: "2 April, 2026",
     excerpt:
