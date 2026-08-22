@@ -74,8 +74,8 @@ export function PracticeConfigPopup({
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [attemptFilter, setAttemptFilter] = useState<string>("all");
-  const [filteredCount, setFilteredCount] = useState<number>(0);
-  const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
+  const [filteredCount, setFilteredCount] = useState<number>(1688);
+  const [isLoadingCount, setIsLoadingCount] = useState<boolean>(false);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
   const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
