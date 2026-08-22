@@ -703,22 +703,22 @@ function RWPracticePageContent() {
       // When attempt/status filters are active, fetch ALL questions for client-side filtering
       const shouldFetchAll = statusFilter !== "all" || attemptFilter !== "all";
 
-      // First, get the total count (only if no attempt/status filters)
+      // First, get the total count from Firebase stats (only if no attempt/status filters)
       if (!shouldFetchAll) {
         const countParams = new URLSearchParams();
         if (domainsParam) countParams.append("domain", domainsParam);
         if (difficultiesParam)
           countParams.append("difficulty", difficultiesParam);
         if (skillsParam) countParams.append("skill", skillsParam);
-        countParams.append("count_only", "true");
 
         const countResponse = await fetch(
-          `/api/questions?${countParams.toString()}`,
+          `/api/question-stats?${countParams.toString()}`,
         );
         if (countResponse.ok) {
           const countData = await countResponse.json();
-          setTotalQuestions(countData.count || 0);
-          setActualTotalQuestions(countData.count || 0);
+          const count = countData.count || countData.total || 0;
+          setTotalQuestions(count);
+          setActualTotalQuestions(count);
         }
       }
 
