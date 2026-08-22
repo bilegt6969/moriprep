@@ -15,6 +15,83 @@ export async function GET(request: NextRequest) {
     const domain = searchParams.get("domain");
     const skill = searchParams.get("skill");
     const difficulty = searchParams.get("difficulty");
+    const userId = searchParams.get("userId");
+
+    // If userId is provided, fetch user-specific stats
+    if (userId) {
+      const userStatsRef = doc(db, "userQuestionStats", userId);
+      const userStatsDoc = await getDoc(userStatsRef);
+
+      if (!userStatsDoc.exists()) {
+        console.log("User stats not found in Firebase for user:", userId);
+        // Return empty user stats if not found
+        return NextResponse.json({
+          totalAnswered: 0,
+          totalCorrect: 0,
+          totalIncorrect: 0,
+          domains: {},
+          skills: {},
+          difficulties: {},
+        });
+      }
+
+      const userStats = userStatsDoc.data();
+      console.log("Fetched user stats from Firebase for user:", userId);
+
+      // If no filters, return full user stats
+      if (!domain && !skill && !difficulty) {
+        return NextResponse.json(userStats);
+      }
+
+      // Calculate filtered count based on filters
+      let answered = 0;
+      let correct = 0;
+      let incorrect = 0;
+
+      if (domain && skill) {
+        // Get stats for specific domain + skill combination
+        const skillStats = userStats?.skills?.[skill] || {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
+        answered = skillStats.answered;
+        correct = skillStats.correct;
+        incorrect = skillStats.incorrect;
+      } else if (domain) {
+        // Get stats for specific domain
+        const domainStats = userStats?.domains?.[domain] || {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
+        answered = domainStats.answered;
+        correct = domainStats.correct;
+        incorrect = domainStats.incorrect;
+      } else if (skill) {
+        // Get stats for specific skill (global)
+        const skillStats = userStats?.skills?.[skill] || {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
+        answered = skillStats.answered;
+        correct = skillStats.correct;
+        incorrect = skillStats.incorrect;
+      } else if (difficulty) {
+        // Get stats for specific difficulty
+        const difficultyStats = userStats?.difficulties?.[difficulty] || {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
+        answered = difficultyStats.answered;
+        correct = difficultyStats.correct;
+        incorrect = difficultyStats.incorrect;
+      }
+
+      return NextResponse.json({ answered, correct, incorrect });
+    }
 
     // Fetch stats from Firebase
     const statsRef = doc(db, "questionStats", "summary");

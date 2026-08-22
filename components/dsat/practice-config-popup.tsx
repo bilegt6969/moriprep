@@ -117,7 +117,7 @@ export function PracticeConfigPopup({
     attemptFilter,
   ]);
 
-  // Real-time filtering count from Firebase stats API with client-side attempt/status filtering
+  // Real-time filtering count from Firebase stats API with user-specific data
   useEffect(() => {
     // Don't fetch until config is loaded from localStorage
     if (!isConfigLoaded) return;
@@ -125,166 +125,97 @@ export function PracticeConfigPopup({
     const fetchFilteredCount = async () => {
       setIsLoadingCount(true);
       try {
-        // If we need to apply attempt/status filters, we still need to fetch full questions
-        const needsFullQuestions =
-          attemptFilter === "tried" ||
-          attemptFilter === "not-tried" ||
-          statusFilter === "correct" ||
-          statusFilter === "incorrect";
+        // Get current user
+        const { auth } = await import("@/lib/firebase");
+        const currentUser = auth?.currentUser;
+        const userId = currentUser?.uid;
 
-        if (needsFullQuestions) {
-          // Fall back to the old method for attempt/status filters
-          const params = new URLSearchParams();
-          if (selectedDifficulties.length > 0) {
-            params.append("difficulty", selectedDifficulties.join(","));
-          }
-          if (selectedDomains.length > 0) {
-            params.append("domain", selectedDomains.join(","));
-          }
-          if (selectedSkills.length > 0) {
-            params.append("skill", selectedSkills.join(","));
-          }
-          params.append("limit", "10000");
+        // Fetch global stats for total available questions
+        const globalParams = new URLSearchParams();
+        if (selectedDomains.length === 1) {
+          globalParams.append("domain", selectedDomains[0]);
+        } else if (selectedSkills.length === 1) {
+          globalParams.append("skill", selectedSkills[0]);
+        } else if (selectedDifficulties.length === 1) {
+          globalParams.append("difficulty", selectedDifficulties[0]);
+        }
 
-          const response = await fetch(`/api/questions?${params.toString()}`);
-          if (response.ok) {
-            const data = await response.json();
-            const questions = Array.isArray(data) ? data : [];
+        const globalResponse = await fetch(
+          `/api/question-stats?${globalParams.toString()}`,
+        );
+        const globalData = await globalResponse.json();
+        const totalAvailable = globalData.count || 0;
 
-            // Fetch user progress from Firebase
-            const { auth, db } = await import("@/lib/firebase");
-            const currentUser = auth?.currentUser;
-
-            if (currentUser && db) {
-              const userId = currentUser.uid;
-              const { collection, getDocs, query, where } = await import(
-                "firebase/firestore"
-              );
-
-              const q = query(
-                collection(db, "userProgress"),
-                where("userId", "==", userId),
-              );
-              const querySnapshot = await getDocs(q);
-
-              const userProgressMap = new Map<string, { attempts: any[] }>();
-              querySnapshot.forEach((doc: any) => {
-                const data = doc.data();
-                userProgressMap.set(data.questionId, {
-                  attempts: data.attempts || [],
-                });
-              });
-
-              // Apply attempt filter
-              let filteredCount = 0;
-              if (attemptFilter === "tried") {
-                filteredCount = questions.filter((q: any) =>
-                  userProgressMap.has(q.question_id),
-                ).length;
-              } else if (attemptFilter === "not-tried") {
-                filteredCount = questions.filter(
-                  (q: any) => !userProgressMap.has(q.question_id),
-                ).length;
-              } else {
-                filteredCount = questions.length;
-              }
-
-              // Apply status filter
-              if (statusFilter === "correct") {
-                filteredCount = questions.filter((q: any) => {
-                  const progress = userProgressMap.get(q.question_id);
-                  if (
-                    !progress ||
-                    !progress.attempts ||
-                    progress.attempts.length === 0
-                  )
-                    return false;
-                  return progress.attempts.some(
-                    (attempt: any) => attempt.isCorrect === true,
-                  );
-                }).length;
-              } else if (statusFilter === "incorrect") {
-                filteredCount = questions.filter((q: any) => {
-                  const progress = userProgressMap.get(q.question_id);
-                  if (
-                    !progress ||
-                    !progress.attempts ||
-                    progress.attempts.length === 0
-                  )
-                    return false;
-                  const hasIncorrect = progress.attempts.some(
-                    (attempt: any) => attempt.isCorrect === false,
-                  );
-                  const hasCorrect = progress.attempts.some(
-                    (attempt: any) => attempt.isCorrect === true,
-                  );
-                  return hasIncorrect && !hasCorrect;
-                }).length;
-              }
-
-              setFilteredCount(filteredCount);
-            } else {
-              // User not authenticated or db not available
-              if (
-                attemptFilter === "tried" ||
-                statusFilter === "correct" ||
-                statusFilter === "incorrect"
-              ) {
-                setFilteredCount(0);
-              } else {
-                setFilteredCount(questions.length);
-              }
-            }
-          }
-        } else {
-          // Use Firebase stats for fast count when no attempt/status filters
-          const params = new URLSearchParams();
-
-          // For now, if multiple domains/skills are selected, we need to sum them up
-          // This is a simplification - ideally we'd handle this better in the API
-          if (selectedDomains.length === 1 && selectedSkills.length === 1) {
-            params.append("domain", selectedDomains[0]);
-            params.append("skill", selectedSkills[0]);
-          } else if (selectedDomains.length === 1) {
-            params.append("domain", selectedDomains[0]);
+        // If user is authenticated, fetch user-specific stats
+        if (userId) {
+          const userParams = new URLSearchParams();
+          userParams.append("userId", userId);
+          if (selectedDomains.length === 1) {
+            userParams.append("domain", selectedDomains[0]);
           } else if (selectedSkills.length === 1) {
-            params.append("skill", selectedSkills[0]);
+            userParams.append("skill", selectedSkills[0]);
           } else if (selectedDifficulties.length === 1) {
-            params.append("difficulty", selectedDifficulties[0]);
+            userParams.append("difficulty", selectedDifficulties[0]);
           }
 
-          const response = await fetch(
-            `/api/question-stats?${params.toString()}`,
+          const userResponse = await fetch(
+            `/api/question-stats?${userParams.toString()}`,
           );
-          if (response.ok) {
-            const data = await response.json();
-            setFilteredCount(data.count || 0);
-          } else {
-            // Fallback to old method if stats API fails
-            const oldParams = new URLSearchParams();
-            if (selectedDifficulties.length > 0) {
-              oldParams.append("difficulty", selectedDifficulties.join(","));
-            }
-            if (selectedDomains.length > 0) {
-              oldParams.append("domain", selectedDomains.join(","));
-            }
-            if (selectedSkills.length > 0) {
-              oldParams.append("skill", selectedSkills.join(","));
-            }
-            oldParams.append("count_only", "true");
+          const userData = await userResponse.json();
 
-            const oldResponse = await fetch(
-              `/api/questions?${oldParams.toString()}`,
-            );
-            if (oldResponse.ok) {
-              const oldData = await oldResponse.json();
-              setFilteredCount(oldData.count || 0);
-            }
+          let filteredCount = 0;
+
+          // Apply attempt filter
+          if (attemptFilter === "tried") {
+            filteredCount = userData.answered || 0;
+          } else if (attemptFilter === "not-tried") {
+            filteredCount = totalAvailable - (userData.answered || 0);
+          } else {
+            filteredCount = totalAvailable;
+          }
+
+          // Apply status filter
+          if (statusFilter === "correct") {
+            filteredCount = userData.correct || 0;
+          } else if (statusFilter === "incorrect") {
+            filteredCount = userData.incorrect || 0;
+          }
+
+          setFilteredCount(filteredCount);
+        } else {
+          // User not authenticated, just use global stats
+          if (
+            attemptFilter === "tried" ||
+            statusFilter === "correct" ||
+            statusFilter === "incorrect"
+          ) {
+            setFilteredCount(0);
+          } else {
+            setFilteredCount(totalAvailable);
           }
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);
-        setFilteredCount(0);
+        // Fallback to old method if stats API fails
+        const oldParams = new URLSearchParams();
+        if (selectedDifficulties.length > 0) {
+          oldParams.append("difficulty", selectedDifficulties.join(","));
+        }
+        if (selectedDomains.length > 0) {
+          oldParams.append("domain", selectedDomains.join(","));
+        }
+        if (selectedSkills.length > 0) {
+          oldParams.append("skill", selectedSkills.join(","));
+        }
+        oldParams.append("count_only", "true");
+
+        const oldResponse = await fetch(
+          `/api/questions?${oldParams.toString()}`,
+        );
+        if (oldResponse.ok) {
+          const oldData = await oldResponse.json();
+          setFilteredCount(oldData.count || 0);
+        }
       } finally {
         setIsLoadingCount(false);
       }
