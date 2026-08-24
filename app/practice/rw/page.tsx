@@ -222,9 +222,7 @@ function RWPracticePageContent() {
   const [eliminatedChoices, setEliminatedChoices] = useState<Set<string>>(
     new Set(),
   );
-  const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
-    new Set(),
-  );
+
   // Load answered questions from localStorage synchronously for immediate availability
   const getInitialAnsweredQuestions = () => {
     try {
@@ -240,9 +238,23 @@ function RWPracticePageContent() {
     return new Map();
   };
 
+  const getInitialMarkedQuestions = () => {
+    try {
+      const saved = localStorage.getItem("markedQuestions");
+      if (saved) return new Set<string>(JSON.parse(saved));
+    } catch (e) {
+      console.error("Error loading initial marked questions:", e);
+    }
+    return new Set<string>();
+  };
+
   const [answeredQuestions, setAnsweredQuestions] = useState<
     Map<string, { isCorrect: boolean; answer: string }>
   >(getInitialAnsweredQuestions());
+
+  const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
+    getInitialMarkedQuestions(),
+  );
 
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
     difficultiesParam
@@ -488,6 +500,14 @@ function RWPracticePageContent() {
     }
   }, [answeredQuestions, user]);
 
+  // Save marked questions to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(
+      "markedQuestions",
+      JSON.stringify(Array.from(markedQuestions)),
+    );
+  }, [markedQuestions]);
+
   const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isHighlightActive, setIsHighlightActive] = useState(true);
   const [highlightMenu, setHighlightMenu] = useState<{
@@ -498,6 +518,35 @@ function RWPracticePageContent() {
   const [currentSelection, setCurrentSelection] = useState<Range | null>(null);
   const [activeHighlightColor, setActiveHighlightColor] =
     useState("bg-blue-200/80");
+  const [showUnderlineSubmenu, setShowUnderlineSubmenu] = useState(false);
+  const [menuDisplayColor, setMenuDisplayColor] = useState<string | null>(
+    "bg-yellow-200/80",
+  );
+
+  const HIGHLIGHT_COLORS: Record<string, string> = {
+    "bg-yellow-200/80": "rgb(253, 230, 138)",
+    "bg-blue-200/80": "rgb(191, 219, 254)",
+    "bg-pink-200/80": "rgb(251, 207, 232)",
+  };
+
+  function getHighlightColorClass(span: HTMLElement): string | null {
+    const bg = span.style.backgroundColor;
+    const match = Object.entries(HIGHLIGHT_COLORS).find(
+      ([, rgb]) => rgb === bg,
+    );
+    return match ? match[0] : null;
+  }
+
+  const cleanupSelectionAndMenu = () => {
+    window.getSelection()?.removeAllRanges();
+    setCurrentSelection(null);
+    setHighlightMenu({ visible: false, x: 0, y: 0 });
+    setShowUnderlineSubmenu(false);
+  };
+
+  useEffect(() => {
+    if (!highlightMenu.visible) setShowUnderlineSubmenu(false);
+  }, [highlightMenu.visible]);
 
   useEffect(() => {
     const savedDifficulty = localStorage.getItem("dsat_difficulty");
@@ -1072,6 +1121,7 @@ function RWPracticePageContent() {
     if (isInsidePassage || isInsideQuestion) {
       const rect = range.getBoundingClientRect();
       setCurrentSelection(range);
+      setMenuDisplayColor(activeHighlightColor);
 
       // --- VIEWPORT BOUNDARY FIX ---
 
@@ -1147,83 +1197,134 @@ function RWPracticePageContent() {
     });
   };
 
-  // FIX: Accept an optional overrideRange parameter
-  const applyHighlight = (colorClass: string, overrideRange?: Range) => {
-    // Use the passed range from double-click, or fallback to state for manual drag selections
+  const applyUnderlineStyle = (
+    style: "solid" | "dashed" | "dotted" | "none",
+    overrideRange?: Range,
+  ) => {
     const targetRange = overrideRange || currentSelection;
-
     if (!targetRange || targetRange.collapsed) {
-      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      cleanupSelectionAndMenu();
       return;
     }
 
-    setActiveHighlightColor(colorClass);
-
-    const bgColor = colorClass.includes("yellow")
-      ? "#fde68a"
-      : colorClass.includes("pink")
-        ? "#fbcfe8"
-        : colorClass.includes("underline")
-          ? "transparent"
-          : "#bfdbfe";
-
-    // --- NEW: Check if we are updating an existing highlight ---
     const node = targetRange.commonAncestorContainer;
-    // Get the parent element if the node is a text node
     const parentElement =
       node.nodeType === Node.TEXT_NODE
         ? node.parentElement
         : (node as HTMLElement);
 
-    // If the selection is already inside one of our highlights, just update its style!
+    const decorationClasses = [
+      "decoration-solid",
+      "decoration-dashed",
+      "decoration-dotted",
+    ];
+
     if (parentElement && parentElement.classList.contains("dsat-highlight")) {
-      if (colorClass.includes("underline")) {
-        const hasUnderline = parentElement.classList.contains("underline");
-        if (hasUnderline) {
-          parentElement.classList.remove(
-            "underline",
-            "decoration-2",
-            "decoration-gray-400",
-          );
-        } else {
-          parentElement.classList.add(
-            "underline",
-            "decoration-2",
-            "decoration-gray-400",
-          );
-        }
+      parentElement.classList.remove(
+        "underline",
+        "decoration-2",
+        "decoration-gray-400",
+        ...decorationClasses,
+      );
+
+      if (style !== "none") {
+        parentElement.classList.add(
+          "underline",
+          "decoration-2",
+          "decoration-gray-400",
+          `decoration-${style}`,
+        );
       } else {
-        parentElement.style.backgroundColor = bgColor;
-        parentElement.className = "dsat-highlight";
+        // Pure underline highlight (no background) with underline removed
+        // has nothing left to show — unwrap it. Otherwise just leave the
+        // background color in place.
+        const hasBg =
+          parentElement.style.backgroundColor &&
+          parentElement.style.backgroundColor !== "transparent";
+        if (!hasBg) {
+          const parent = parentElement.parentNode;
+          if (parent) {
+            while (parentElement.firstChild)
+              parent.insertBefore(parentElement.firstChild, parentElement);
+            parent.removeChild(parentElement);
+          }
+        }
       }
-      window.getSelection()?.removeAllRanges();
-      setCurrentSelection(null);
-      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      cleanupSelectionAndMenu();
       return;
     }
-    // --- END NEW LOGIC ---
 
-    const span = document.createElement("span");
-    span.classList.add("dsat-highlight"); // Add tracking class
-
-    if (colorClass.includes("underline")) {
-      span.className = `dsat-highlight ${colorClass}`;
-    } else {
-      span.style.backgroundColor = bgColor;
-      span.style.padding = "2px 0";
-      span.style.borderRadius = "2px";
+    if (style === "none") {
+      cleanupSelectionAndMenu();
+      return;
     }
 
+    const span = document.createElement("span");
+    span.className = `dsat-highlight underline decoration-2 decoration-gray-400 decoration-${style}`;
     try {
-      // FIX: Use targetRange here instead of currentSelection
+      wrapRangeMultiNode(targetRange, span);
+    } catch (e) {
+      console.error("Underline error:", e);
+    }
+    cleanupSelectionAndMenu();
+  };
+
+  // FIX: Accept an optional overrideRange parameter
+  const applyHighlight = (colorClass: string, overrideRange?: Range) => {
+    const targetRange = overrideRange || currentSelection;
+    if (!targetRange || targetRange.collapsed) {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    setActiveHighlightColor(colorClass);
+
+    const bgColor =
+      colorClass === "bg-yellow-200/80"
+        ? "#fde68a"
+        : colorClass === "bg-pink-200/80"
+          ? "#fbcfe8"
+          : "#bfdbfe";
+
+    const node = targetRange.commonAncestorContainer;
+    const parentElement =
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : (node as HTMLElement);
+
+    if (parentElement && parentElement.classList.contains("dsat-highlight")) {
+      const hadUnderline = parentElement.classList.contains("underline");
+      const decorationStyle = [
+        "decoration-solid",
+        "decoration-dashed",
+        "decoration-dotted",
+      ].find((c) => parentElement.classList.contains(c));
+      parentElement.style.backgroundColor = bgColor;
+      parentElement.className = "dsat-highlight";
+      if (hadUnderline) {
+        parentElement.classList.add(
+          "underline",
+          "decoration-2",
+          "decoration-gray-400",
+        );
+        if (decorationStyle) parentElement.classList.add(decorationStyle);
+      }
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.classList.add("dsat-highlight");
+    span.style.backgroundColor = bgColor;
+    span.style.padding = "2px 0";
+    span.style.borderRadius = "2px";
+
+    try {
       wrapRangeMultiNode(targetRange, span);
     } catch (e) {
       console.error("Highlight error:", e);
     }
-
-    window.getSelection()?.removeAllRanges();
-    setCurrentSelection(null);
-    setHighlightMenu({ visible: false, x: 0, y: 0 });
+    cleanupSelectionAndMenu();
   };
 
   const clearHighlights = () => {
@@ -1281,21 +1382,37 @@ function RWPracticePageContent() {
     const handleMouseUp = (e: MouseEvent) => {
       if (!isHighlightActive) return;
 
-      // --- NEW: Intercept clicks on existing highlights ---
       const target = e.target as HTMLElement;
-      const highlightSpan = target.closest(".dsat-highlight");
+      const highlightSpan = target.closest(
+        ".dsat-highlight",
+      ) as HTMLElement | null;
 
       if (highlightSpan) {
-        // Programmatically select the exact text inside the highlight
-        const selection = window.getSelection();
+        // Don't call window.getSelection().addRange() here — the native
+        // selection visually competes with the custom pastel background
+        // (under `selection:bg-cyan-200`) and makes the highlight look like
+        // it disappeared. Build a Range for reference only, no visible select.
         const range = document.createRange();
         range.selectNodeContents(highlightSpan);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-      }
-      // --- END NEW LOGIC ---
+        setCurrentSelection(range);
+        setMenuDisplayColor(getHighlightColorClass(highlightSpan));
 
-      // Small delay to ensure selection is complete
+        const rect = highlightSpan.getBoundingClientRect();
+        const menuWidth = 320;
+        const menuHeight = 50;
+        const edgePadding = 16;
+        let menuX = rect.left + rect.width / 2;
+        let menuY = rect.top - 10;
+        const minX = menuWidth / 2 + edgePadding;
+        const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+        menuX = Math.max(minX, Math.min(menuX, maxX));
+        if (menuY < menuHeight + edgePadding) {
+          menuY = rect.bottom + 10 + menuHeight;
+        }
+        setHighlightMenu({ visible: true, x: menuX, y: menuY });
+        return;
+      }
+
       setTimeout(() => {
         handleTextSelection();
       }, 10);
@@ -1425,28 +1542,67 @@ function RWPracticePageContent() {
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-yellow-200/80")}
-                className={`w-7 h-7 rounded-full bg-[#fde68a] border-2 transition-transform ${activeHighlightColor === "bg-yellow-200/80" ? "border-black" : "border-transparent"}`}
+                className={`w-7 h-7 rounded-full bg-[#fde68a] border-2 transition-transform ${menuDisplayColor === "bg-yellow-200/80" ? "border-black" : "border-transparent"}`}
               />
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-blue-200/80")}
-                className={`w-7 h-7 rounded-full bg-[#bfdbfe] border-2 transition-transform ${activeHighlightColor === "bg-blue-200/80" ? "border-black" : "border-transparent"}`}
+                className={`w-7 h-7 rounded-full bg-[#bfdbfe] border-2 transition-transform ${menuDisplayColor === "bg-blue-200/80" ? "border-black" : "border-transparent"}`}
               />
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyHighlight("bg-pink-200/80")}
-                className={`w-7 h-7 rounded-full bg-[#fbcfe8] border-2 transition-transform ${activeHighlightColor === "bg-pink-200/80" ? "border-black" : "border-transparent"}`}
+                className={`w-7 h-7 rounded-full bg-[#fbcfe8] border-2 transition-transform ${menuDisplayColor === "bg-pink-200/80" ? "border-black" : "border-transparent"}`}
               />
               <div className="w-[1px] h-6 bg-gray-200 mx-1" />
-              <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() =>
-                  applyHighlight("underline decoration-2 decoration-gray-400")
-                }
-                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <UnderlineIcon size={18} />
-              </button>
+              <div className="relative">
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowUnderlineSubmenu((v) => !v)}
+                  className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <UnderlineIcon size={18} />
+                </button>
+                {showUnderlineSubmenu && (
+                  <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 py-1 w-16 z-50 flex flex-col items-center">
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyUnderlineStyle("solid")}
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                    >
+                      <span className="text-base font-serif border-b-2 border-gray-700 leading-none px-1">
+                        U
+                      </span>
+                    </button>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyUnderlineStyle("dashed")}
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                    >
+                      <span className="text-base font-serif border-b-2 border-dashed border-gray-700 leading-none px-1">
+                        U
+                      </span>
+                    </button>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyUnderlineStyle("dotted")}
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                    >
+                      <span className="text-base font-serif border-b-2 border-dotted border-gray-700 leading-none px-1">
+                        U
+                      </span>
+                    </button>
+                    <div className="w-8 h-px bg-gray-100 my-1" />
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyUnderlineStyle("none")}
+                      className="w-full py-2 text-xs text-gray-500 hover:bg-gray-50 rounded-lg"
+                    >
+                      None
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
@@ -2494,6 +2650,13 @@ export default function RWPracticePage() {
         .passage-content * {
           user-select: text !important;
           -webkit-user-select: text !important;
+        }
+        .dsat-highlight {
+          cursor: pointer;
+          transition: opacity 0.15s ease;
+        }
+        .dsat-highlight:hover {
+          opacity: 0.6;
         }
       `}</style>
     </Suspense>
