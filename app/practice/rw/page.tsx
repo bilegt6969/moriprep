@@ -612,10 +612,8 @@ function RWPracticePageContent() {
     fetchQuestions();
   }, [domainParam, domainsParam, difficultyParam, difficultiesParam]);
 
+  // Recompute only when the actual filter selection changes
   useEffect(() => {
-    // Don't re-filter while viewing an answered question (would rip it out
-    // of a "not tried" list mid-view) or while the explanation modal is open.
-    if (showExplanation || justAnswered) return;
     filterQuestions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -624,9 +622,18 @@ function RWPracticePageContent() {
     selectedDifficulties,
     statusFilter,
     attemptFilter,
-    answeredQuestions,
-    justAnswered,
   ]);
+
+  // Apply status/attempt filters once against real progress data after it loads,
+  // without re-running on every subsequent answer
+  const initialAnsweredAppliedRef = useRef(false);
+  useEffect(() => {
+    if (initialAnsweredAppliedRef.current || answeredQuestions.size === 0)
+      return;
+    initialAnsweredAppliedRef.current = true;
+    filterQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answeredQuestions]);
 
   useEffect(() => {
     filterQuestions();
@@ -928,7 +935,12 @@ function RWPracticePageContent() {
 
   function handleAnswerHighlight(answer: string) {
     if (showExplanation) return;
+    // Only lock once the correct answer has actually been submitted.
+    if (selectedAnswer && selectedAnswer === selectedQuestion?.correct_answer)
+      return;
     setHighlightedAnswer(answer);
+    // Clear a previous wrong submission so choices/cross-out re-enable
+    if (selectedAnswer) setSelectedAnswer("");
   }
 
   async function handleAnswerSubmit() {
@@ -2029,6 +2041,9 @@ function RWPracticePageContent() {
                           // question you've answered before instead of it being permanently locked
                           // with the old answer revealed.
                           const hasAnswered = !!selectedAnswer;
+                          const isLocked =
+                            !!selectedAnswer &&
+                            selectedAnswer === selectedQuestion.correct_answer;
                           const isWrongSelected =
                             hasAnswered && isSelected && !isCorrectAnswer;
                           const isRightAnswerShown =
@@ -2063,10 +2078,8 @@ function RWPracticePageContent() {
                           return (
                             <div
                               key={key}
-                              onClick={() =>
-                                !hasAnswered && handleAnswerHighlight(key)
-                              }
-                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${hasAnswered ? "cursor-default" : "cursor-pointer"}`}
+                              onClick={() => handleAnswerHighlight(key)}
+                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${isLocked ? "cursor-default" : "cursor-pointer"}`}
                             >
                               <div
                                 className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
@@ -2099,7 +2112,7 @@ function RWPracticePageContent() {
                               </span>
 
                               {isHighlighted &&
-                                !hasAnswered &&
+                                !isLocked &&
                                 !showExplanation && (
                                   <button
                                     onClick={(e) => {
@@ -2124,7 +2137,7 @@ function RWPracticePageContent() {
                                 </button>
                               )}
 
-                              {isCrossOutMode && !hasAnswered && (
+                              {isCrossOutMode && !isLocked && (
                                 <button
                                   onClick={(e) => toggleElimination(e, key)}
                                   className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
