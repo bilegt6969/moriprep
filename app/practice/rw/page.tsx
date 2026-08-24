@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   Bookmark,
+  Check,
   ChevronDown,
   ChevronLeft,
   Clock,
@@ -859,8 +860,6 @@ function RWPracticePageContent() {
     if (!highlightedAnswer || showExplanation) return;
     setSelectedAnswer(highlightedAnswer);
     setJustAnswered(true);
-    // Reset the flag after 2 seconds to allow normal navigation
-    setTimeout(() => setJustAnswered(false), 2000);
     if (selectedQuestion) {
       const isCorrect = highlightedAnswer === selectedQuestion.correct_answer;
       setAnsweredQuestions((prev) => {
@@ -1187,11 +1186,23 @@ function RWPracticePageContent() {
     // If the selection is already inside one of our highlights, just update its style!
     if (parentElement && parentElement.classList.contains("dsat-highlight")) {
       if (colorClass.includes("underline")) {
-        // Keep the existing background color, just add underline
-        parentElement.className = `dsat-highlight ${colorClass}`;
+        const hasUnderline = parentElement.classList.contains("underline");
+        if (hasUnderline) {
+          parentElement.classList.remove(
+            "underline",
+            "decoration-2",
+            "decoration-gray-400",
+          );
+        } else {
+          parentElement.classList.add(
+            "underline",
+            "decoration-2",
+            "decoration-gray-400",
+          );
+        }
       } else {
         parentElement.style.backgroundColor = bgColor;
-        parentElement.className = "dsat-highlight"; // Clear underline classes if changing to a solid color
+        parentElement.className = "dsat-highlight";
       }
       window.getSelection()?.removeAllRanges();
       setCurrentSelection(null);
@@ -1821,6 +1832,13 @@ function RWPracticePageContent() {
                           const isEliminated = eliminatedChoices.has(key);
                           const isCorrectAnswer =
                             key === selectedQuestion.correct_answer;
+                          const hasAnswered = answeredQuestions.has(
+                            selectedQuestion.question_id,
+                          );
+                          const isWrongSelected =
+                            hasAnswered && isSelected && !isCorrectAnswer;
+                          const isRightAnswerShown =
+                            hasAnswered && isCorrectAnswer;
 
                           let borderClass = "border-gray-400";
                           let bgClass = "bg-white";
@@ -1828,18 +1846,13 @@ function RWPracticePageContent() {
                             ? "text-gray-400 line-through"
                             : "text-[#1C1C1E]";
 
-                          // Color answers when they've been answered (not just when modal is open)
-                          const hasAnswered = answeredQuestions.has(
-                            selectedQuestion.question_id,
-                          );
-
                           if (hasAnswered) {
-                            if (isCorrectAnswer) {
+                            if (isRightAnswerShown) {
                               borderClass = "border-green-600";
-                              bgClass = "bg-green-50/20";
-                            } else if (isSelected) {
+                              bgClass = "bg-green-50";
+                            } else if (isWrongSelected) {
                               borderClass = "border-red-600";
-                              bgClass = "bg-red-50/20";
+                              bgClass = "bg-red-50";
                             }
                           } else if (isHighlighted) {
                             borderClass = "border-sky-500";
@@ -1854,13 +1867,33 @@ function RWPracticePageContent() {
                           return (
                             <div
                               key={key}
-                              onClick={() => handleAnswerHighlight(key)}
-                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
+                              onClick={() =>
+                                !hasAnswered && handleAnswerHighlight(key)
+                              }
+                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${hasAnswered ? "cursor-default" : "cursor-pointer"}`}
                             >
                               <div
-                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-500 text-white" : hasAnswered && isCorrectAnswer ? "bg-green-600 text-white" : hasAnswered && isSelected ? "bg-red-600 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-2 border-gray-300 text-gray-400" : "border-2 border-gray-600 text-[#1C1C1E]"}`}
+                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
+                                  isRightAnswerShown
+                                    ? "bg-green-600 text-white"
+                                    : isWrongSelected
+                                      ? "bg-red-600 text-white"
+                                      : isHighlighted
+                                        ? "bg-sky-500 text-white"
+                                        : isSelected
+                                          ? "bg-black text-white"
+                                          : isEliminated
+                                            ? "border-2 border-gray-300 text-gray-400"
+                                            : "border-2 border-gray-600 text-[#1C1C1E]"
+                                }`}
                               >
-                                {key}
+                                {isRightAnswerShown ? (
+                                  <Check size={16} strokeWidth={3} />
+                                ) : isWrongSelected ? (
+                                  <X size={16} strokeWidth={3} />
+                                ) : (
+                                  key
+                                )}
                               </div>
 
                               <span
@@ -1869,22 +1902,35 @@ function RWPracticePageContent() {
                                 {value}
                               </span>
 
-                              {isHighlighted && !showExplanation && (
+                              {isHighlighted &&
+                                !hasAnswered &&
+                                !showExplanation && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAnswerSubmit();
+                                    }}
+                                    className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                  >
+                                    Check
+                                  </button>
+                                )}
+
+                              {isWrongSelected && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAnswerSubmit();
+                                    setShowExplanation(true);
                                   }}
-                                  className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                  className="flex items-center justify-center px-4 py-2 shrink-0 bg-black hover:bg-gray-800 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
                                 >
-                                  Check
+                                  Explain
                                 </button>
                               )}
 
-                              {isCrossOutMode && (
+                              {isCrossOutMode && !hasAnswered && (
                                 <button
                                   onClick={(e) => toggleElimination(e, key)}
-                                  disabled={showExplanation}
                                   className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
                                 >
                                   <div
