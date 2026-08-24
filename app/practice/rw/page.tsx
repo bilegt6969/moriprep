@@ -2038,10 +2038,12 @@ function RWPracticePageContent() {
                             : "text-[#1C1C1E]";
 
                           if (hasAnswered) {
-                            if (isRightAnswerShown) {
+                            if (isSelected && isCorrectAnswer) {
+                              // Only show correct answer in green if user selected it
                               borderClass = "border-green-600";
                               bgClass = "bg-green-50";
-                            } else if (isWrongSelected) {
+                            } else if (isSelected && !isCorrectAnswer) {
+                              // Show wrong answer in red
                               borderClass = "border-red-600";
                               bgClass = "bg-red-50";
                             }
