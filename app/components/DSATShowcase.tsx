@@ -225,15 +225,7 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
 export function DSATShowcase() {
   return (
     <main className="flex min-h-screen flex-col bg-white">
-      <Navbar
-        siteName="mori Prep"
-        categories={[
-          { label: "Practice", href: "#practice" },
-          { label: "Lessons", href: "#lessons" },
-          { label: "Resources", href: "#resources" },
-        ]}
-        showBanner={true}
-      />
+      <Navbar siteName="mori Prep" categories={[]} showBanner={true} />
       {/* Question Bank Practice Section */}
       <FeatureShowcase
         badge="Practice"
