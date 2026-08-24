@@ -362,8 +362,7 @@ export function Hero() {
             height="800"
             loading="eager"
             decoding="async"
-            // @ts-expect-error - fetchPriority is valid but not yet in React's TS types
-            fetchpriority="high"
+            fetchPriority="high"
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
             className={`block mx-auto transition-opacity duration-700 ease-out
