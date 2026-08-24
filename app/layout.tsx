@@ -1,7 +1,4 @@
-import { Analytics } from "@vercel/analytics/next";
-import { AuthSessionSync } from "components/auth/auth-session-sync";
-import { CookieConsentProvider } from "components/cookie-consent";
-import { Providers } from "components/providers/tooltip-provider";
+import { BodyWrapper } from "components/body-wrapper";
 import { baseUrl } from "lib/utils";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
@@ -60,14 +57,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className="bg-white text-primary antialiased selection:bg-gray-200 selection:text-black"
         style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
       >
-        <Providers>
-          <CookieConsentProvider>
-            <AuthSessionSync />
-            <main>{children}</main>
-          </CookieConsentProvider>
-        </Providers>
+        <BodyWrapper>{children}</BodyWrapper>
       </body>
-      <Analytics />
     </html>
   );
 }
