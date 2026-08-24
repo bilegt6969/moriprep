@@ -693,30 +693,13 @@ function RWPracticePageContent() {
     try {
       const skillsParam = searchParams.get("skills");
 
-      // If questionIdParam is provided, fetch that specific question
-      if (questionIdParam) {
-        console.log("Fetching specific question:", questionIdParam);
-        const response = await fetch(
-          `/api/questions?question_id=${questionIdParam}`,
-        );
-        if (!response.ok) {
-          console.error("Failed to fetch question, status:", response.status);
-          throw new Error("Failed to fetch question");
-        }
-        const questionsData = await response.json();
-        console.log("Fetched question data:", questionsData);
-        setQuestions(questionsData);
-        setFilteredQuestions(questionsData);
-        setLoading(false);
-        setTotalQuestions(questionsData.length);
-        return;
-      }
+      // A question_id deep-link should still load the FULL configured set
+      // (domain/difficulty/skill), just starting at a specific question —
+      // not replace the set with a single question.
+      const shouldFetchAll =
+        statusFilter !== "all" || attemptFilter !== "all" || !!questionIdParam;
 
-      // When attempt/status filters are active, fetch ALL questions for client-side filtering
-      const shouldFetchAll = statusFilter !== "all" || attemptFilter !== "all";
-
-      // First, get the total count from Firebase stats (when domain/skill/difficulty filters are active)
-      // This count should NOT include attempt/status filters since those are client-side
+      // Total count for the configured set (domain/skill/difficulty)
       if (domainsParam || difficultiesParam || skillsParam) {
         const countParams = new URLSearchParams();
         if (domainsParam) countParams.append("domain", domainsParam);
@@ -733,32 +716,44 @@ function RWPracticePageContent() {
           setTotalQuestions(count);
           setActualTotalQuestions(count);
         }
-      } else if (!shouldFetchAll) {
+      } else {
         // Default total for RW questions when no filters applied
         setTotalQuestions(1688);
         setActualTotalQuestions(1688);
-      } else {
-        // When only attempt/status filters are active (no domain/skill/difficulty), use default total
-        setTotalQuestions(1688);
-        setActualTotalQuestions(1688);
       }
 
-      // Then fetch the questions
       const params = new URLSearchParams();
       if (shouldFetchAll) {
-        // Fetch all questions when filters are active
-        params.append("limit", "10000"); // Large limit to get all questions
+        params.append("limit", "10000");
       } else {
         params.append("limit", BATCH_SIZE.toString());
       }
-
       if (domainsParam) params.append("domain", domainsParam);
       if (difficultiesParam) params.append("difficulty", difficultiesParam);
       if (skillsParam) params.append("skill", skillsParam);
 
       const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch questions");
-      const questionsData = await response.json();
+      let questionsData = await response.json();
+
+      // If we came in via a question_id and that question isn't in the
+      // filtered set (e.g. filters don't match it), fetch it separately
+      // and prepend it so it can still be selected.
+      if (
+        questionIdParam &&
+        !questionsData.find((q: any) => q.question_id === questionIdParam)
+      ) {
+        const singleRes = await fetch(
+          `/api/questions?question_id=${questionIdParam}`,
+        );
+        if (singleRes.ok) {
+          const singleData = await singleRes.json();
+          if (Array.isArray(singleData) && singleData.length > 0) {
+            questionsData = [...singleData, ...questionsData];
+          }
+        }
+      }
+
       setQuestions(questionsData);
       setFilteredQuestions(questionsData);
       setLoading(false);
@@ -2209,6 +2204,10 @@ function RWPracticePageContent() {
                     <div className="flex items-center gap-1.5">
                       <div className="w-4 h-4 rounded bg-red-500" />
                       <span className="text-gray-600">Incorrect</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-4 h-4 rounded bg-gray-100 border border-gray-300" />
+                      <span className="text-gray-600">Not Attempted</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Bookmark size={16} className="text-gray-400" />
