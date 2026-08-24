@@ -550,13 +550,15 @@ function RWPracticePageContent() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (showQuestionBank) {
-        const target = e.target as HTMLElement;
-        const popup = target.closest('[class*="Question Bank Popup"]');
-        if (!popup && !target.closest("button")) {
-          setShowQuestionBank(false);
-        }
+      if (!showQuestionBank) return;
+      const target = e.target as HTMLElement;
+      if (
+        target.closest(".question-bank-popup") ||
+        target.closest(".question-bank-btn")
+      ) {
+        return;
       }
+      setShowQuestionBank(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -611,8 +613,9 @@ function RWPracticePageContent() {
   }, [domainParam, domainsParam, difficultyParam, difficultiesParam]);
 
   useEffect(() => {
-    // Don't re-filter when explanation modal is open to prevent auto-advance
-    if (showExplanation) return;
+    // Don't re-filter while viewing an answered question (would rip it out
+    // of a "not tried" list mid-view) or while the explanation modal is open.
+    if (showExplanation || justAnswered) return;
     filterQuestions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -621,6 +624,8 @@ function RWPracticePageContent() {
     selectedDifficulties,
     statusFilter,
     attemptFilter,
+    answeredQuestions,
+    justAnswered,
   ]);
 
   useEffect(() => {
@@ -692,6 +697,16 @@ function RWPracticePageContent() {
   }, [selectedQuestion, user, isAuthLoaded]);
 
   useEffect(() => {
+    if (!selectedQuestion) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.get("question_id") !== selectedQuestion.question_id) {
+      params.set("question_id", selectedQuestion.question_id);
+      router.replace(`/practice/rw?${params.toString()}`, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedQuestion?.question_id]);
+
+  useEffect(() => {
     if (
       !isReturningToSelection &&
       filteredQuestions.length > 0 &&
@@ -755,11 +770,11 @@ function RWPracticePageContent() {
     try {
       const skillsParam = searchParams.get("skills");
 
-      // A question_id deep-link should still load the FULL configured set
-      // (domain/difficulty/skill), just starting at a specific question —
-      // not replace the set with a single question.
-      const shouldFetchAll =
-        statusFilter !== "all" || attemptFilter !== "all" || !!questionIdParam;
+      // Batch pagination (loadMoreQuestions) isn't wired to any scroll/button
+      // trigger in the UI, so partial 24-item loads were causing "Next" to run
+      // out of questions and the Question Bank popup to show incomplete counts.
+      // Just load the whole filtered set — it's at most a few hundred questions.
+      const shouldFetchAll = true;
 
       // Total count for the configured set (domain/skill/difficulty)
       if (domainsParam || difficultiesParam || skillsParam) {
@@ -1026,6 +1041,7 @@ function RWPracticePageContent() {
       const currentIndex = filteredQuestions.findIndex(
         (q) => q.question_id === selectedQuestion?.question_id,
       );
+      if (currentIndex === -1) return; // current question isn't in the list — don't jump anywhere
       if (currentIndex < filteredQuestions.length - 1) {
         setSelectedQuestion(filteredQuestions[currentIndex + 1] || null);
       }
@@ -1051,6 +1067,7 @@ function RWPracticePageContent() {
       const currentIndex = filteredQuestions.findIndex(
         (q) => q.question_id === selectedQuestion?.question_id,
       );
+      if (currentIndex === -1) return; // current question isn't in the list — don't jump anywhere
       if (currentIndex > 0) {
         setSelectedQuestion(filteredQuestions[currentIndex - 1] || null);
       }
@@ -1396,6 +1413,12 @@ function RWPracticePageContent() {
       if (!isHighlightActive) return;
 
       const target = e.target as HTMLElement;
+
+      // Clicks inside the highlight toolbar (color swatches, underline submenu,
+      // copy/trash) shouldn't trigger a re-check of the text selection — that
+      // re-check can close the toolbar/submenu a moment after it opens.
+      if (target.closest(".dsat-highlight-toolbar")) return;
+
       const highlightSpan = target.closest(
         ".dsat-highlight",
       ) as HTMLElement | null;
@@ -1545,7 +1568,7 @@ function RWPracticePageContent() {
           {/* Highlighter Tool Popover */}
           {highlightMenu.visible && (
             <div
-              className="fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
+              className="dsat-highlight-toolbar fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
               style={{
                 top: highlightMenu.y,
                 left: highlightMenu.x,
@@ -1999,9 +2022,10 @@ function RWPracticePageContent() {
                           const isEliminated = eliminatedChoices.has(key);
                           const isCorrectAnswer =
                             key === selectedQuestion.correct_answer;
-                          const hasAnswered = answeredQuestions.has(
-                            selectedQuestion.question_id,
-                          );
+                          // Use local session state, not lifetime history — lets you re-attempt a
+                          // question you've answered before instead of it being permanently locked
+                          // with the old answer revealed.
+                          const hasAnswered = !!selectedAnswer;
                           const isWrongSelected =
                             hasAnswered && isSelected && !isCorrectAnswer;
                           const isRightAnswerShown =
@@ -2182,7 +2206,7 @@ function RWPracticePageContent() {
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQuestionBank(!showQuestionBank)}
-                className="flex items-center gap-2 text-white bg-black px-4 py-2 rounded-full text-sm font-semibold transition-colors hover:bg-gray-800"
+                className="question-bank-btn flex items-center gap-2 text-white bg-black px-4 py-2 rounded-full text-sm font-semibold transition-colors hover:bg-gray-800"
               >
                 <span>
                   {Math.max(
@@ -2200,7 +2224,7 @@ function RWPracticePageContent() {
                 />
               </button>
 
-              {user && questionAttempts.length > 0 && (
+              {questionAttempts.length > 0 && (
                 <button
                   onClick={() => setShowHistory(!showHistory)}
                   className="p-2.5 bg-white border border-gray-200/60 rounded-full text-gray-600 hover:text-black hover:border-gray-300 hover:bg-gray-50/80 transition-all active:scale-95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
@@ -2366,7 +2390,7 @@ function RWPracticePageContent() {
             {/* Question Bank Popup */}
             {showQuestionBank && (
               <div
-                className="absolute bottom-20 left-4 sm:left-6 right-4 sm:right-auto w-auto sm:w-[600px] max-w-[calc(100vw-2rem)] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden"
+                className="question-bank-popup absolute bottom-20 left-4 sm:left-6 right-4 sm:right-auto w-auto sm:w-[600px] max-w-[calc(100vw-2rem)] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
