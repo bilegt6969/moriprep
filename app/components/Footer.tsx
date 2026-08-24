@@ -159,14 +159,6 @@ export function Footer() {
                   Contact
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/(legal)/support"
-                  className="hover:text-[#111] transition-colors"
-                >
-                  Support
-                </Link>
-              </li>
             </ul>
           </div>
 
