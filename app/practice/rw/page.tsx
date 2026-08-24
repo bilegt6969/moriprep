@@ -1467,7 +1467,11 @@ function RWPracticePageContent() {
                 onClick={handleGoBack}
                 className="flex items-center gap-1.5 text-base sm:text-sm font-medium text-gray-500 hover:text-black transition-colors"
               >
-                <ChevronLeft size={18} strokeWidth={2} className="sm:size-16" />{" "}
+                <ChevronLeft
+                  size={18}
+                  strokeWidth={2}
+                  className="w-[18px] h-[18px] sm:w-[16px] sm:h-[16px]"
+                />{" "}
                 Go back
               </button>
               <div className="relative">
@@ -1479,7 +1483,7 @@ function RWPracticePageContent() {
                   <ChevronDown
                     size={16}
                     strokeWidth={2}
-                    className="mt-0.5 sm:size-14"
+                    className="mt-0.5 w-[16px] h-[16px] sm:w-[14px] sm:h-[14px]"
                   />
                 </button>
                 {showDirections && (
