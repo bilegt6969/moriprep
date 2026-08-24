@@ -13,7 +13,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
     AlertCircle,
     Bookmark,
-    CheckCircle2,
     ChevronDown,
     ChevronLeft,
     Clock,
@@ -856,7 +855,6 @@ function RWPracticePageContent() {
     if (!highlightedAnswer || showExplanation) return;
     setSelectedAnswer(highlightedAnswer);
     if (selectedQuestion) {
-      setShowExplanation(true);
       const isCorrect = highlightedAnswer === selectedQuestion.correct_answer;
       setAnsweredQuestions((prev) => {
         const newMap = new Map(prev);
@@ -1827,11 +1825,18 @@ function RWPracticePageContent() {
                             ? "text-gray-400 line-through"
                             : "text-[#1C1C1E]";
 
-                          if (showExplanation) {
+                          // Color answers when they've been answered (not just when modal is open)
+                          const hasAnswered = answeredQuestions.has(
+                            selectedQuestion.question_id,
+                          );
+
+                          if (hasAnswered) {
                             if (isCorrectAnswer) {
-                              borderClass = "border-green-600 bg-green-50/20";
+                              borderClass = "border-green-600";
+                              bgClass = "bg-green-50/20";
                             } else if (isSelected) {
-                              borderClass = "border-red-600 bg-red-50/20";
+                              borderClass = "border-red-600";
+                              bgClass = "bg-red-50/20";
                             }
                           } else if (isHighlighted) {
                             borderClass = "border-sky-500";
@@ -1850,7 +1855,7 @@ function RWPracticePageContent() {
                               className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all ${borderClass} ${bgClass} min-w-0`}
                             >
                               <div
-                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-500 text-white" : showExplanation && isCorrectAnswer ? "bg-green-600 text-white" : showExplanation && isSelected ? "bg-red-600 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-2 border-gray-300 text-gray-400" : "border-2 border-gray-600 text-[#1C1C1E]"}`}
+                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${isHighlighted ? "bg-sky-500 text-white" : hasAnswered && isCorrectAnswer ? "bg-green-600 text-white" : hasAnswered && isSelected ? "bg-red-600 text-white" : isSelected ? "bg-black text-white" : isEliminated ? "border-2 border-gray-300 text-gray-400" : "border-2 border-gray-600 text-[#1C1C1E]"}`}
                               >
                                 {key}
                               </div>
@@ -1940,104 +1945,6 @@ function RWPracticePageContent() {
 
                   {/* Content Area */}
                   <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
-                    <div className="flex flex-col gap-4 mb-8">
-                      {/* Conditional logic: Did the user answer this, and was it wrong? */}
-                      {answeredQuestions.has(selectedQuestion.question_id) &&
-                        !answeredQuestions.get(selectedQuestion.question_id)
-                          ?.isCorrect && (
-                          <div className="bg-red-50/50 border border-red-100 rounded-[24px] p-6">
-                            <div className="flex items-center gap-2 mb-4">
-                              <X
-                                size={14}
-                                strokeWidth={3}
-                                className="text-red-500"
-                              />
-                              <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider">
-                                Your Answer
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                              <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-[17px] shrink-0">
-                                {
-                                  answeredQuestions.get(
-                                    selectedQuestion.question_id,
-                                  )?.answer
-                                }
-                              </div>
-                              <div className="flex-1 pt-1.5">
-                                <p className="text-gray-800 leading-relaxed font-medium text-[15px]">
-                                  {
-                                    selectedQuestion.choices[
-                                      answeredQuestions.get(
-                                        selectedQuestion.question_id,
-                                      )
-                                        ?.answer as keyof typeof selectedQuestion.choices
-                                    ]
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                      {/* The Correct Answer Block */}
-                      <div
-                        className={`border rounded-[24px] p-6 ${
-                          answeredQuestions.get(selectedQuestion.question_id)
-                            ?.isCorrect
-                            ? "bg-green-50/50 border-green-100"
-                            : "bg-gray-50/50 border-gray-200/60"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-4">
-                          <CheckCircle2
-                            size={14}
-                            strokeWidth={3}
-                            className={
-                              answeredQuestions.get(
-                                selectedQuestion.question_id,
-                              )?.isCorrect
-                                ? "text-green-500"
-                                : "text-gray-500"
-                            }
-                          />
-                          <span
-                            className={`text-[11px] font-bold uppercase tracking-wider ${
-                              answeredQuestions.get(
-                                selectedQuestion.question_id,
-                              )?.isCorrect
-                                ? "text-green-600"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            Correct Answer
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[17px] shrink-0 ${
-                              answeredQuestions.get(
-                                selectedQuestion.question_id,
-                              )?.isCorrect
-                                ? "bg-green-100 text-green-600"
-                                : "bg-gray-200 text-gray-700"
-                            }`}
-                          >
-                            {selectedQuestion.correct_answer}
-                          </div>
-                          <div className="flex-1 pt-1.5">
-                            <p className="text-gray-800 leading-relaxed font-medium text-[15px]">
-                              {
-                                selectedQuestion.choices[
-                                  selectedQuestion.correct_answer as keyof typeof selectedQuestion.choices
-                                ]
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Rationale Section */}
                     <div className="space-y-3 px-2">
                       <h3 className="text-[15px] font-semibold text-gray-900 tracking-tight">
