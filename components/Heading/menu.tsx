@@ -30,20 +30,10 @@ interface CompanyLink {
 
 const companyLinks: CompanyLink[] = [
   {
-    label: "Our Mission",
-    href: "/story",
+    label: "About",
+    href: "/info/story",
     description:
       "Learn about our mission to build Mongolia's education ecosystem.",
-  },
-  {
-    label: "ByteLabs",
-    href: "/labs",
-    description: "Real-world projects and portfolio building opportunities.",
-  },
-  {
-    label: "Byte Network",
-    href: "/network",
-    description: "Connect with Mongolia's most ambitious students.",
   },
   {
     label: "Contact",
