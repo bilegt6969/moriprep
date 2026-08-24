@@ -547,6 +547,8 @@ function RWPracticePageContent() {
   }, [domainParam, domainsParam, difficultyParam, difficultiesParam]);
 
   useEffect(() => {
+    // Don't re-filter when explanation modal is open to prevent auto-advance
+    if (showExplanation) return;
     filterQuestions();
   }, [
     questions,
@@ -555,6 +557,7 @@ function RWPracticePageContent() {
     statusFilter,
     attemptFilter,
     answeredQuestions,
+    showExplanation,
   ]);
 
   useEffect(() => {
@@ -625,7 +628,11 @@ function RWPracticePageContent() {
   }, [selectedQuestion, user, isAuthLoaded]);
 
   useEffect(() => {
-    if (!isReturningToSelection && filteredQuestions.length > 0) {
+    if (
+      !isReturningToSelection &&
+      filteredQuestions.length > 0 &&
+      !showExplanation
+    ) {
       // If the currently selected question is not in the filtered list, select the first one
       if (
         !selectedQuestion ||
@@ -657,6 +664,7 @@ function RWPracticePageContent() {
     isReturningToSelection,
     questionIdParam,
     attemptFilter,
+    showExplanation,
   ]);
 
   useEffect(() => {
@@ -1897,7 +1905,7 @@ function RWPracticePageContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-100 p-4 sm:p-6"
+                className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[9999] p-4 sm:p-6"
                 onClick={() => setShowExplanation(false)}
               >
                 <motion.div
