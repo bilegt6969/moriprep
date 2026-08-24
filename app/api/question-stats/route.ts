@@ -25,10 +25,34 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const userId = searchParams.get("userId");
 
+    console.log("=== question-stats API called ===");
+    console.log("domain:", domain);
+    console.log("skill:", skill);
+    console.log("difficulty:", difficulty);
+    console.log("userId:", userId);
+    console.log(
+      "All searchParams:",
+      Object.fromEntries(searchParams.entries()),
+    );
+
+    // Handle multiple domains (comma-separated or multiple params)
+    const domains = domain ? domain.split(",").map((d) => d.trim()) : [];
+    const allDomains = searchParams.getAll("domain").map((d) => d.trim());
+    const combinedDomains = [...new Set([...domains, ...allDomains])];
+
+    // Handle multiple skills (comma-separated or multiple params)
+    const skills = skill ? skill.split(",").map((s) => s.trim()) : [];
+    const allSkills = searchParams.getAll("skill").map((s) => s.trim());
+    const combinedSkills = [...new Set([...skills, ...allSkills])];
+
     // Handle multiple difficulties (comma-separated)
     const difficulties = difficulty
       ? difficulty.split(",").map((d) => d.trim())
       : [];
+
+    console.log("Parsed domains:", combinedDomains);
+    console.log("Parsed skills:", combinedSkills);
+    console.log("Parsed difficulties:", difficulties);
 
     // If userId is provided, fetch user-specific stats
     if (userId) {
@@ -52,7 +76,12 @@ export async function GET(request: NextRequest) {
       console.log("Fetched user stats from Firebase for user:", userId);
 
       // If no filters, return full user stats
-      if (!domain && !skill && !difficulty) {
+      if (
+        combinedDomains.length === 0 &&
+        combinedSkills.length === 0 &&
+        difficulties.length === 0
+      ) {
+        console.log("No filters, returning full user stats");
         return NextResponse.json(userStats);
       }
 
@@ -61,32 +90,52 @@ export async function GET(request: NextRequest) {
       let correct = 0;
       let incorrect = 0;
 
-      if (domain && skill) {
-        const sanitizedSkill = sanitizeFieldName(skill);
-        const skillData = userStats?.skillCounts?.[sanitizedSkill];
-        if (skillData) {
-          answered = skillData.answered;
-          correct = skillData.correct;
-          incorrect = skillData.incorrect;
-        }
-      } else if (domain) {
-        const sanitizedDomain = sanitizeFieldName(domain);
-        const domainData = userStats?.domainCounts?.[sanitizedDomain];
-        if (domainData) {
-          answered = domainData.answered;
-          correct = domainData.correct;
-          incorrect = domainData.incorrect;
-        }
-      } else if (skill) {
-        const sanitizedSkill = sanitizeFieldName(skill);
-        const skillData = userStats?.skillCounts?.[sanitizedSkill];
-        if (skillData) {
-          answered = skillData.answered;
-          correct = skillData.correct;
-          incorrect = skillData.incorrect;
-        }
+      console.log("Calculating filtered user stats...");
+
+      // If domains and skills are both provided, use skill-level stats (more specific)
+      if (combinedDomains.length > 0 && combinedSkills.length > 0) {
+        console.log(
+          "Using skill-level stats for domains:",
+          combinedDomains,
+          "skills:",
+          combinedSkills,
+        );
+        combinedSkills.forEach((skill) => {
+          const sanitizedSkill = sanitizeFieldName(skill);
+          const skillData = userStats?.skillCounts?.[sanitizedSkill];
+          if (skillData) {
+            answered += skillData.answered;
+            correct += skillData.correct;
+            incorrect += skillData.incorrect;
+          }
+        });
+      } else if (combinedDomains.length > 0) {
+        console.log("Using domain-level stats for domains:", combinedDomains);
+        combinedDomains.forEach((domain) => {
+          const sanitizedDomain = sanitizeFieldName(domain);
+          const domainData = userStats?.domainCounts?.[sanitizedDomain];
+          if (domainData) {
+            answered += domainData.answered;
+            correct += domainData.correct;
+            incorrect += domainData.incorrect;
+          }
+        });
+      } else if (combinedSkills.length > 0) {
+        console.log("Using skill-level stats for skills:", combinedSkills);
+        combinedSkills.forEach((skill) => {
+          const sanitizedSkill = sanitizeFieldName(skill);
+          const skillData = userStats?.skillCounts?.[sanitizedSkill];
+          if (skillData) {
+            answered += skillData.answered;
+            correct += skillData.correct;
+            incorrect += skillData.incorrect;
+          }
+        });
       } else if (difficulties.length > 0) {
-        // Sum counts for multiple difficulties
+        console.log(
+          "Using difficulty-level stats for difficulties:",
+          difficulties,
+        );
         difficulties.forEach((diff) => {
           const sanitizedDiff = sanitizeFieldName(diff);
           const diffData = userStats?.difficultyCounts?.[sanitizedDiff];
@@ -98,6 +147,14 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      console.log(
+        "Filtered user stats - answered:",
+        answered,
+        "correct:",
+        correct,
+        "incorrect:",
+        incorrect,
+      );
       return NextResponse.json({ answered, correct, incorrect });
     }
 
@@ -117,30 +174,56 @@ export async function GET(request: NextRequest) {
     console.log("Fetched question stats from Firebase");
 
     // If no filters, return full stats
-    if (!domain && !skill && difficulties.length === 0) {
+    if (
+      combinedDomains.length === 0 &&
+      combinedSkills.length === 0 &&
+      difficulties.length === 0
+    ) {
+      console.log("No filters, returning full global stats");
       return NextResponse.json(stats);
     }
 
     // Calculate filtered count based on filters using sanitized keys
     let count = 0;
 
-    if (domain && skill) {
-      const sanitizedSkill = sanitizeFieldName(skill);
-      count = stats?.skillCounts?.[sanitizedSkill] || 0;
-    } else if (domain) {
-      const sanitizedDomain = sanitizeFieldName(domain);
-      count = stats?.domainCounts?.[sanitizedDomain] || 0;
-    } else if (skill) {
-      const sanitizedSkill = sanitizeFieldName(skill);
-      count = stats?.skillCounts?.[sanitizedSkill] || 0;
+    console.log("Calculating filtered global stats...");
+
+    // If domains and skills are both provided, use skill-level stats (more specific)
+    if (combinedDomains.length > 0 && combinedSkills.length > 0) {
+      console.log(
+        "Using skill-level stats for domains:",
+        combinedDomains,
+        "skills:",
+        combinedSkills,
+      );
+      combinedSkills.forEach((skill) => {
+        const sanitizedSkill = sanitizeFieldName(skill);
+        count += stats?.skillCounts?.[sanitizedSkill] || 0;
+      });
+    } else if (combinedDomains.length > 0) {
+      console.log("Using domain-level stats for domains:", combinedDomains);
+      combinedDomains.forEach((domain) => {
+        const sanitizedDomain = sanitizeFieldName(domain);
+        count += stats?.domainCounts?.[sanitizedDomain] || 0;
+      });
+    } else if (combinedSkills.length > 0) {
+      console.log("Using skill-level stats for skills:", combinedSkills);
+      combinedSkills.forEach((skill) => {
+        const sanitizedSkill = sanitizeFieldName(skill);
+        count += stats?.skillCounts?.[sanitizedSkill] || 0;
+      });
     } else if (difficulties.length > 0) {
-      // Sum counts for multiple difficulties
+      console.log(
+        "Using difficulty-level stats for difficulties:",
+        difficulties,
+      );
       count = difficulties.reduce((sum, diff) => {
         const sanitizedDiff = sanitizeFieldName(diff);
         return sum + (stats?.difficultyCounts?.[sanitizedDiff] || 0);
       }, 0);
     }
 
+    console.log("Filtered global count:", count);
     return NextResponse.json({ count });
   } catch (error) {
     console.error("Error fetching question stats:", error);
