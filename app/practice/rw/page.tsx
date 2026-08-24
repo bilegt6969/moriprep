@@ -1460,22 +1460,27 @@ function RWPracticePageContent() {
           )}
 
           {/* Top Header Bar strictly matching Screenshot 2026-07-22 at 17.54.13.jpg */}
-          <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-2.5 shrink-0 bg-white z-40 relative border-b-2 border-gray-200">
+          <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 sm:py-2.5 shrink-0 bg-white z-40 relative border-b-2 border-gray-200">
             {/* Left: Go back & Directions */}
-            <div className="flex items-center gap-4 sm:gap-6 w-auto sm:w-1/3 relative">
+            <div className="flex items-center gap-3 sm:gap-6 w-auto sm:w-1/3 relative">
               <button
                 onClick={handleGoBack}
-                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors"
+                className="flex items-center gap-1.5 text-base sm:text-sm font-medium text-gray-500 hover:text-black transition-colors"
               >
-                <ChevronLeft size={16} strokeWidth={2} /> Go back
+                <ChevronLeft size={18} strokeWidth={2} className="sm:size-16" />{" "}
+                Go back
               </button>
               <div className="relative">
                 <button
                   onClick={() => setShowDirections(!showDirections)}
-                  className="directions-btn flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors"
+                  className="directions-btn flex items-center gap-1.5 text-base sm:text-sm font-medium text-gray-500 hover:text-black transition-colors"
                 >
                   Directions{" "}
-                  <ChevronDown size={14} strokeWidth={2} className="mt-0.5" />
+                  <ChevronDown
+                    size={16}
+                    strokeWidth={2}
+                    className="mt-0.5 sm:size-14"
+                  />
                 </button>
                 {showDirections && (
                   <div className="directions-menu absolute top-10 left-0 w-[90vw] max-w-[550px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 text-[15px] leading-relaxed text-gray-800">
