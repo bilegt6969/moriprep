@@ -330,6 +330,9 @@ export function Hero() {
         <img
           src="/home/hero-illustration.avif"
           alt="Illustration"
+          width="1200"
+          height="800"
+          loading="eager"
           onLoad={() => setImgLoaded(true)}
           className={`block mx-auto transition-opacity duration-700 ease-out
             /* Mobile: Width 150% scales it up. h-[35vh] with object-cover forces the bottom half to be cut off */
