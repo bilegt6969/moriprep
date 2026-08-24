@@ -1,38 +1,38 @@
 "use client";
 
 import {
-    saveAnsweredQuestions,
-    saveQuestionReport,
-    saveUserProgress,
-    updateUserStats,
+  saveAnsweredQuestions,
+  saveQuestionReport,
+  saveUserProgress,
+  updateUserStats,
 } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    Bookmark,
-    ChevronDown,
-    ChevronLeft,
-    Clock,
-    Command,
-    Copy,
-    Flag,
-    Highlighter,
-    History,
-    Info,
-    List,
-    Maximize2,
-    Minimize2,
-    Moon,
-    MoreVertical,
-    Pause,
-    Play,
-    Shuffle,
-    Trash2,
-    Underline as UnderlineIcon,
-    X,
+  AlertCircle,
+  Bookmark,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Command,
+  Copy,
+  Flag,
+  Highlighter,
+  History,
+  Info,
+  List,
+  Maximize2,
+  Minimize2,
+  Moon,
+  MoreVertical,
+  Pause,
+  Play,
+  Shuffle,
+  Trash2,
+  Underline as UnderlineIcon,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -1187,7 +1187,7 @@ function RWPracticePageContent() {
     // If the selection is already inside one of our highlights, just update its style!
     if (parentElement && parentElement.classList.contains("dsat-highlight")) {
       if (colorClass.includes("underline")) {
-        parentElement.style.backgroundColor = "transparent";
+        // Keep the existing background color, just add underline
         parentElement.className = `dsat-highlight ${colorClass}`;
       } else {
         parentElement.style.backgroundColor = bgColor;
@@ -1466,10 +1466,6 @@ function RWPracticePageContent() {
                 className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <Trash2 size={18} />
-              </button>
-              <div className="w-[1px] h-6 bg-gray-200 mx-1" />
-              <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-full transition-colors">
-                <Flag size={18} fill="currentColor" />
               </button>
             </div>
           )}
