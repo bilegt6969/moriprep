@@ -3,19 +3,29 @@
 import { Analytics } from "@vercel/analytics/next";
 import { AuthSessionSync } from "components/auth/auth-session-sync";
 import { CookieConsentProvider } from "components/cookie-consent";
-import { Providers } from "components/providers/tooltip-provider";
 import { PageTransition } from "components/page-transition";
+import { Providers } from "components/providers/tooltip-provider";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 export function BodyWrapper({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // Don't apply page transition on practice pages (single-page app experience)
+  const shouldTransition = !pathname?.startsWith("/practice");
+
   return (
     <>
       <Providers>
         <CookieConsentProvider>
           <AuthSessionSync />
-          <PageTransition>
+          {shouldTransition ? (
+            <PageTransition>
+              <main>{children}</main>
+            </PageTransition>
+          ) : (
             <main>{children}</main>
-          </PageTransition>
+          )}
         </CookieConsentProvider>
       </Providers>
       <Analytics />
