@@ -550,6 +550,7 @@ function RWPracticePageContent() {
     // Don't re-filter when explanation modal is open to prevent auto-advance
     if (showExplanation) return;
     filterQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     questions,
     selectedDomains,
@@ -557,7 +558,6 @@ function RWPracticePageContent() {
     statusFilter,
     attemptFilter,
     answeredQuestions,
-    showExplanation,
   ]);
 
   useEffect(() => {
