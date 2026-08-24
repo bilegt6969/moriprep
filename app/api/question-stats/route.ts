@@ -75,14 +75,18 @@ export async function GET(request: NextRequest) {
       const userStats = userStatsDoc.data();
       console.log("Fetched user stats from Firebase for user:", userId);
 
-      // If no filters, return full user stats
+      // If no filters, return full user stats with consistent structure
       if (
         combinedDomains.length === 0 &&
         combinedSkills.length === 0 &&
         difficulties.length === 0
       ) {
         console.log("No filters, returning full user stats");
-        return NextResponse.json(userStats);
+        return NextResponse.json({
+          answered: userStats.totalAnswered || 0,
+          correct: userStats.totalCorrect || 0,
+          incorrect: userStats.totalIncorrect || 0,
+        });
       }
 
       // Calculate filtered count based on filters using sanitized keys

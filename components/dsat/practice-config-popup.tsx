@@ -74,8 +74,8 @@ export function PracticeConfigPopup({
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [attemptFilter, setAttemptFilter] = useState<string>("all");
-  const [filteredCount, setFilteredCount] = useState<number>(1688);
-  const [isLoadingCount, setIsLoadingCount] = useState<boolean>(false);
+  const [filteredCount, setFilteredCount] = useState<number>(0);
+  const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
   const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
@@ -259,6 +259,7 @@ export function PracticeConfigPopup({
           setFilteredCount(totalAvailable);
         } else {
           // No filters at all, show total
+          console.log("No filters, showing total 1688");
           setFilteredCount(1688);
         }
       } catch (error) {
