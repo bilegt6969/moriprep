@@ -123,21 +123,23 @@ export function PracticeConfigPopup({
     if (!isConfigLoaded) return;
 
     const fetchFilteredCount = async () => {
-      // Default to 1688 (total RW questions) - don't show loading state
+      // Default to 1688 (total RW questions)
       let totalAvailable = 1688;
 
       try {
-        // Always fetch if any filter is applied (domains, skills, difficulties, or attempt/status)
-        const hasFilters =
+        // If attempt or status filters are active, we need user-specific stats only
+        const needsUserStats =
+          attemptFilter !== "all" || statusFilter !== "all";
+        const hasContentFilters =
           selectedDomains.length > 0 ||
           selectedSkills.length > 0 ||
-          selectedDifficulties.length > 0 ||
-          attemptFilter !== "all" ||
-          statusFilter !== "all";
+          selectedDifficulties.length > 0;
 
         console.log(
-          "fetchFilteredCount - hasFilters:",
-          hasFilters,
+          "fetchFilteredCount - needsUserStats:",
+          needsUserStats,
+          "hasContentFilters:",
+          hasContentFilters,
           "domains:",
           selectedDomains,
           "skills:",
@@ -150,40 +152,22 @@ export function PracticeConfigPopup({
           statusFilter,
         );
 
-        if (hasFilters) {
-          setIsLoadingCount(true);
-          const globalParams = new URLSearchParams();
-
-          // Add all selected domains
-          if (selectedDomains.length > 0) {
-            selectedDomains.forEach((d) => globalParams.append("domain", d));
-          }
-
-          // Add all selected skills
-          if (selectedSkills.length > 0) {
-            selectedSkills.forEach((s) => globalParams.append("skill", s));
-          }
-
-          // Add all selected difficulties
-          if (selectedDifficulties.length > 0) {
-            globalParams.append("difficulty", selectedDifficulties.join(","));
-          }
-
-          const globalResponse = await fetch(
-            `/api/question-stats?${globalParams.toString()}`,
-          );
-          const globalData = await globalResponse.json();
-          console.log("Global stats response:", globalData);
-          totalAvailable = globalData.count || globalData.total || 1688;
-        }
-
         // Get current user for user-specific stats
         const { auth } = await import("@/lib/firebase");
         const currentUser = auth?.currentUser;
         const userId = currentUser?.uid;
 
-        // If user is authenticated and attempt/status filters are applied, fetch user-specific stats
-        if (userId && (attemptFilter !== "all" || statusFilter !== "all")) {
+        if (needsUserStats) {
+          // When attempt/status filters are active, we MUST use user stats
+          if (!userId) {
+            console.log(
+              "User not authenticated, cannot apply attempt/status filters",
+            );
+            setFilteredCount(0);
+            return;
+          }
+
+          setIsLoadingCount(true);
           const userParams = new URLSearchParams();
           userParams.append("userId", userId);
 
@@ -214,9 +198,27 @@ export function PracticeConfigPopup({
           if (attemptFilter === "tried") {
             filteredCount = userData.answered || 0;
           } else if (attemptFilter === "not-tried") {
+            // Need to get total available for this filtered set
+            const globalParams = new URLSearchParams();
+            if (selectedDomains.length > 0) {
+              selectedDomains.forEach((d) => globalParams.append("domain", d));
+            }
+            if (selectedSkills.length > 0) {
+              selectedSkills.forEach((s) => globalParams.append("skill", s));
+            }
+            if (selectedDifficulties.length > 0) {
+              globalParams.append("difficulty", selectedDifficulties.join(","));
+            }
+
+            const globalResponse = await fetch(
+              `/api/question-stats?${globalParams.toString()}`,
+            );
+            const globalData = await globalResponse.json();
+            console.log("Global stats for not-tried calculation:", globalData);
+            totalAvailable = globalData.count || globalData.total || 1688;
             filteredCount = totalAvailable - (userData.answered || 0);
           } else {
-            filteredCount = totalAvailable;
+            filteredCount = userData.answered || 0;
           }
 
           // Apply status filter (overrides attempt filter if both are set)
@@ -228,12 +230,36 @@ export function PracticeConfigPopup({
 
           console.log("Setting filteredCount to:", filteredCount);
           setFilteredCount(filteredCount);
-        } else {
-          console.log(
-            "User not authenticated or no attempt/status filter, setting filteredCount to:",
-            totalAvailable,
+        } else if (hasContentFilters) {
+          // Only content filters (domains/skills/difficulties), no attempt/status filters
+          setIsLoadingCount(true);
+          const globalParams = new URLSearchParams();
+
+          // Add all selected domains
+          if (selectedDomains.length > 0) {
+            selectedDomains.forEach((d) => globalParams.append("domain", d));
+          }
+
+          // Add all selected skills
+          if (selectedSkills.length > 0) {
+            selectedSkills.forEach((s) => globalParams.append("skill", s));
+          }
+
+          // Add all selected difficulties
+          if (selectedDifficulties.length > 0) {
+            globalParams.append("difficulty", selectedDifficulties.join(","));
+          }
+
+          const globalResponse = await fetch(
+            `/api/question-stats?${globalParams.toString()}`,
           );
+          const globalData = await globalResponse.json();
+          console.log("Global stats response:", globalData);
+          totalAvailable = globalData.count || globalData.total || 1688;
           setFilteredCount(totalAvailable);
+        } else {
+          // No filters at all, show total
+          setFilteredCount(1688);
         }
       } catch (error) {
         console.error("Error fetching filtered count:", error);
