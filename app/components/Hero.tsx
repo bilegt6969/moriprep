@@ -328,7 +328,7 @@ export function Hero() {
           />
         )}
         <img
-          src="/home/68e8f533b2d110c6d06c6afd_Group 1261154922 (2).avif"
+          src="/home/68e8f533b2d110c6d06c6afd_Group%201261154922%20(2).avif"
           alt="Illustration"
           onLoad={() => setImgLoaded(true)}
           className={`block mx-auto transition-opacity duration-700 ease-out
