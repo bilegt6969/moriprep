@@ -261,7 +261,7 @@ function RWPracticePageContent() {
       ? difficultiesParam.split(",")
       : difficultyParam
         ? [difficultyParam]
-        : [],
+        : ["Easy", "Medium", "Hard"],
   );
   const [selectedDomains, setSelectedDomains] = useState<string[]>(
     domainsParam ? domainsParam.split(",") : domainParam ? [domainParam] : [],
@@ -777,6 +777,8 @@ function RWPracticePageContent() {
       const shouldFetchAll = true;
 
       // Total count for the configured set (domain/skill/difficulty)
+      // Note: actualTotalQuestions is no longer used for the footer counter
+      // (which now uses filteredQuestions.length), but we keep this for compatibility
       if (domainsParam || difficultiesParam || skillsParam) {
         const countParams = new URLSearchParams();
         if (domainsParam) countParams.append("domain", domainsParam);
@@ -795,8 +797,9 @@ function RWPracticePageContent() {
         }
       } else {
         // Default total for RW questions when no filters applied
-        setTotalQuestions(1688);
-        setActualTotalQuestions(1688);
+        // This will be overridden by filterQuestions() once it runs
+        setTotalQuestions(0);
+        setActualTotalQuestions(0);
       }
 
       const params = new URLSearchParams();
