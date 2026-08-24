@@ -127,35 +127,45 @@ export function PracticeConfigPopup({
       let totalAvailable = 1688;
 
       try {
-        // Only fetch when specific domain or skill filter is applied
-        // For difficulties, only fetch if not all 3 are selected
-        const shouldFetchFiltered =
-          selectedDomains.length === 1 ||
-          selectedSkills.length === 1 ||
-          (selectedDifficulties.length > 0 && selectedDifficulties.length < 3);
+        // Always fetch if any filter is applied (domains, skills, difficulties, or attempt/status)
+        const hasFilters =
+          selectedDomains.length > 0 ||
+          selectedSkills.length > 0 ||
+          selectedDifficulties.length > 0 ||
+          attemptFilter !== "all" ||
+          statusFilter !== "all";
 
         console.log(
-          "fetchFilteredCount - shouldFetchFiltered:",
-          shouldFetchFiltered,
+          "fetchFilteredCount - hasFilters:",
+          hasFilters,
           "domains:",
           selectedDomains,
           "skills:",
           selectedSkills,
           "difficulties:",
           selectedDifficulties,
+          "attemptFilter:",
+          attemptFilter,
+          "statusFilter:",
+          statusFilter,
         );
 
-        if (shouldFetchFiltered) {
+        if (hasFilters) {
           setIsLoadingCount(true);
           const globalParams = new URLSearchParams();
-          if (selectedDomains.length === 1) {
-            globalParams.append("domain", selectedDomains[0]);
-          } else if (selectedSkills.length === 1) {
-            globalParams.append("skill", selectedSkills[0]);
-          } else if (
-            selectedDifficulties.length > 0 &&
-            selectedDifficulties.length < 3
-          ) {
+
+          // Add all selected domains
+          if (selectedDomains.length > 0) {
+            selectedDomains.forEach((d) => globalParams.append("domain", d));
+          }
+
+          // Add all selected skills
+          if (selectedSkills.length > 0) {
+            selectedSkills.forEach((s) => globalParams.append("skill", s));
+          }
+
+          // Add all selected difficulties
+          if (selectedDifficulties.length > 0) {
             globalParams.append("difficulty", selectedDifficulties.join(","));
           }
 
@@ -172,18 +182,23 @@ export function PracticeConfigPopup({
         const currentUser = auth?.currentUser;
         const userId = currentUser?.uid;
 
-        // If user is authenticated, fetch user-specific stats
-        if (userId) {
+        // If user is authenticated and attempt/status filters are applied, fetch user-specific stats
+        if (userId && (attemptFilter !== "all" || statusFilter !== "all")) {
           const userParams = new URLSearchParams();
           userParams.append("userId", userId);
-          if (selectedDomains.length === 1) {
-            userParams.append("domain", selectedDomains[0]);
-          } else if (selectedSkills.length === 1) {
-            userParams.append("skill", selectedSkills[0]);
-          } else if (
-            selectedDifficulties.length > 0 &&
-            selectedDifficulties.length < 3
-          ) {
+
+          // Add all selected domains
+          if (selectedDomains.length > 0) {
+            selectedDomains.forEach((d) => userParams.append("domain", d));
+          }
+
+          // Add all selected skills
+          if (selectedSkills.length > 0) {
+            selectedSkills.forEach((s) => userParams.append("skill", s));
+          }
+
+          // Add all selected difficulties
+          if (selectedDifficulties.length > 0) {
             userParams.append("difficulty", selectedDifficulties.join(","));
           }
 
@@ -204,7 +219,7 @@ export function PracticeConfigPopup({
             filteredCount = totalAvailable;
           }
 
-          // Apply status filter
+          // Apply status filter (overrides attempt filter if both are set)
           if (statusFilter === "correct") {
             filteredCount = userData.correct || 0;
           } else if (statusFilter === "incorrect") {
@@ -215,7 +230,7 @@ export function PracticeConfigPopup({
           setFilteredCount(filteredCount);
         } else {
           console.log(
-            "User not authenticated, setting filteredCount to:",
+            "User not authenticated or no attempt/status filter, setting filteredCount to:",
             totalAvailable,
           );
           setFilteredCount(totalAvailable);

@@ -549,6 +549,20 @@ function RWPracticePageContent() {
   }, [highlightMenu.visible]);
 
   useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showQuestionBank) {
+        const target = e.target as HTMLElement;
+        const popup = target.closest('[class*="Question Bank Popup"]');
+        if (!popup && !target.closest("button")) {
+          setShowQuestionBank(false);
+        }
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showQuestionBank]);
+
+  useEffect(() => {
     const savedDifficulty = localStorage.getItem("dsat_difficulty");
     const savedDomains = localStorage.getItem("dsat_domains");
     const savedSkill = localStorage.getItem("dsat_skill");
@@ -607,7 +621,6 @@ function RWPracticePageContent() {
     selectedDifficulties,
     statusFilter,
     attemptFilter,
-    answeredQuestions,
   ]);
 
   useEffect(() => {
@@ -1558,13 +1571,19 @@ function RWPracticePageContent() {
               <div className="relative">
                 <button
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setShowUnderlineSubmenu((v) => !v)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowUnderlineSubmenu((v) => !v);
+                  }}
                   className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <UnderlineIcon size={18} />
                 </button>
                 {showUnderlineSubmenu && (
-                  <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 py-1 w-16 z-50 flex flex-col items-center">
+                  <div
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 py-1 w-16 z-50 flex flex-col items-center"
+                  >
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyUnderlineStyle("solid")}
@@ -2346,7 +2365,10 @@ function RWPracticePageContent() {
 
             {/* Question Bank Popup */}
             {showQuestionBank && (
-              <div className="absolute bottom-20 left-4 sm:left-6 right-4 sm:right-auto w-auto sm:w-[600px] max-w-[calc(100vw-2rem)] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden">
+              <div
+                className="absolute bottom-20 left-4 sm:left-6 right-4 sm:right-auto w-auto sm:w-[600px] max-w-[calc(100vw-2rem)] max-h-[400px] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] border border-gray-200 p-6 z-50 overflow-hidden"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-bold text-gray-900">Question Bank</h4>
                   <div className="flex items-center gap-4 text-xs">
