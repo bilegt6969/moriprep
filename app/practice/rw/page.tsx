@@ -871,9 +871,6 @@ function RWPracticePageContent() {
         setIsTimerPaused(true);
       }
 
-      // Clear highlights when answer is submitted
-      clearHighlights();
-
       if (selectedQuestion) {
         const timeSpent = Date.now() - questionStartTime;
         // Save to localStorage as fallback (user-specific)
