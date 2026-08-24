@@ -139,7 +139,7 @@ export function DSATPracticeCards() {
             <motion.div
               key={area.id}
               variants={slideUp}
-              className={`w-full ${area.color} rounded-[32px] p-8 md:p-10 relative overflow-hidden transition-transform duration-300 ${
+              className={`w-full aspect-square md:aspect-auto ${area.color} rounded-[32px] p-8 md:p-10 relative overflow-hidden transition-transform duration-300 ${
                 !reduce && area.available ? "hover:scale-[1.01]" : ""
               }`}
               suppressHydrationWarning
