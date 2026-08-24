@@ -2217,7 +2217,7 @@ function RWPracticePageContent() {
                       (q) => q.question_id === selectedQuestion.question_id,
                     ) + 1,
                   )}{" "}
-                  of {Math.max(1, actualTotalQuestions)}
+                  of {Math.max(1, filteredQuestions.length)}
                 </span>
                 <ChevronDown
                   size={16}
