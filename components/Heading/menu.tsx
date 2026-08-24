@@ -36,6 +36,11 @@ const companyLinks: CompanyLink[] = [
       "Learn about our mission to build Mongolia's education ecosystem.",
   },
   {
+    label: "Blog",
+    href: "/blog",
+    description: "Read our latest insights and updates.",
+  },
+  {
     label: "Contact",
     href: "/contact",
     description: "Get in touch with our team for questions and partnerships.",

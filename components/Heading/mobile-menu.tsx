@@ -34,6 +34,7 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
       ? categories
       : [
           { label: "About", href: "/info/story" },
+          { label: "Blog", href: "/blog" },
           { label: "Contact", href: "/contact" },
         ];
 
