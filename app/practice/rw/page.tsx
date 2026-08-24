@@ -217,6 +217,7 @@ function RWPracticePageContent() {
   const [questionAttempts, setQuestionAttempts] = useState<Attempt[]>([]);
   const [isAuthLoaded, setIsAuthLoaded] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [justAnswered, setJustAnswered] = useState(false);
   const [eliminatedChoices, setEliminatedChoices] = useState<Set<string>>(
     new Set(),
   );
@@ -596,6 +597,7 @@ function RWPracticePageContent() {
     setEliminatedChoices(new Set());
     setSelectedAnswer("");
     setHighlightedAnswer("");
+    setJustAnswered(false);
     // Keep eliminator mode on when moving to next question
     // setIsCrossOutMode(false);
     setShowExplanation(false);
@@ -630,7 +632,8 @@ function RWPracticePageContent() {
     if (
       !isReturningToSelection &&
       filteredQuestions.length > 0 &&
-      !showExplanation
+      !showExplanation &&
+      !justAnswered
     ) {
       // If the currently selected question is not in the filtered list, select the first one
       if (
@@ -664,6 +667,7 @@ function RWPracticePageContent() {
     questionIdParam,
     attemptFilter,
     showExplanation,
+    justAnswered,
   ]);
 
   useEffect(() => {
@@ -854,6 +858,9 @@ function RWPracticePageContent() {
   async function handleAnswerSubmit() {
     if (!highlightedAnswer || showExplanation) return;
     setSelectedAnswer(highlightedAnswer);
+    setJustAnswered(true);
+    // Reset the flag after 2 seconds to allow normal navigation
+    setTimeout(() => setJustAnswered(false), 2000);
     if (selectedQuestion) {
       const isCorrect = highlightedAnswer === selectedQuestion.correct_answer;
       setAnsweredQuestions((prev) => {
