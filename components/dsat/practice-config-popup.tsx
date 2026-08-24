@@ -119,8 +119,8 @@ export function PracticeConfigPopup({
 
   // Real-time filtering count from Firebase stats API with user-specific data
   useEffect(() => {
-    // Don't fetch until config is loaded from localStorage
-    if (!isConfigLoaded) return;
+    // Don't fetch until config is loaded from localStorage and popup is open
+    if (!isConfigLoaded || !isOpen) return;
 
     const fetchFilteredCount = async () => {
       // Default to 1688 (total RW questions)
@@ -279,6 +279,7 @@ export function PracticeConfigPopup({
     statusFilter,
     attemptFilter,
     isConfigLoaded,
+    isOpen,
   ]);
 
   const availableSkills =

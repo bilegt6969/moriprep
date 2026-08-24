@@ -212,6 +212,7 @@ function RWPracticePageContent() {
   );
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [highlightedAnswer, setHighlightedAnswer] = useState<string>("");
+  const [wrongAnswers, setWrongAnswers] = useState<Set<string>>(new Set());
   const [isCrossOutMode, setIsCrossOutMode] = useState(false);
   const [isTimerHidden, setIsTimerHidden] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -713,6 +714,12 @@ function RWPracticePageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedQuestion?.question_id]);
 
+  // Reset wrong answers when changing questions
+  useEffect(() => {
+    setWrongAnswers(new Set());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedQuestion?.question_id]);
+
   useEffect(() => {
     if (
       !isReturningToSelection &&
@@ -949,6 +956,12 @@ function RWPracticePageContent() {
     setJustAnswered(true);
     if (selectedQuestion) {
       const isCorrect = highlightedAnswer === selectedQuestion.correct_answer;
+
+      // Track wrong answers for persistent red borders
+      if (!isCorrect) {
+        setWrongAnswers((prev) => new Set(prev).add(highlightedAnswer));
+      }
+
       setAnsweredQuestions((prev) => {
         const newMap = new Map(prev);
         newMap.set(selectedQuestion.question_id, {
@@ -2048,6 +2061,7 @@ function RWPracticePageContent() {
                             hasAnswered && isSelected && !isCorrectAnswer;
                           const isRightAnswerShown =
                             hasAnswered && isSelected && isCorrectAnswer;
+                          const isPreviouslyWrong = wrongAnswers.has(key);
 
                           let borderClass = "border-gray-400";
                           let bgClass = "bg-white";
@@ -2055,7 +2069,11 @@ function RWPracticePageContent() {
                             ? "text-gray-400 line-through"
                             : "text-[#1C1C1E]";
 
-                          if (hasAnswered) {
+                          // Show red border for previously wrong answers (persistent)
+                          if (isPreviouslyWrong) {
+                            borderClass = "border-red-600";
+                            bgClass = "bg-red-50";
+                          } else if (hasAnswered) {
                             if (isSelected && isCorrectAnswer) {
                               // Only show correct answer in green if user selected it
                               borderClass = "border-green-600";
@@ -2113,7 +2131,8 @@ function RWPracticePageContent() {
 
                               {isHighlighted &&
                                 !isLocked &&
-                                !showExplanation && (
+                                !showExplanation &&
+                                !isPreviouslyWrong && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
