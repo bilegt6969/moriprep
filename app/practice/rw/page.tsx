@@ -2029,7 +2029,7 @@ function RWPracticePageContent() {
                           const isWrongSelected =
                             hasAnswered && isSelected && !isCorrectAnswer;
                           const isRightAnswerShown =
-                            hasAnswered && isCorrectAnswer;
+                            hasAnswered && isSelected && isCorrectAnswer;
 
                           let borderClass = "border-gray-400";
                           let bgClass = "bg-white";
