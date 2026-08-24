@@ -21,7 +21,7 @@ export default function LiteNavbar() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full bg-white border-b border-gray-200 flex justify-center sticky top-0 z-50"
     >
-      <div className="w-full max-w-[600px] pl-6 py-4 flex items-center">
+      <div className="w-full max-w-[600px] px-6 py-4 flex items-center">
         <motion.button
           onClick={() => window.history.back()}
           className="flex items-center gap-1.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors bg-transparent border-none cursor-pointer p-0 group"
