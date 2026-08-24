@@ -1393,7 +1393,7 @@ function RWPracticePageContent() {
   return (
     <>
       {selectedQuestion ? (
-        <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white font-sans text-gray-900 overflow-hidden selection:bg-cyan-200 relative">
+        <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white font-sans text-gray-900 overflow-auto md:overflow-hidden selection:bg-cyan-200 relative">
           {/* Highlighter Tool Popover */}
           {highlightMenu.visible && (
             <div
