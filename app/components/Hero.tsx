@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { SlotText } from "slot-text/react";
 import "slot-text/style.css";
 
@@ -182,6 +182,8 @@ export function Hero() {
 
   // Track image load state
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -193,6 +195,29 @@ export function Hero() {
   useEffect(() => {
     setRotatingWord(words[wordIndex] || "Free");
   }, [wordIndex]);
+
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el) return;
+
+    // Handles the case where the browser already resolved the image
+    // (cached, or resolved before React attached the onLoad listener)
+    if (el.complete) {
+      if (el.naturalWidth > 0) {
+        setImgLoaded(true);
+      } else {
+        // complete but naturalWidth 0 means it errored
+        setImgError(true);
+      }
+      return;
+    }
+
+    // Safety net: if neither load nor error fires within a few seconds
+    // (flaky network, dropped event, etc.), reveal anyway rather than
+    // leaving a skeleton up forever.
+    const timeout = setTimeout(() => setImgLoaded(true), 6000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <section
@@ -317,8 +342,8 @@ export function Hero() {
         animate="visible"
         className="absolute bottom-0 left-0 right-0 z-10 w-full pointer-events-none flex justify-center"
       >
-        {/* Placeholder Skeleton */}
-        {!imgLoaded && (
+        {/* Skeleton stays up until we know we're loaded OR failed */}
+        {!imgLoaded && !imgError && (
           <div
             className="block mx-auto
             w-[150%] max-w-[150%] h-[35vh] bg-neutral-100
@@ -327,21 +352,27 @@ export function Hero() {
           "
           />
         )}
-        <img
-          src="/home/hero-illustration.avif"
-          alt="Illustration"
-          width="1200"
-          height="800"
-          loading="eager"
-          onLoad={() => setImgLoaded(true)}
-          className={`block mx-auto transition-opacity duration-700 ease-out
-            /* Mobile: Width 150% scales it up. h-[35vh] with object-cover forces the bottom half to be cut off */
-            w-[150%] max-w-[150%] h-[35vh] object-cover object-top translate-y-[15%]
-            /* Tablet/Desktop: Restores the standard behavior and proportions */
-            sm:w-[90%] sm:max-w-none sm:h-auto sm:object-contain sm:translate-y-[6%] md:max-w-375
-            ${imgLoaded ? "opacity-100" : "opacity-0 absolute"}
-          `}
-        />
+
+        {!imgError && (
+          <img
+            ref={imgRef}
+            src="/home/hero-illustration.avif"
+            alt="Illustration"
+            width="1200"
+            height="800"
+            loading="eager"
+            decoding="async"
+            // @ts-expect-error - fetchPriority is valid but not yet in React's TS types
+            fetchpriority="high"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            className={`block mx-auto transition-opacity duration-700 ease-out
+              w-[150%] max-w-[150%] h-[35vh] object-cover object-top translate-y-[15%]
+              sm:w-[90%] sm:max-w-none sm:h-auto sm:object-contain sm:translate-y-[6%] md:max-w-375
+              ${imgLoaded ? "opacity-100" : "opacity-0 absolute"}
+            `}
+          />
+        )}
         <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 bg-linear-to-t from-white/90 from-30% via-white/80 via-60% to-transparent pointer-events-none" />
       </motion.div>
 
