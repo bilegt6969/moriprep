@@ -144,7 +144,7 @@ export default function Navbar({
             initial="hidden"
             animate="show"
             exit="hidden"
-            className="fixed inset-x-0 top-3 z-50 flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
+            className="fixed inset-x-0 top-3 z-[999] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
           >
             <Wrapper
               className={cn(
