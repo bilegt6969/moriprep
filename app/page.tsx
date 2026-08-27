@@ -13,7 +13,7 @@ import LatestFromFamily from "./components/Testimonials";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
+    <>
       <Navbar
         siteName="Mori Prep"
         categories={[
@@ -24,18 +24,20 @@ export default function HomePage() {
         ]}
         showBanner={false}
       />
-      <Hero />
-      <Explore />
-      <SendReceiveSwap />
-      <FeaturesSection />
-      <DSATShowcase />
-      <SecurityFeatureSection />
-      {/* <Onboarding /> */}
-      <DetailsSection />
-      <LatestFromFamily />
-      <Faq />
-      <CTA />
-      <Footer />
-    </main>
+      <main className="min-h-screen">
+        <Hero />
+        <Explore />
+        <SendReceiveSwap />
+        <FeaturesSection />
+        <DSATShowcase />
+        <SecurityFeatureSection />
+        {/* <Onboarding /> */}
+        <DetailsSection />
+        <LatestFromFamily />
+        <Faq />
+        <CTA />
+        <Footer />
+      </main>
+    </>
   );
 }
