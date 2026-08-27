@@ -1,3 +1,4 @@
+import Navbar from "components/Heading/Navbar";
 import CTA from "./components/CTA";
 import { DSATShowcase } from "./components/DSATShowcase";
 import DetailsSection from "./components/DetailsSection";
@@ -13,6 +14,16 @@ import LatestFromFamily from "./components/Testimonials";
 export default function HomePage() {
   return (
     <main className="min-h-screen">
+      <Navbar
+        siteName="Mori Prep"
+        categories={[
+          { label: "Practice", href: "/practice" },
+          { label: "Lessons", href: "/resources" },
+          { label: "History", href: "/history" },
+          { label: "Leaderboard", href: "/leaderboard" },
+        ]}
+        showBanner={false}
+      />
       <Hero />
       <Explore />
       <SendReceiveSwap />
