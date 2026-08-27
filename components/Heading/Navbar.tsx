@@ -139,13 +139,7 @@ export default function Navbar({
 
       <AnimatePresence>
         {isVisible && (
-          <motion.header
-            variants={navbarVariants}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="fixed inset-x-0 top-3 z-[999] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4"
-          >
+          <header className="fixed inset-x-0 top-3 z-[999] flex flex-col items-center px-3 max-lg:top-[max(0.75rem,env(safe-area-inset-top))] lg:top-4">
             <Wrapper
               className={cn(
                 "island-surface relative z-10 flex h-12 w-fit max-w-[calc(100vw-1.5rem)] items-center justify-between gap-2.5 rounded-full px-2 sm:gap-4 sm:px-2",
@@ -222,7 +216,7 @@ export default function Navbar({
                 <AnnouncementBanner />
               </div>
             )}
-          </motion.header>
+          </header>
         )}
       </AnimatePresence>
     </div>

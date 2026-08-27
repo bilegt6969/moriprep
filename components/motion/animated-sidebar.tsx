@@ -1,31 +1,30 @@
 "use client";
 // beui.dev/components/motion/animated-sidebar
 
-import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
 import { EASE_DRAWER, EASE_OUT, SPRING_LAYOUT, SPRING_PRESS } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import {
-    AnimatePresence,
-    type HTMLMotionProps,
-    motion,
-    useReducedMotion,
-    type Variants,
+  AnimatePresence,
+  type HTMLMotionProps,
+  motion,
+  useReducedMotion,
+  type Variants,
 } from "motion/react";
 import {
-    type ButtonHTMLAttributes,
-    createContext,
-    type CSSProperties,
-    forwardRef,
-    type HTMLAttributes,
-    type ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useId,
-    useRef,
-    useState,
-    useSyncExternalStore,
+  type ButtonHTMLAttributes,
+  createContext,
+  type CSSProperties,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -42,24 +41,23 @@ const PANEL_TRANSITION = {
   ease: EASE_DRAWER,
 } as const;
 
-// The desktop rail settles at a hard zero-width boundary. Keep the spring
-// critically damped so it cannot overshoot, pause against that boundary, and
-// then snap back during the final frame.
+// Shared duration for all sidebar morph animations so everything finishes in lockstep
+const SIDEBAR_MORPH_DURATION = 0.32;
+const SIDEBAR_MORPH_EASE = [0.32, 0.72, 0, 1] as const; // smooth decelerate, no bounce
+
 const SIDEBAR_MORPH_TRANSITION = {
-  type: "spring",
-  stiffness: 380,
-  damping: 35,
-  mass: 0.75,
+  duration: SIDEBAR_MORPH_DURATION,
+  ease: SIDEBAR_MORPH_EASE,
 } as const;
 
 const LABEL_ENTER_TRANSITION = {
-  duration: 0.2,
-  delay: 0.08,
+  duration: SIDEBAR_MORPH_DURATION * 0.55,
+  delay: SIDEBAR_MORPH_DURATION * 0.4, // text waits until the rail is mostly open
   ease: EASE_OUT,
 } as const;
 
 const LABEL_EXIT_TRANSITION = {
-  duration: 0.12,
+  duration: SIDEBAR_MORPH_DURATION * 0.3, // text vanishes fast, well before the rail finishes narrowing
   ease: EASE_OUT,
 } as const;
 
@@ -215,7 +213,11 @@ export function AnimatedSidebarProvider({
   style,
   ...props
 }: AnimatedSidebarProviderProps) {
-  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(() => {
+    if (typeof window === "undefined") return defaultOpen;
+    const stored = window.localStorage.getItem("sidebar:open");
+    return stored === null ? defaultOpen : stored === "true";
+  });
   const [internalOpenMobile, setInternalOpenMobile] =
     useState(defaultOpenMobile);
   const isMobile = useIsMobile();
@@ -228,6 +230,9 @@ export function AnimatedSidebarProvider({
   const setOpen = useCallback(
     (nextOpen: boolean) => {
       if (open === undefined) setInternalOpen(nextOpen);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("sidebar:open", String(nextOpen));
+      }
       onOpenChange?.(nextOpen);
     },
     [onOpenChange, open],
@@ -271,7 +276,7 @@ export function AnimatedSidebarProvider({
         reduce,
         setOpen,
         setOpenMobile,
-        state: desktopOpen ? "expanded" : "collapsed",
+        state: (desktopOpen ? "expanded" : "collapsed") as SidebarState,
         toggleSidebar,
         triggerRef,
       }}
@@ -736,21 +741,30 @@ export const AnimatedSidebarGroupLabel = forwardRef<
   forwardedRef,
 ) {
   const { collapsed } = useAnimatedSidebarPanel();
+  const context = useAnimatedSidebar();
 
   return (
-    <div
-      {...props}
+    <motion.div
+      {...(props as any)}
       ref={forwardedRef}
       aria-hidden={collapsed}
       data-slot="sidebar-group-label"
+      initial={false}
+      animate={{ opacity: collapsed ? 0 : 1 }}
+      transition={
+        context.reduce
+          ? REDUCED_TRANSITION
+          : collapsed
+            ? LABEL_EXIT_TRANSITION
+            : LABEL_ENTER_TRANSITION
+      }
       className={cn(
-        "mb-1 h-7 overflow-hidden px-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground transition-opacity",
-        collapsed ? "opacity-0" : "opacity-100",
+        "mb-1 h-7 overflow-hidden px-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground",
         className,
       )}
     >
       {children}
-    </div>
+    </motion.div>
   );
 });
 
@@ -768,6 +782,16 @@ export const AnimatedSidebarGroupContent = forwardRef<
   );
 });
 
+// NOTE: this used to wrap its children in <SharedLayoutBg pillClassName=
+// "rounded-xl bg-muted/70" pillContainerClassName="inset-y-auto top-0 h-9">.
+// That component renders its own independent hover-tracking background pill
+// as a sibling of the <li> items. AnimatedSidebarMenuButton below *also*
+// renders its own background for the active item (a layoutId-animated
+// span). The two pills don't share sizing or positioning logic, so hovering
+// over the currently-active item rendered both at once, slightly
+// misaligned — that's the double-edge/"chopped" look on the active pill.
+// The active-state pill in AnimatedSidebarMenuButton already covers what
+// this was for, so the extra wrapper is removed rather than patched.
 export const AnimatedSidebarMenu = forwardRef<
   HTMLUListElement,
   HTMLAttributes<HTMLUListElement>
@@ -776,13 +800,9 @@ export const AnimatedSidebarMenu = forwardRef<
   forwardedRef,
 ) {
   return (
-    <SharedLayoutBg
+    <ul
       {...props}
-      ref={forwardedRef as React.Ref<HTMLElement>}
-      as="ul"
-      inset={0}
-      pillClassName="rounded-xl bg-muted/70"
-      pillContainerClassName="inset-y-auto top-0 h-9"
+      ref={forwardedRef}
       data-slot="sidebar-menu"
       className={cn(
         "flex w-full min-w-0 list-none flex-col gap-0.5",
@@ -790,7 +810,7 @@ export const AnimatedSidebarMenu = forwardRef<
       )}
     >
       {children}
-    </SharedLayoutBg>
+    </ul>
   );
 });
 
@@ -1009,7 +1029,11 @@ export function AnimatedSidebarMenuButton({
         <motion.span
           layoutId={context.layoutId}
           transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
-          className="absolute inset-0 rounded-xl bg-neutral-100"
+          // This is the ONLY background layer for the active state — see
+          // the notes on AnimatedSidebarMenu and in AppNavbar's
+          // NAV_ITEM_ACTIVE constant. Do not add a bg-* class anywhere else
+          // for isActive, or you'll get the double-pill artifact again.
+          className="absolute inset-0 z-0 rounded-xl bg-zinc-900/[0.06] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
         />
       ) : null}
       {icon ? (
@@ -1020,63 +1044,87 @@ export function AnimatedSidebarMenuButton({
           {icon}
         </span>
       ) : null}
-      <motion.span
-        initial={false}
-        animate={{
-          opacity: panel.collapsed ? 0 : 1,
-          x: panel.collapsed ? -4 : 0,
-        }}
-        transition={
-          context.reduce
-            ? REDUCED_TRANSITION
-            : panel.collapsed
-              ? LABEL_EXIT_TRANSITION
-              : LABEL_ENTER_TRANSITION
-        }
-        aria-hidden={panel.collapsed}
-        className={cn(
-          "relative z-10 min-w-0 flex-1 truncate",
-          panel.collapsed && "pointer-events-none",
+      {/*
+        Mounted/unmounted, not just opacity-faded — a zero-opacity span
+        still occupies a flex slot and still counts for `gap`, which was
+        quietly shoving the icon off-center in the collapsed 36x36 box.
+        Removing it from the DOM entirely when collapsed is the only way
+        to get a truly centered icon.
+      */}
+      <AnimatePresence initial={false}>
+        {!panel.collapsed && (
+          <motion.span
+            key="label"
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -4 }}
+            transition={
+              context.reduce ? REDUCED_TRANSITION : LABEL_ENTER_TRANSITION
+            }
+            className="relative z-10 min-w-0 flex-1 truncate"
+          >
+            {children}
+          </motion.span>
         )}
-      >
-        {children}
-      </motion.span>
-      {badge && !panel.collapsed ? (
-        <span className="relative z-10 shrink-0 text-xs text-muted-foreground">
-          {badge}
-        </span>
-      ) : null}
-      {ariaExpanded !== undefined ? (
-        <motion.span
-          aria-hidden="true"
-          initial={false}
-          animate={{
-            opacity: panel.collapsed ? 0 : 1,
-            rotate: ariaExpanded ? 90 : 0,
-            x: panel.collapsed ? 4 : 0,
-          }}
-          transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
-          className="relative z-10 grid size-4 shrink-0 place-items-center text-muted-foreground"
-        >
-          <ChevronRight className="size-3.5" />
-        </motion.span>
-      ) : null}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {badge && !panel.collapsed ? (
+          <motion.span
+            key="badge"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={
+              context.reduce ? REDUCED_TRANSITION : LABEL_ENTER_TRANSITION
+            }
+            className="relative z-10 shrink-0 text-xs text-muted-foreground"
+          >
+            {badge}
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {ariaExpanded !== undefined && !panel.collapsed && (
+          <motion.span
+            key="chevron"
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, rotate: ariaExpanded ? 90 : 0 }}
+            exit={{ opacity: 0 }}
+            transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
+            className="relative z-10 grid size-4 shrink-0 place-items-center text-muted-foreground"
+          >
+            <ChevronRight className="size-3.5" />
+          </motion.span>
+        )}
+      </AnimatePresence>
     </>
   );
 
-  // NOTE: the active state is now rendered entirely by the shared
-  // layoutId pill above (bg-neutral-100) plus a foreground text color here.
-  // Previously this class also painted `bg-cyan-500`, which fought the pill
-  // for the same box and made the active row flash two overlapping
-  // backgrounds on light themes. Text color alone keeps one clean layer.
+  // The active state is rendered entirely by the layoutId pill above.
+  // isActive only ever changes text color/weight here — never a bg-* class
+  // — or it will double up with that pill again.
   const interactiveClassName = cn(
-    "relative flex min-h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium outline-none",
+    "relative flex items-center overflow-hidden rounded-xl text-left text-sm font-medium outline-none",
+    panel.collapsed
+      ? "justify-center shrink-0 mx-auto gap-0"
+      : "min-h-9 w-full min-w-0 gap-2.5 px-3",
     "text-muted-foreground transition-colors hover:text-foreground",
+    !isActive && "hover:bg-muted/60",
     "focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring",
     isActive && "text-foreground",
     disabled && "cursor-not-allowed opacity-40",
     className,
   );
+
+  // Belt-and-suspenders: force the exact square with inline styles when
+  // collapsed instead of relying on a Tailwind class surviving cn()/twMerge
+  // and className overrides from call sites. This guarantees the isActive
+  // pill (absolute inset-0, sized off this element) is a true 36x36 square,
+  // not whatever the flex children happen to size themselves to.
+  const collapsedBoxStyle: React.CSSProperties | undefined = panel.collapsed
+    ? { width: 36, height: 36, minHeight: 0, padding: 0 }
+    : undefined;
 
   return href ? (
     <motion.a
@@ -1092,6 +1140,7 @@ export function AnimatedSidebarMenuButton({
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
       transition={SPRING_PRESS}
+      style={collapsedBoxStyle}
       className={interactiveClassName}
     >
       {content}
@@ -1108,6 +1157,7 @@ export function AnimatedSidebarMenuButton({
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
       transition={SPRING_PRESS}
+      style={collapsedBoxStyle}
       className={interactiveClassName}
     >
       {content}

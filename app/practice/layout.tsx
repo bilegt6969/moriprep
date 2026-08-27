@@ -26,19 +26,15 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [pathname, router]);
 
-  // Hide navbar and footer for practice session pages
-  const isPracticeSession =
-    pathname?.startsWith("/practice/rw") &&
-    (pathname?.includes("/practice") ||
-      pathname?.includes("/setup") ||
-      searchParams.has("domains") ||
-      searchParams.has("difficulties"));
+  // Hide sidebar on actual practice sessions (when question_id is present)
+  const isPracticeSession = searchParams.has("question_id");
 
-  if (isPracticeSession) {
-    return <>{children}</>;
-  }
-
-  return <AppNavbar>{children}</AppNavbar>;
+  // Only show navbar with sidebar when not in an actual practice session
+  return isPracticeSession ? (
+    <>{children}</>
+  ) : (
+    <AppNavbar>{children}</AppNavbar>
+  );
 }
 
 export default function PracticeLayout({

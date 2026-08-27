@@ -117,17 +117,14 @@ const LogoTicker = memo(() => {
                   rel="noopener noreferrer"
                   className="shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
-                  <div className="relative h-9 sm:h-10 md:h-12 w-auto bg-white rounded-lg">
-                    {!loadedImages.has(index) && (
-                      <div className="absolute inset-0 bg-white animate-pulse rounded-lg" />
-                    )}
+                  <div className="relative h-9 sm:h-10 md:h-12 w-auto">
                     <img
                       src={`/schools/${school.logo}`}
                       alt="University Logo"
                       width="150"
                       height="60"
                       loading="eager"
-                      className={`h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300 ${loadedImages.has(index) ? "opacity-100" : "opacity-0"}`}
+                      className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
                       onLoad={() => handleImageLoad(index)}
                     />
                   </div>
@@ -146,17 +143,14 @@ const LogoTicker = memo(() => {
                   tabIndex={-1}
                   className="shrink-0 w-40 sm:w-52 md:w-64 px-6 sm:px-10 md:px-14 flex items-center justify-center active:scale-95 transition-transform duration-100"
                 >
-                  <div className="relative h-9 sm:h-10 md:h-12 w-auto bg-white rounded-lg">
-                    {!loadedImages.has(index) && (
-                      <div className="absolute inset-0 bg-white animate-pulse rounded-lg" />
-                    )}
+                  <div className="relative h-9 sm:h-10 md:h-12 w-auto">
                     <img
                       src={`/schools/${school.logo}`}
                       alt="University Logo"
                       width="150"
                       height="60"
                       loading="eager"
-                      className={`h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300 ${loadedImages.has(index) ? "opacity-100" : "opacity-0"}`}
+                      className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
                       onLoad={() => handleImageLoad(index)}
                     />
                   </div>

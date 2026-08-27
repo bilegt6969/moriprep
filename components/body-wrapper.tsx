@@ -12,7 +12,9 @@ export function BodyWrapper({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   // Don't apply page transition on practice pages (single-page app experience)
-  const shouldTransition = !pathname?.startsWith("/practice");
+  // or landing page (to keep navbar sticky)
+  const shouldTransition =
+    !pathname?.startsWith("/practice") && pathname !== "/";
 
   return (
     <>

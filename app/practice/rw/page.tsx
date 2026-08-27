@@ -34,6 +34,8 @@ import {
   Trash2,
   Underline as UnderlineIcon,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -196,10 +198,10 @@ function RWPracticePageContent() {
   const domainsParam = searchParams.get("domains");
   const difficultyParam = searchParams.get("difficulty");
   const difficultiesParam = searchParams.get("difficulties");
+  const skillParam = searchParams.get("skills");
   const questionIdParam = searchParams.get("question_id");
 
   const [questions, setQuestions] = useState<any[]>([]);
-  const [filteredQuestions, setFilteredQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -308,9 +310,74 @@ function RWPracticePageContent() {
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isQuestionLoading, setIsQuestionLoading] = useState(false);
+  const [imageZoomLevels, setImageZoomLevels] = useState<
+    Record<number, number>
+  >({});
+
+  const adjustImageZoom = (idx: number, delta: number) => {
+    setImageZoomLevels((prev) => {
+      const current = prev[idx] ?? 100;
+      const next = Math.min(200, Math.max(50, current + delta));
+      return { ...prev, [idx]: next };
+    });
+  };
 
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
+
+  // Derived filtered questions - computed from all filter dependencies
+  const filteredQuestions = useMemo(() => {
+    let filtered = questions;
+
+    if (selectedDifficulties.length > 0) {
+      filtered = filtered.filter((q) =>
+        selectedDifficulties.includes(q.difficulty),
+      );
+    }
+    if (selectedDomains.length > 0) {
+      filtered = filtered.filter((q) => selectedDomains.includes(q.domain));
+    }
+    // Filter by selectedSkills array (multi-skill selection) if populated,
+    // otherwise fall back to legacy singular skill state
+    if (selectedSkills.length > 0) {
+      filtered = filtered.filter((q) => selectedSkills.includes(q.skill));
+    } else if (skill !== "all") {
+      filtered = filtered.filter((q) => q.skill === skill);
+    }
+    // Filter by status (correct/incorrect)
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((q) => {
+        const answered = answeredQuestions.get(q.question_id);
+        if (!answered) return false;
+        return statusFilter === "correct"
+          ? answered.isCorrect
+          : !answered.isCorrect;
+      });
+    }
+    // Filter by attempt status (tried/not-tried)
+    if (attemptFilter !== "all") {
+      filtered = filtered.filter((q) => {
+        const attempted = answeredQuestions.has(q.question_id);
+        return attemptFilter === "tried" ? attempted : !attempted;
+      });
+    }
+    return filtered;
+  }, [
+    questions,
+    selectedDomains,
+    selectedDifficulties,
+    selectedSkills,
+    skill,
+    statusFilter,
+    attemptFilter,
+    answeredQuestions,
+  ]);
+
+  // Update total questions count whenever filteredQuestions changes
+  useEffect(() => {
+    setTotalQuestions(filteredQuestions.length);
+    setActualTotalQuestions(filteredQuestions.length);
+  }, [filteredQuestions.length]);
 
   // Handle fullscreen toggle
   const toggleFullscreen = () => {
@@ -611,51 +678,12 @@ function RWPracticePageContent() {
     }
 
     fetchQuestions();
-  }, [domainParam, domainsParam, difficultyParam, difficultiesParam]);
-
-  // Recompute only when the actual filter selection changes
-  useEffect(() => {
-    filterQuestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    questions,
-    selectedDomains,
-    selectedDifficulties,
-    statusFilter,
-    attemptFilter,
-  ]);
-
-  // Apply status/attempt filters once against real progress data after it loads,
-  // without re-running on every subsequent answer
-  const initialAnsweredAppliedRef = useRef(false);
-  useEffect(() => {
-    if (initialAnsweredAppliedRef.current || answeredQuestions.size === 0)
-      return;
-    initialAnsweredAppliedRef.current = true;
-    filterQuestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answeredQuestions]);
-
-  useEffect(() => {
-    filterQuestions();
-    if (
-      !domainsParam &&
-      !difficultyParam &&
-      !difficultiesParam &&
-      !domainParam
-    ) {
-      localStorage.setItem("dsat_difficulty", selectedDifficulties[0] || "");
-      localStorage.setItem("dsat_domains", JSON.stringify(selectedDomains));
-      localStorage.setItem("dsat_skill", skill);
-    }
-  }, [
-    selectedDifficulties,
-    selectedDomains,
-    skill,
     domainParam,
     domainsParam,
     difficultyParam,
     difficultiesParam,
+    skillParam,
   ]);
 
   useEffect(() => {
@@ -668,6 +696,7 @@ function RWPracticePageContent() {
     }
   }, []);
 
+  // Reset question state when the actual question changes
   useEffect(() => {
     setQuestionStartTime(Date.now());
     setEliminatedChoices(new Set());
@@ -680,11 +709,15 @@ function RWPracticePageContent() {
     setElapsedSeconds(0);
     setIsTimerPaused(false);
     showHistory && setShowHistory(false);
+    setImageZoomLevels({});
 
     // Clear highlights when moving to a new question
     clearHighlights();
+  }, [selectedQuestion?.question_id]);
 
-    // Fetch attempt history from localStorage as fallback (user-specific)
+  // Fetch attempt history from localStorage when user or question changes
+  // This doesn't reset question state, just loads history
+  useEffect(() => {
     if (selectedQuestion) {
       const userId = user?.uid || "guest";
       const storedAttempts = localStorage.getItem(
@@ -702,7 +735,7 @@ function RWPracticePageContent() {
     } else {
       setQuestionAttempts([]);
     }
-  }, [selectedQuestion, user, isAuthLoaded]);
+  }, [selectedQuestion?.question_id, user?.uid]);
 
   useEffect(() => {
     if (!selectedQuestion) return;
@@ -790,10 +823,21 @@ function RWPracticePageContent() {
       // Just load the whole filtered set — it's at most a few hundred questions.
       const shouldFetchAll = true;
 
+      console.log("=== Question Count Debug ===");
+      console.log("domainsParam:", domainsParam);
+      console.log("difficultiesParam:", difficultiesParam);
+      console.log("skillsParam:", skillsParam);
+      console.log("attemptFilter:", attemptFilter);
+
       // Total count for the configured set (domain/skill/difficulty)
-      // Note: actualTotalQuestions is no longer used for the footer counter
-      // (which now uses filteredQuestions.length), but we keep this for compatibility
-      if (domainsParam || difficultiesParam || skillsParam) {
+      // When attemptFilter or statusFilter is active, we can't use the count API since it doesn't
+      // support those filters - we'll rely on filteredQuestions.length instead
+      if (
+        (domainsParam || difficultiesParam || skillsParam) &&
+        attemptFilter === "all" &&
+        statusFilter === "all"
+      ) {
+        console.log("Using count API for domain/skill/difficulty filters");
         const countParams = new URLSearchParams();
         if (domainsParam) countParams.append("domain", domainsParam);
         if (difficultiesParam)
@@ -806,12 +850,14 @@ function RWPracticePageContent() {
         if (countResponse.ok) {
           const countData = await countResponse.json();
           const count = countData.count || countData.total || 0;
+          console.log("Count API returned:", count);
           setTotalQuestions(count);
           setActualTotalQuestions(count);
         }
       } else {
-        // Default total for RW questions when no filters applied
+        // Default total for RW questions when no filters applied or attemptFilter/statusFilter is active
         // This will be overridden by filterQuestions() once it runs
+        console.log("Skipping count API, will use filteredQuestions.length");
         setTotalQuestions(0);
         setActualTotalQuestions(0);
       }
@@ -825,6 +871,8 @@ function RWPracticePageContent() {
       if (domainsParam) params.append("domain", domainsParam);
       if (difficultiesParam) params.append("difficulty", difficultiesParam);
       if (skillsParam) params.append("skill", skillsParam);
+      if (attemptFilter !== "all")
+        params.append("attemptFilter", attemptFilter);
 
       const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch questions");
@@ -849,7 +897,6 @@ function RWPracticePageContent() {
       }
 
       setQuestions(questionsData);
-      setFilteredQuestions(questionsData);
       setLoading(false);
       setHasMore(shouldFetchAll ? false : questionsData.length === BATCH_SIZE);
       setCurrentOffset(shouldFetchAll ? 0 : BATCH_SIZE);
@@ -871,15 +918,13 @@ function RWPracticePageContent() {
 
       if (domainsParam) params.append("domain", domainsParam);
       if (difficultiesParam) params.append("difficulty", difficultiesParam);
-      const skillsParam = searchParams.get("skills");
-      if (skillsParam) params.append("skill", skillsParam);
+      if (skillParam) params.append("skill", skillParam);
 
       const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch more questions");
       const questionsData = await response.json();
 
       setQuestions((prev) => [...prev, ...questionsData]);
-      setFilteredQuestions((prev) => [...prev, ...questionsData]);
       setCurrentOffset((prev) => prev + BATCH_SIZE);
       setHasMore(questionsData.length === BATCH_SIZE);
     } catch (error) {
@@ -887,57 +932,6 @@ function RWPracticePageContent() {
     } finally {
       setLoadingMore(false);
     }
-  }
-
-  function filterQuestions() {
-    let filtered = questions;
-    if (selectedDifficulties.length > 0) {
-      filtered = filtered.filter((q) =>
-        selectedDifficulties.includes(q.difficulty),
-      );
-    }
-    if (selectedDomains.length > 0) {
-      filtered = filtered.filter((q) => selectedDomains.includes(q.domain));
-    }
-    if (skill !== "all") {
-      filtered = filtered.filter((q) => q.skill === skill);
-    }
-
-    // Filter by status (correct/incorrect)
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((q) => {
-        const answered = answeredQuestions.get(q.question_id);
-        if (!answered) return false;
-        return statusFilter === "correct"
-          ? answered.isCorrect
-          : !answered.isCorrect;
-      });
-    }
-
-    // Filter by attempt status (tried/not-tried)
-    if (attemptFilter !== "all") {
-      console.log(
-        `Applying attempt filter: ${attemptFilter}, answeredQuestions size: ${answeredQuestions.size}`,
-      );
-      console.log(
-        "Answered question IDs:",
-        Array.from(answeredQuestions.keys()),
-      );
-      filtered = filtered.filter((q) => {
-        const attempted = answeredQuestions.has(q.question_id);
-        const shouldInclude =
-          attemptFilter === "tried" ? attempted : !attempted;
-        console.log(
-          `Question ${q.question_id}: attempted=${attempted}, attemptFilter=${attemptFilter}, shouldInclude=${shouldInclude}`,
-        );
-        return shouldInclude;
-      });
-    }
-
-    setFilteredQuestions(filtered);
-
-    // Always update total questions count to reflect the actual filtered questions
-    setTotalQuestions(filtered.length);
   }
 
   function handleAnswerHighlight(answer: string) {
@@ -1111,8 +1105,7 @@ function RWPracticePageContent() {
   }
 
   function handleGoBack() {
-    setIsReturningToSelection(true);
-    setSelectedQuestion(null);
+    router.push("/practice");
   }
 
   function handleQuestionSelect(index: number) {
@@ -1888,21 +1881,51 @@ function RWPracticePageContent() {
                     selectedQuestion.graphics &&
                     selectedQuestion.graphics.length > 0 && (
                       <div className="my-4">
-                        {selectedQuestion.graphics.map((graphic, idx) => (
-                          <div key={idx} className="mb-6">
-                            {graphic.image_path && (
-                              <img
-                                src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
-                                alt="Question graphic"
-                                className="max-w-full h-auto rounded-lg border border-gray-200"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
-                              />
-                            )}
-                          </div>
-                        ))}
+                        {selectedQuestion.graphics.map((graphic, idx) => {
+                          const zoom = imageZoomLevels[idx] ?? 100;
+                          return (
+                            <div
+                              key={idx}
+                              className="mb-6 flex items-start gap-3"
+                            >
+                              {graphic.image_path && (
+                                <div className="flex-1 min-w-0 overflow-auto">
+                                  <img
+                                    src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
+                                    alt="Question graphic"
+                                    style={{ width: `${zoom}%` }}
+                                    className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
+                                    onError={(e) => {
+                                      (
+                                        e.target as HTMLImageElement
+                                      ).style.display = "none";
+                                    }}
+                                  />
+                                </div>
+                              )}
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => adjustImageZoom(idx, 20)}
+                                  disabled={zoom >= 200}
+                                  aria-label="Zoom in"
+                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                >
+                                  <ZoomIn size={16} strokeWidth={2} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => adjustImageZoom(idx, -20)}
+                                  disabled={zoom <= 50}
+                                  aria-label="Zoom out"
+                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                >
+                                  <ZoomOut size={16} strokeWidth={2} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   {memoizedPassage}
@@ -2326,30 +2349,34 @@ function RWPracticePageContent() {
 
             {/* Info Menu Popup */}
             {showInfo && (
-              <div className="info-menu absolute bottom-20 right-4 sm:right-[350px] w-[calc(100vw-2rem)] max-w-64 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-4 z-50">
+              <div className="info-menu absolute bottom-20 right-4 sm:right-[350px] w-[calc(100vw-2rem)] max-w-72 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 p-4 z-50">
                 <h4 className="font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">
                   Question Details
                 </h4>
-                <div className="space-y-2 text-sm text-gray-700">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Question ID:</span>{" "}
-                    <span>{selectedQuestion.question_id}</span>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-semibold shrink-0">Question ID:</span>
+                    <span className="flex-1 min-w-0 text-right">
+                      {selectedQuestion.question_id}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Difficulty:</span>{" "}
-                    <span className="capitalize">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-semibold shrink-0">Difficulty:</span>
+                    <span className="flex-1 min-w-0 text-right capitalize">
                       {selectedQuestion.difficulty || "Medium"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Domain:</span>{" "}
-                    <span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-semibold shrink-0">Domain:</span>
+                    <span className="flex-1 min-w-0 text-right">
                       {selectedQuestion.domain || "Craft & Structure"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Skill:</span>{" "}
-                    <span>{selectedQuestion.skill || "Words in Context"}</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-semibold shrink-0">Skill:</span>
+                    <span className="flex-1 min-w-0 text-right">
+                      {selectedQuestion.skill || "Words in Context"}
+                    </span>
                   </div>
                 </div>
               </div>
