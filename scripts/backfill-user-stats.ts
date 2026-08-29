@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
-    collection,
-    doc,
-    getDocs,
-    getFirestore,
-    query,
-    setDoc,
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  setDoc,
 } from "firebase/firestore";
 import fs from "fs";
 import path from "path";
@@ -61,72 +61,12 @@ function sanitizeFieldName(name: string): string {
     .replace(/^_|_$/g, "");
 }
 
-// Calculate question statistics - simplified to just store total and basic counts
-function calculateStats(questions: any[]) {
-  const stats = {
-    totalCount: questions.length,
-    count: questions.length, // Alias for popup compatibility
-    total: questions.length, // Alias for backward compatibility
-    // Store simple counts with sanitized keys
-    domainCounts: {} as Record<string, number>,
-    skillCounts: {} as Record<string, number>,
-    difficultyCounts: {} as Record<string, number>,
-    // Joint counts for exact domain/skill × difficulty combinations
-    skillDifficultyCounts: {} as Record<string, number>,
-    domainDifficultyCounts: {} as Record<string, number>,
-  };
-
-  questions.forEach((q) => {
-    // Count by domain
-    if (q.domain) {
-      const sanitizedDomain = sanitizeFieldName(q.domain);
-      stats.domainCounts[sanitizedDomain] =
-        (stats.domainCounts[sanitizedDomain] || 0) + 1;
-    }
-
-    // Count by skill (global)
-    if (q.skill) {
-      const sanitizedSkill = sanitizeFieldName(q.skill);
-      stats.skillCounts[sanitizedSkill] =
-        (stats.skillCounts[sanitizedSkill] || 0) + 1;
-    }
-
-    // Count by difficulty
-    if (q.difficulty) {
-      const sanitizedDifficulty = sanitizeFieldName(q.difficulty);
-      stats.difficultyCounts[sanitizedDifficulty] =
-        (stats.difficultyCounts[sanitizedDifficulty] || 0) + 1;
-    }
-
-    // Joint counts: skill × difficulty
-    if (q.skill && q.difficulty) {
-      const sanitizedSkill = sanitizeFieldName(q.skill);
-      const sanitizedDifficulty = sanitizeFieldName(q.difficulty);
-      const key = `${sanitizedSkill}__${sanitizedDifficulty}`;
-      stats.skillDifficultyCounts[key] =
-        (stats.skillDifficultyCounts[key] || 0) + 1;
-    }
-
-    // Joint counts: domain × difficulty
-    if (q.domain && q.difficulty) {
-      const sanitizedDomain = sanitizeFieldName(q.domain);
-      const sanitizedDifficulty = sanitizeFieldName(q.difficulty);
-      const key = `${sanitizedDomain}__${sanitizedDifficulty}`;
-      stats.domainDifficultyCounts[key] =
-        (stats.domainDifficultyCounts[key] || 0) + 1;
-    }
-  });
-
-  return stats;
-}
-
-// Calculate user-specific statistics - simplified with sanitized keys
-function calculateUserStats(questions: any[], userProgress: Map<string, any>) {
+// Recalculate user stats from scratch using distinct question counts (not attempt counts)
+function recalculateUserStats(questions: any[], userProgress: Map<string, any>) {
   const userStats = {
-    totalAnswered: userProgress.size,
+    totalAnswered: userProgress.size, // Distinct questions, not attempts
     totalCorrect: 0,
     totalIncorrect: 0,
-    // Simple structure with sanitized keys
     domainCounts: {} as Record<
       string,
       { answered: number; correct: number; incorrect: number }
@@ -139,7 +79,6 @@ function calculateUserStats(questions: any[], userProgress: Map<string, any>) {
       string,
       { answered: number; correct: number; incorrect: number }
     >,
-    // Joint counts for exact domain/skill × difficulty combinations
     skillDifficultyCounts: {} as Record<
       string,
       { answered: number; correct: number; incorrect: number }
@@ -163,7 +102,7 @@ function calculateUserStats(questions: any[], userProgress: Map<string, any>) {
     const lastAttempt = attempts[attempts.length - 1];
     const isCorrect = lastAttempt.isCorrect;
 
-    // Update totals
+    // Update totals (based on last attempt outcome)
     if (isCorrect) {
       userStats.totalCorrect++;
     } else {
@@ -273,37 +212,6 @@ function calculateUserStats(questions: any[], userProgress: Map<string, any>) {
   return userStats;
 }
 
-// Update stats in Firebase
-async function updateStatsInFirebase(stats: any) {
-  try {
-    const statsRef = doc(db, "questionStats", "summary");
-    await Promise.race([
-      setDoc(statsRef, { ...stats, updatedAt: new Date().toISOString() }),
-      new Promise((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                "Firestore write timed out — check your Firebase config/env vars",
-              ),
-            ),
-          15000,
-        ),
-      ),
-    ]);
-    console.log("✅ Successfully updated question stats in Firebase");
-    console.log("Stats summary:", {
-      total: stats.total,
-      domains: Object.keys(stats.domainCounts).length,
-      skills: Object.keys(stats.skillCounts).length,
-      difficulties: Object.keys(stats.difficultyCounts).length,
-    });
-  } catch (error) {
-    console.error("❌ Error updating stats in Firebase:", error);
-    throw error;
-  }
-}
-
 // Update user-specific stats in Firebase
 async function updateUserStatsInFirebase(userId: string, userStats: any) {
   try {
@@ -312,10 +220,10 @@ async function updateUserStatsInFirebase(userId: string, userStats: any) {
       ...userStats,
       updatedAt: new Date().toISOString(),
     });
-    console.log(`✅ Successfully updated user stats for ${userId} in Firebase`);
+    console.log(`✅ Successfully backfilled user stats for ${userId} in Firebase`);
   } catch (error) {
     console.error(
-      `❌ Error updating user stats for ${userId} in Firebase:`,
+      `❌ Error backfilling user stats for ${userId} in Firebase:`,
       error,
     );
     throw error;
@@ -324,31 +232,18 @@ async function updateUserStatsInFirebase(userId: string, userStats: any) {
 
 // Main function
 async function main() {
-  console.log("🚀 Starting question stats update...");
+  console.log("🚀 Starting user stats backfill to fix attempt-inflation bug...");
 
   try {
     // Load questions
     const questions = loadQuestionsData();
 
-    // Calculate global stats
-    console.log("📊 Calculating global statistics...");
-    const stats = calculateStats(questions);
-
-    console.log("Global statistics calculated:");
-    console.log("- Total questions:", stats.totalCount);
-    console.log("- Domains:", Object.entries(stats.domainCounts));
-    console.log("- Skills:", Object.entries(stats.skillCounts));
-    console.log("- Difficulties:", Object.entries(stats.difficultyCounts));
-
-    // Update Firebase with global stats
-    await updateStatsInFirebase(stats);
-
-    // Calculate and update user-specific stats for all users
-    console.log("👥 Calculating user-specific statistics...");
+    // Fetch all user progress
+    console.log("👥 Fetching user progress from Firebase...");
     const userProgressQuery = query(collection(db, "userProgress"));
     const userProgressSnapshot = await getDocs(userProgressQuery);
 
-    console.log(`Found ${userProgressSnapshot.size} users with progress`);
+    console.log(`Found ${userProgressSnapshot.size} userProgress docs`);
 
     // Group user progress by userId
     const userProgressMap = new Map<string, Map<string, any>>();
@@ -368,20 +263,25 @@ async function main() {
       userProgressMap.get(userId)!.set(questionId, data);
     });
 
-    // Calculate and update stats for each user
+    console.log(`Found ${userProgressMap.size} unique users with progress`);
+
+    // Recalculate and update stats for each user
     for (const [userId, progressMap] of userProgressMap.entries()) {
       if (!userId || typeof userId !== "string" || userId.includes("/")) {
         console.warn(`⚠️ Skipping invalid userId:`, userId);
         continue;
       }
       console.log(
-        `Processing user: ${userId} (${progressMap.size} answered questions)`,
+        `Backfilling user: ${userId} (${progressMap.size} distinct questions)`,
       );
-      const userStats = calculateUserStats(questions, progressMap);
+      const userStats = recalculateUserStats(questions, progressMap);
       await updateUserStatsInFirebase(userId, userStats);
     }
 
-    console.log("✨ Done!");
+    console.log("✨ Backfill complete!");
+    console.log("📝 Next steps:");
+    console.log("   1. Run 'npm run update-question-stats' to update global summary with joint counts");
+    console.log("   2. Test the popup vs practice page counts to verify the fix");
   } catch (error) {
     console.error("❌ Error:", error);
     process.exit(1);

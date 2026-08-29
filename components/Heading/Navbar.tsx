@@ -165,7 +165,7 @@ export default function Navbar({
                       alt={siteName}
                       width={200}
                       height={43}
-                      className={`h-4 w-auto max-w-[5.5rem] object-contain object-left opacity-60 sm:h-[1rem] sm:max-w-[6rem] transition-opacity duration-300 ${logoLoaded ? "opacity-100" : "opacity-0"}`}
+                      className={`h-4 w-auto max-w-[5.5rem] object-contain object-left grayscale opacity-60 sm:h-[1rem] sm:max-w-[6rem] transition-opacity duration-300 ${logoLoaded ? "opacity-100" : "opacity-0"}`}
                       priority
                       onLoad={() => setLogoLoaded(true)}
                     />

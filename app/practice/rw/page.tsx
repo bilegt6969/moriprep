@@ -269,7 +269,23 @@ function RWPracticePageContent() {
   const [selectedDomains, setSelectedDomains] = useState<string[]>(
     domainsParam ? domainsParam.split(",") : domainParam ? [domainParam] : [],
   );
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(
+    skillParam ? skillParam.split(",") : [],
+  );
+
+  // Sync skills with domains: if domains are selected but skills are empty, auto-populate all skills for those domains
+  useEffect(() => {
+    if (
+      selectedDomains.length > 0 &&
+      selectedSkills.length === 0 &&
+      !skillParam
+    ) {
+      const allSkillsForDomains = selectedDomains.flatMap(
+        (d) => domainSkills[d] || [],
+      );
+      setSelectedSkills(allSkillsForDomains);
+    }
+  }, [selectedDomains, selectedSkills, skillParam]);
   const [skill, setSkill] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const statusFilterParam = searchParams.get("statusFilter");
@@ -310,6 +326,7 @@ function RWPracticePageContent() {
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isQuestionLoading, setIsQuestionLoading] = useState(false);
+  const [isAnsweredDataSettled, setIsAnsweredDataSettled] = useState(false);
   const [imageZoomLevels, setImageZoomLevels] = useState<
     Record<number, number>
   >({});
@@ -328,21 +345,26 @@ function RWPracticePageContent() {
   // Derived filtered questions - computed from all filter dependencies
   const filteredQuestions = useMemo(() => {
     let filtered = questions;
+    console.log("filteredQuestions start:", filtered.length);
 
     if (selectedDifficulties.length > 0) {
       filtered = filtered.filter((q) =>
         selectedDifficulties.includes(q.difficulty),
       );
+      console.log("after difficulty filter:", filtered.length);
     }
     if (selectedDomains.length > 0) {
       filtered = filtered.filter((q) => selectedDomains.includes(q.domain));
+      console.log("after domain filter:", filtered.length);
     }
     // Filter by selectedSkills array (multi-skill selection) if populated,
     // otherwise fall back to legacy singular skill state
     if (selectedSkills.length > 0) {
       filtered = filtered.filter((q) => selectedSkills.includes(q.skill));
+      console.log("after skill filter:", filtered.length);
     } else if (skill !== "all") {
       filtered = filtered.filter((q) => q.skill === skill);
+      console.log("after legacy skill filter:", filtered.length);
     }
     // Filter by status (correct/incorrect)
     if (statusFilter !== "all") {
@@ -353,6 +375,7 @@ function RWPracticePageContent() {
           ? answered.isCorrect
           : !answered.isCorrect;
       });
+      console.log("after status filter:", filtered.length);
     }
     // Filter by attempt status (tried/not-tried)
     if (attemptFilter !== "all") {
@@ -360,7 +383,9 @@ function RWPracticePageContent() {
         const attempted = answeredQuestions.has(q.question_id);
         return attemptFilter === "tried" ? attempted : !attempted;
       });
+      console.log("after attempt filter:", filtered.length);
     }
+    console.log("filteredQuestions final:", filtered.length);
     return filtered;
   }, [
     questions,
@@ -434,60 +459,107 @@ function RWPracticePageContent() {
 
   // Load answered questions from localStorage on mount or Firebase if user is authenticated
   useEffect(() => {
+    setIsAnsweredDataSettled(false);
     const loadAnsweredQuestions = async () => {
-      console.log("Loading answered questions, user:", user);
-      if (user) {
-        try {
-          // Load from userProgress collection for attempt/status filtering
-          const { collection, getDocs, query, where } = await import(
-            "firebase/firestore"
-          );
-          const { db } = await import("@/lib/firebase");
-
-          if (db) {
-            const q = query(
-              collection(db, "userProgress"),
-              where("userId", "==", user.uid),
+      try {
+        console.log("Loading answered questions, user:", user);
+        if (user) {
+          try {
+            // Load from userProgress collection for attempt/status filtering
+            const { collection, getDocs, query, where } = await import(
+              "firebase/firestore"
             );
-            const querySnapshot = await getDocs(q);
-            console.log("Firebase query returned docs:", querySnapshot.size);
+            const { db } = await import("@/lib/firebase");
 
+            if (db) {
+              const q = query(
+                collection(db, "userProgress"),
+                where("userId", "==", user.uid),
+              );
+              const querySnapshot = await getDocs(q);
+              console.log("Firebase query returned docs:", querySnapshot.size);
+
+              const answeredMap = new Map<
+                string,
+                { isCorrect: boolean; answer: string }
+              >();
+              querySnapshot.forEach((doc: any) => {
+                const data = doc.data();
+                console.log("Firebase doc data:", data);
+                if (data.attempts && data.attempts.length > 0) {
+                  const lastAttempt = data.attempts[data.attempts.length - 1];
+                  // Use question_id to match the field name in questions
+                  const questionId = data.question_id || data.questionId;
+                  answeredMap.set(questionId, {
+                    isCorrect: lastAttempt.isCorrect,
+                    answer: lastAttempt.answer,
+                  });
+                }
+              });
+
+              console.log(
+                "Setting answeredQuestions from Firebase, size:",
+                answeredMap.size,
+              );
+              setAnsweredQuestions((prev) => {
+                const merged = new Map(prev);
+                answeredMap.forEach((v, k) => merged.set(k, v));
+                return merged;
+              });
+            }
+          } catch (e) {
+            console.error("Error loading answered questions from Firebase:", e);
+            // Fallback to localStorage (user-specific)
             const answeredMap = new Map<
               string,
               { isCorrect: boolean; answer: string }
             >();
-            querySnapshot.forEach((doc: any) => {
-              const data = doc.data();
-              console.log("Firebase doc data:", data);
-              if (data.attempts && data.attempts.length > 0) {
-                const lastAttempt = data.attempts[data.attempts.length - 1];
-                // Use question_id to match the field name in questions
-                const questionId = data.question_id || data.questionId;
-                answeredMap.set(questionId, {
-                  isCorrect: lastAttempt.isCorrect,
-                  answer: lastAttempt.answer,
-                });
+            // Iterate through all localStorage keys to find attempts for this user
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith(`attempts_${user.uid}_`)) {
+                const questionId = key.replace(`attempts_${user.uid}_`, "");
+                try {
+                  const attempts = JSON.parse(
+                    localStorage.getItem(key) || "[]",
+                  );
+                  if (attempts.length > 0) {
+                    const lastAttempt = attempts[attempts.length - 1];
+                    answeredMap.set(questionId, {
+                      isCorrect: lastAttempt.isCorrect,
+                      answer: lastAttempt.answer,
+                    });
+                  }
+                } catch (e) {
+                  console.error(
+                    "Error parsing attempts for question:",
+                    questionId,
+                    e,
+                  );
+                }
               }
-            });
-
+            }
             console.log(
-              "Setting answeredQuestions from Firebase, size:",
+              "Setting answeredQuestions from localStorage (fallback), size:",
               answeredMap.size,
             );
-            setAnsweredQuestions(answeredMap);
+            setAnsweredQuestions((prev) => {
+              const merged = new Map(prev);
+              answeredMap.forEach((v, k) => merged.set(k, v));
+              return merged;
+            });
           }
-        } catch (e) {
-          console.error("Error loading answered questions from Firebase:", e);
-          // Fallback to localStorage (user-specific)
+        } else {
+          // Load from localStorage for non-authenticated users (guest)
           const answeredMap = new Map<
             string,
             { isCorrect: boolean; answer: string }
           >();
-          // Iterate through all localStorage keys to find attempts for this user
+          // Iterate through all localStorage keys to find attempts for guest
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(`attempts_${user.uid}_`)) {
-              const questionId = key.replace(`attempts_${user.uid}_`, "");
+            if (key && key.startsWith("attempts_guest_")) {
+              const questionId = key.replace("attempts_guest_", "");
               try {
                 const attempts = JSON.parse(localStorage.getItem(key) || "[]");
                 if (attempts.length > 0) {
@@ -507,45 +579,17 @@ function RWPracticePageContent() {
             }
           }
           console.log(
-            "Setting answeredQuestions from localStorage (fallback), size:",
+            "Setting answeredQuestions from localStorage (no auth), size:",
             answeredMap.size,
           );
-          setAnsweredQuestions(answeredMap);
+          setAnsweredQuestions((prev) => {
+            const merged = new Map(prev);
+            answeredMap.forEach((v, k) => merged.set(k, v));
+            return merged;
+          });
         }
-      } else {
-        // Load from localStorage for non-authenticated users (guest)
-        const answeredMap = new Map<
-          string,
-          { isCorrect: boolean; answer: string }
-        >();
-        // Iterate through all localStorage keys to find attempts for guest
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("attempts_guest_")) {
-            const questionId = key.replace("attempts_guest_", "");
-            try {
-              const attempts = JSON.parse(localStorage.getItem(key) || "[]");
-              if (attempts.length > 0) {
-                const lastAttempt = attempts[attempts.length - 1];
-                answeredMap.set(questionId, {
-                  isCorrect: lastAttempt.isCorrect,
-                  answer: lastAttempt.answer,
-                });
-              }
-            } catch (e) {
-              console.error(
-                "Error parsing attempts for question:",
-                questionId,
-                e,
-              );
-            }
-          }
-        }
-        console.log(
-          "Setting answeredQuestions from localStorage (no auth), size:",
-          answeredMap.size,
-        );
-        setAnsweredQuestions(answeredMap);
+      } finally {
+        setIsAnsweredDataSettled(true);
       }
     };
 
@@ -677,8 +721,14 @@ function RWPracticePageContent() {
       }
     }
 
+    // Wait for auth to resolve before fetching — fetching before onAuthStateChanged
+    // fires can pull the wrong attemptFilter results and cause the footer count
+    // to flicker between the guest and authenticated numbers
+    if (!isAuthLoaded) return;
+
     fetchQuestions();
   }, [
+    isAuthLoaded,
     domainParam,
     domainsParam,
     difficultyParam,
@@ -877,6 +927,7 @@ function RWPracticePageContent() {
       const response = await fetch(`/api/questions?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch questions");
       let questionsData = await response.json();
+      console.log("rw fetched questionsData.length:", questionsData.length);
 
       // If we came in via a question_id and that question isn't in the
       // filtered set (e.g. filters don't match it), fetch it separately
@@ -1578,7 +1629,9 @@ function RWPracticePageContent() {
     selectedQuestion?.underlined_text,
   ]);
 
-  if (loading) {
+  const needsAnsweredData = attemptFilter !== "all" || statusFilter !== "all";
+
+  if (loading || (needsAnsweredData && !isAnsweredDataSettled)) {
     return <SkeletonLoader />;
   }
 
@@ -2275,7 +2328,10 @@ function RWPracticePageContent() {
                       (q) => q.question_id === selectedQuestion.question_id,
                     ) + 1,
                   )}{" "}
-                  of {Math.max(1, filteredQuestions.length)}
+                  of{" "}
+                  {loading || isQuestionLoading
+                    ? "…"
+                    : Math.max(1, filteredQuestions.length)}
                 </span>
                 <ChevronDown
                   size={16}

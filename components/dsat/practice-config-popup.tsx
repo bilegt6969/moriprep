@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, ChevronDown, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 interface PracticeConfigPopupProps {
   isOpen: boolean;
@@ -18,46 +18,39 @@ interface PracticeConfig {
   attemptFilter: string;
 }
 
-const domainSkills: Record<string, string[]> = {
-  "Information and Ideas": [
-    "Central Ideas and Details",
-    "Inferences",
-    "Command of Evidence — Textual",
-    "Command of Evidence — Quantitative",
-  ],
-  "Craft and Structure": [
-    "Words in Context",
-    "Text Structure and Purpose",
-    "Cross-Text Connections",
-  ],
-  "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
-  "Standard English Convention": ["Boundaries", "Form Structure and Sense"],
-};
+import { allSkills, domainSkills, domains } from "@/lib/dsat/domain-skills";
+const allDifficulties = ["Easy", "Medium", "Hard"];
+const DEFAULT_TOTAL_QUESTIONS = 1688;
 
-const domains = Object.keys(domainSkills);
+const PILL_SELECTED = "bg-zinc-900 text-white shadow-md";
+const PILL_UNSELECTED =
+  "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700";
+const FOCUS_RING =
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-2";
+
+function toggleValue<T>(list: T[], value: T): T[] {
+  return list.includes(value)
+    ? list.filter((v) => v !== value)
+    : [...list, value];
+}
+
+function dedupe<T>(list: T[]): T[] {
+  return Array.from(new Set(list));
+}
 
 export function PracticeConfigPopup({
   isOpen,
   onClose,
   onStartPractice,
 }: PracticeConfigPopupProps) {
-  // Add custom scrollbar styles
+  // Custom scrollbar styles
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #d4d4d8;
-        border-radius: 3px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #a1a1aa;
-      }
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
     `;
     document.head.appendChild(style);
     return () => {
@@ -65,42 +58,50 @@ export function PracticeConfigPopup({
     };
   }, []);
 
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([
-    "Easy",
-    "Medium",
-    "Hard",
-  ]);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedDifficulties, setSelectedDifficulties] =
+    useState<string[]>(allDifficulties);
+  const [selectedDomains, setSelectedDomains] = useState<string[]>(domains);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(allSkills);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [attemptFilter, setAttemptFilter] = useState<string>("all");
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
+  const [countIsStale, setCountIsStale] = useState<boolean>(false);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
   const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
+  const [showSkills, setShowSkills] = useState<boolean>(false);
 
-  // Load saved configuration from localStorage on mount
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Load saved configuration from localStorage on mount. Only fall back to
+  // "everything selected" when a field is genuinely missing (e.g. an older
+  // saved config) — an intentionally empty selection the user saved earlier
+  // should stay empty.
   useEffect(() => {
     const savedConfig = localStorage.getItem("practiceConfig");
     if (savedConfig) {
       try {
         const config = JSON.parse(savedConfig);
-        setSelectedDifficulties(
-          config.difficulties || ["Easy", "Medium", "Hard"],
-        );
-        setSelectedDomains(config.domains || []);
-        setSelectedSkills(config.skills || []);
+        setSelectedDifficulties(config.difficulties ?? allDifficulties);
+        setSelectedDomains(config.domains ?? domains);
+        setSelectedSkills(config.skills ?? allSkills);
         setStatusFilter(config.statusFilter || "all");
         setAttemptFilter(config.attemptFilter || "all");
       } catch (e) {
-        console.error("Error parsing saved config:", e);
+        console.error(
+          "Error parsing saved practice config, using defaults:",
+          e,
+        );
       }
     }
     setIsConfigLoaded(true);
   }, []);
 
-  // Save configuration to localStorage whenever it changes
+  // Persist configuration whenever it changes — but not before the saved
+  // config has actually been loaded, otherwise this fires once on mount
+  // with default values and clobbers what was just read from storage.
   useEffect(() => {
+    if (!isConfigLoaded) return;
     const config = {
       difficulties: selectedDifficulties,
       domains: selectedDomains,
@@ -115,19 +116,52 @@ export function PracticeConfigPopup({
     selectedSkills,
     statusFilter,
     attemptFilter,
+    isConfigLoaded,
   ]);
 
-  // Real-time filtering count from Firebase stats API with user-specific data
+  // Don't let a stale "Loading..." state carry over into the next time the
+  // popup is opened.
   useEffect(() => {
-    // Don't fetch until config is loaded from localStorage and popup is open
+    if (!isOpen) setIsStartingPractice(false);
+  }, [isOpen]);
+
+  // Close on Escape.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
+
+  // Debounced, cancellable fetch of the matching-question count. Debouncing
+  // avoids firing a request on every single filter click, and the
+  // AbortController stops an older, slower request from overwriting the
+  // result of a newer one.
+  useEffect(() => {
     if (!isConfigLoaded || !isOpen) return;
 
-    const fetchFilteredCount = async () => {
-      // Default to 1688 (total RW questions)
-      let totalAvailable = 1688;
+    const timer = setTimeout(async () => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setIsLoadingCount(true);
+      setCountIsStale(false);
+
+      const buildParams = (userId?: string) => {
+        const params = new URLSearchParams();
+        if (userId) params.append("userId", userId);
+        selectedDomains.forEach((d) => params.append("domain", d));
+        selectedSkills.forEach((s) => params.append("skill", s));
+        if (selectedDifficulties.length > 0) {
+          params.append("difficulty", selectedDifficulties.join(","));
+        }
+        return params;
+      };
 
       try {
-        // If attempt or status filters are active, we need user-specific stats only
         const needsUserStats =
           attemptFilter !== "all" || statusFilter !== "all";
         const hasContentFilters =
@@ -135,143 +169,73 @@ export function PracticeConfigPopup({
           selectedSkills.length > 0 ||
           selectedDifficulties.length > 0;
 
-        console.log(
-          "fetchFilteredCount - needsUserStats:",
-          needsUserStats,
-          "hasContentFilters:",
-          hasContentFilters,
-          "domains:",
-          selectedDomains,
-          "skills:",
-          selectedSkills,
-          "difficulties:",
-          selectedDifficulties,
-          "attemptFilter:",
-          attemptFilter,
-          "statusFilter:",
-          statusFilter,
-        );
-
-        // Get current user for user-specific stats
-        const { auth } = await import("@/lib/firebase");
-        const currentUser = auth?.currentUser;
-        const userId = currentUser?.uid;
-
         if (needsUserStats) {
-          // When attempt/status filters are active, we MUST use user stats
+          const { auth } = await import("@/lib/firebase");
+          const userId = auth?.currentUser?.uid;
+
           if (!userId) {
-            console.log(
-              "User not authenticated, cannot apply attempt/status filters",
-            );
             setFilteredCount(0);
             return;
           }
 
-          setIsLoadingCount(true);
-          const userParams = new URLSearchParams();
-          userParams.append("userId", userId);
+          const needsGlobalTotal = attemptFilter === "not-tried";
+          const [userResponse, globalResponse] = await Promise.all([
+            fetch(`/api/question-stats?${buildParams(userId).toString()}`, {
+              signal: controller.signal,
+            }),
+            needsGlobalTotal
+              ? fetch(`/api/question-stats?${buildParams().toString()}`, {
+                  signal: controller.signal,
+                })
+              : Promise.resolve(null),
+          ]);
 
-          // Add all selected domains
-          if (selectedDomains.length > 0) {
-            selectedDomains.forEach((d) => userParams.append("domain", d));
-          }
-
-          // Add all selected skills
-          if (selectedSkills.length > 0) {
-            selectedSkills.forEach((s) => userParams.append("skill", s));
-          }
-
-          // Add all selected difficulties
-          if (selectedDifficulties.length > 0) {
-            userParams.append("difficulty", selectedDifficulties.join(","));
-          }
-
-          const userResponse = await fetch(
-            `/api/question-stats?${userParams.toString()}`,
-          );
+          if (!userResponse.ok)
+            throw new Error("Failed to load question stats");
           const userData = await userResponse.json();
-          console.log("User stats response:", userData);
 
-          let filteredCount = 0;
-
-          // Apply attempt filter
-          if (attemptFilter === "tried") {
-            filteredCount = userData.answered || 0;
-          } else if (attemptFilter === "not-tried") {
-            // Need to get total available for this filtered set
-            const globalParams = new URLSearchParams();
-            if (selectedDomains.length > 0) {
-              selectedDomains.forEach((d) => globalParams.append("domain", d));
-            }
-            if (selectedSkills.length > 0) {
-              selectedSkills.forEach((s) => globalParams.append("skill", s));
-            }
-            if (selectedDifficulties.length > 0) {
-              globalParams.append("difficulty", selectedDifficulties.join(","));
-            }
-
-            const globalResponse = await fetch(
-              `/api/question-stats?${globalParams.toString()}`,
-            );
-            const globalData = await globalResponse.json();
-            console.log("Global stats for not-tried calculation:", globalData);
-            totalAvailable = globalData.count || globalData.total || 1688;
-            filteredCount = totalAvailable - (userData.answered || 0);
+          let count = userData.answered || 0;
+          if (attemptFilter === "not-tried") {
+            const globalData =
+              globalResponse && globalResponse.ok
+                ? await globalResponse.json()
+                : {};
+            const totalAvailable =
+              globalData.count ?? globalData.total ?? DEFAULT_TOTAL_QUESTIONS;
+            const finalCount = totalAvailable - count;
+            setFilteredCount(finalCount);
           } else {
-            filteredCount = userData.answered || 0;
+            setFilteredCount(count);
           }
+          if (statusFilter === "correct") count = userData.correct || 0;
+          else if (statusFilter === "incorrect")
+            count = userData.incorrect || 0;
 
-          // Apply status filter (overrides attempt filter if both are set)
-          if (statusFilter === "correct") {
-            filteredCount = userData.correct || 0;
-          } else if (statusFilter === "incorrect") {
-            filteredCount = userData.incorrect || 0;
-          }
-
-          console.log("Setting filteredCount to:", filteredCount);
-          setFilteredCount(filteredCount);
+          setFilteredCount(Math.max(0, count));
         } else if (hasContentFilters) {
-          // Only content filters (domains/skills/difficulties), no attempt/status filters
-          setIsLoadingCount(true);
-          const globalParams = new URLSearchParams();
-
-          // Add all selected domains
-          if (selectedDomains.length > 0) {
-            selectedDomains.forEach((d) => globalParams.append("domain", d));
-          }
-
-          // Add all selected skills
-          if (selectedSkills.length > 0) {
-            selectedSkills.forEach((s) => globalParams.append("skill", s));
-          }
-
-          // Add all selected difficulties
-          if (selectedDifficulties.length > 0) {
-            globalParams.append("difficulty", selectedDifficulties.join(","));
-          }
-
-          const globalResponse = await fetch(
-            `/api/question-stats?${globalParams.toString()}`,
+          const response = await fetch(
+            `/api/question-stats?${buildParams().toString()}`,
+            {
+              signal: controller.signal,
+            },
           );
-          const globalData = await globalResponse.json();
-          console.log("Global stats response:", globalData);
-          totalAvailable = globalData.count || globalData.total || 1688;
-          setFilteredCount(totalAvailable);
+          if (!response.ok) throw new Error("Failed to load question stats");
+          const data = await response.json();
+          setFilteredCount(data.count ?? data.total ?? DEFAULT_TOTAL_QUESTIONS);
         } else {
-          // No filters at all, show total
-          console.log("No filters, showing total 1688");
-          setFilteredCount(1688);
+          setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
         }
       } catch (error) {
+        if ((error as Error).name === "AbortError") return; // superseded by a newer request
         console.error("Error fetching filtered count:", error);
-        // Fallback to default
-        setFilteredCount(1688);
+        setCountIsStale(true);
+        setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
       } finally {
         setIsLoadingCount(false);
       }
-    };
+    }, 300);
 
-    fetchFilteredCount();
+    return () => clearTimeout(timer);
   }, [
     selectedDifficulties,
     selectedDomains,
@@ -282,14 +246,29 @@ export function PracticeConfigPopup({
     isOpen,
   ]);
 
-  const availableSkills =
-    selectedDomains.length === 0
-      ? []
-      : selectedDomains.flatMap((d) => domainSkills[d] || []);
+  // Cancel any in-flight request if the component unmounts entirely.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const availableSkills = useMemo(
+    () => selectedDomains.flatMap((d) => domainSkills[d] || []),
+    [selectedDomains],
+  );
+
+  const toggleDomain = (domain: string) => {
+    const domainSkillList = domainSkills[domain] || [];
+    if (selectedDomains.includes(domain)) {
+      setSelectedDomains((prev) => prev.filter((d) => d !== domain));
+      setSelectedSkills((prev) =>
+        prev.filter((s) => !domainSkillList.includes(s)),
+      );
+    } else {
+      setSelectedDomains((prev) => [...prev, domain]);
+      setSelectedSkills((prev) => dedupe([...prev, ...domainSkillList]));
+    }
+  };
 
   const handleStartPractice = () => {
     setIsStartingPractice(true);
-    // Add a small delay to show the loading state
     setTimeout(() => {
       onStartPractice({
         difficulties: selectedDifficulties,
@@ -329,7 +308,10 @@ export function PracticeConfigPopup({
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="bg-white rounded-3xl shadow-2xl w-[600px] h-[700px] pointer-events-auto overflow-hidden flex flex-col relative"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Practice configuration"
+              className="bg-white rounded-3xl shadow-2xl w-[600px] max-w-full h-[700px] max-h-[90vh] pointer-events-auto overflow-hidden flex flex-col relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -339,7 +321,8 @@ export function PracticeConfigPopup({
                 </h2>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+                  aria-label="Close"
+                  className={`p-2 hover:bg-zinc-100 rounded-full transition-colors ${FOCUS_RING}`}
                 >
                   <X className="w-5 h-5 text-zinc-500" />
                 </button>
@@ -357,10 +340,9 @@ export function PracticeConfigPopup({
               />
 
               {/* Content with blur effects */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                {/* Top scroll blur */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar relative z-30">
                 <div
-                  className="absolute inset-x-0 top-0 z-10 h-12 bg-white/80 backdrop-blur-md pointer-events-none"
+                  className="absolute inset-x-0 top-0 h-12 bg-white/80 backdrop-blur-md pointer-events-none"
                   style={{
                     WebkitMaskImage:
                       "linear-gradient(to bottom, black 20%, transparent 100%)",
@@ -371,119 +353,82 @@ export function PracticeConfigPopup({
 
                 <div className="px-6 pt-12 pb-8 space-y-8">
                   {/* Difficulty Filter */}
-                  <div className="flex flex-col gap-3.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                        Difficulty
-                      </label>
-                      {selectedDifficulties.length > 0 && (
-                        <button
-                          onClick={() => setSelectedDifficulties([])}
-                          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
+                  <FilterSection
+                    label="Difficulty"
+                    selectedCount={selectedDifficulties.length}
+                    totalCount={allDifficulties.length}
+                    onSelectAll={() => setSelectedDifficulties(allDifficulties)}
+                    onClearAll={() => setSelectedDifficulties([])}
+                  >
                     <div className="flex flex-wrap gap-2.5">
-                      {[
-                        { label: "Easy", value: "Easy" },
-                        { label: "Medium", value: "Medium" },
-                        { label: "Hard", value: "Hard" },
-                      ].map((item) => {
-                        const isSelected = selectedDifficulties.includes(
-                          item.value,
-                        );
-                        return (
-                          <button
-                            key={item.value}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedDifficulties(
-                                  selectedDifficulties.filter(
-                                    (d) => d !== item.value,
-                                  ),
-                                );
-                              } else {
-                                setSelectedDifficulties([
-                                  ...selectedDifficulties,
-                                  item.value,
-                                ]);
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                              isSelected
-                                ? "bg-zinc-900 text-white shadow-md"
-                                : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        );
-                      })}
+                      {allDifficulties.map((value) => (
+                        <Pill
+                          key={value}
+                          selected={selectedDifficulties.includes(value)}
+                          onClick={() =>
+                            setSelectedDifficulties((prev) =>
+                              toggleValue(prev, value),
+                            )
+                          }
+                        >
+                          {value}
+                        </Pill>
+                      ))}
                     </div>
-                  </div>
+                  </FilterSection>
 
                   {/* Domain Filter */}
-                  <div className="flex flex-col gap-3.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                        Domain
-                      </label>
-                      {selectedDomains.length > 0 && (
-                        <button
-                          onClick={() => {
-                            setSelectedDomains([]);
-                            setSelectedSkills([]);
-                          }}
-                          className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
+                  <FilterSection
+                    label="Domain"
+                    selectedCount={selectedDomains.length}
+                    totalCount={domains.length}
+                    onSelectAll={() => {
+                      setSelectedDomains(domains);
+                      setSelectedSkills(allSkills);
+                    }}
+                    onClearAll={() => {
+                      setSelectedDomains([]);
+                      setSelectedSkills([]);
+                    }}
+                  >
                     <div className="flex flex-wrap gap-2.5">
-                      {domains.map((domain) => {
-                        const isSelected = selectedDomains.includes(domain);
-                        return (
-                          <button
-                            key={domain}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedDomains(
-                                  selectedDomains.filter((d) => d !== domain),
-                                );
-                                setSelectedSkills([]);
-                              } else {
-                                setSelectedDomains([
-                                  ...selectedDomains,
-                                  domain,
-                                ]);
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                              isSelected
-                                ? "bg-zinc-900 text-white shadow-md"
-                                : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                            }`}
-                          >
-                            {domain}
-                          </button>
-                        );
-                      })}
+                      {domains.map((domain) => (
+                        <Pill
+                          key={domain}
+                          selected={selectedDomains.includes(domain)}
+                          onClick={() => toggleDomain(domain)}
+                        >
+                          {domain}
+                        </Pill>
+                      ))}
                     </div>
-                  </div>
+                  </FilterSection>
 
-                  {/* Skills Filter - only show if domains are selected */}
+                  {/* Skills Filter - grouped by domain as compact checkbox cards
+                      instead of a second layer of expand/collapse, so opening
+                      "Skills" shows everything at once without extra clicks. */}
                   {selectedDomains.length > 0 && (
                     <div className="flex flex-col gap-3.5">
                       <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+                        <button
+                          onClick={() => setShowSkills(!showSkills)}
+                          className={`flex items-center gap-2 text-[11px] font-semibold text-zinc-500 uppercase tracking-widest hover:text-zinc-900 transition-colors rounded ${FOCUS_RING}`}
+                        >
                           Skills
-                        </label>
-                        <div className="flex gap-3">
-                          {selectedSkills.length !== availableSkills.length &&
-                            availableSkills.length > 0 && (
+                          <span className="text-zinc-400 font-normal normal-case tracking-normal">
+                            {selectedSkills.length}/{availableSkills.length}
+                          </span>
+                          <motion.div
+                            animate={{ rotate: showSkills ? 180 : 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </motion.div>
+                        </button>
+                        {showSkills && (
+                          <div className="flex gap-3">
+                            {selectedSkills.length !==
+                              availableSkills.length && (
                               <button
                                 onClick={() =>
                                   setSelectedSkills(availableSkills)
@@ -493,133 +438,169 @@ export function PracticeConfigPopup({
                                 Select all
                               </button>
                             )}
-                          {selectedSkills.length > 0 && (
-                            <button
-                              onClick={() => setSelectedSkills([])}
-                              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
-                            >
-                              Clear all
-                            </button>
-                          )}
-                        </div>
+                            {selectedSkills.length > 0 && (
+                              <button
+                                onClick={() => setSelectedSkills([])}
+                                className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                              >
+                                Clear all
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-col gap-4">
-                        {selectedDomains.map((domain) => {
-                          const domainSkillList = domainSkills[domain] || [];
-                          if (domainSkillList.length === 0) return null;
 
-                          return (
-                            <div key={domain} className="flex flex-col gap-2">
-                              <span className="text-[11px] font-medium text-zinc-600 uppercase tracking-wider">
-                                {domain}
-                              </span>
-                              <div className="flex flex-wrap gap-2.5">
-                                {domainSkillList.map((skill) => {
-                                  const isSelected =
-                                    selectedSkills.includes(skill);
-                                  return (
-                                    <button
-                                      key={skill}
-                                      onClick={() => {
-                                        if (isSelected) {
-                                          setSelectedSkills(
-                                            selectedSkills.filter(
-                                              (s) => s !== skill,
-                                            ),
-                                          );
-                                        } else {
-                                          setSelectedSkills([
-                                            ...selectedSkills,
-                                            skill,
-                                          ]);
-                                        }
-                                      }}
-                                      className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                                        isSelected
-                                          ? "bg-zinc-900 text-white shadow-md"
-                                          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                                      }`}
-                                    >
-                                      {skill}
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                      <AnimatePresence>
+                        {showSkills && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                              {selectedDomains.map((domain) => {
+                                const domainSkillList =
+                                  domainSkills[domain] || [];
+                                if (domainSkillList.length === 0) return null;
+                                const selectedInDomain = domainSkillList.filter(
+                                  (s) => selectedSkills.includes(s),
+                                ).length;
+
+                                return (
+                                  <div
+                                    key={domain}
+                                    className="rounded-2xl border border-zinc-100 bg-zinc-50/60 p-3.5"
+                                  >
+                                    <div className="flex items-center justify-between mb-2 px-0.5 gap-2">
+                                      <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide leading-tight">
+                                        {domain}
+                                      </span>
+                                      <span className="text-[10px] font-medium text-zinc-400 flex-shrink-0">
+                                        {selectedInDomain}/
+                                        {domainSkillList.length}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                      {domainSkillList.map((skill) => {
+                                        const isSelected =
+                                          selectedSkills.includes(skill);
+                                        return (
+                                          <button
+                                            key={skill}
+                                            onClick={() =>
+                                              setSelectedSkills((prev) =>
+                                                toggleValue(prev, skill),
+                                              )
+                                            }
+                                            className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] font-medium transition-colors duration-150 ${FOCUS_RING} ${
+                                              isSelected
+                                                ? "bg-white text-zinc-900 shadow-sm"
+                                                : "text-zinc-500 hover:bg-white/60 hover:text-zinc-700"
+                                            }`}
+                                          >
+                                            <span
+                                              className={`flex-shrink-0 w-4 h-4 rounded-[5px] border flex items-center justify-center transition-colors ${
+                                                isSelected
+                                                  ? "bg-zinc-900 border-zinc-900"
+                                                  : "border-zinc-300"
+                                              }`}
+                                            >
+                                              {isSelected && (
+                                                <Check
+                                                  className="w-3 h-3 text-white"
+                                                  strokeWidth={3}
+                                                />
+                                              )}
+                                            </span>
+                                            {skill}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
-                      </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
 
                   {/* Performance Filter */}
-                  <div className="flex flex-col gap-3.5">
-                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                      Performance
-                    </label>
+                  <FilterSection label="Performance">
                     <div className="flex flex-wrap gap-2.5">
                       {[
                         { label: "All Questions", value: "all" },
                         { label: "Correct Only", value: "correct" },
                         { label: "Incorrect Only", value: "incorrect" },
                       ].map((item) => (
-                        <button
+                        <Pill
                           key={item.value}
+                          selected={statusFilter === item.value}
                           onClick={() => setStatusFilter(item.value)}
-                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                            statusFilter === item.value
-                              ? "bg-zinc-900 text-white shadow-md"
-                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                          }`}
                         >
                           {item.label}
-                        </button>
+                        </Pill>
                       ))}
                     </div>
-                  </div>
+                  </FilterSection>
 
                   {/* Attempt Filter */}
-                  <div className="flex flex-col gap-3.5">
-                    <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
-                      Attempt Status
-                    </label>
+                  <FilterSection label="Attempt Status">
                     <div className="flex flex-wrap gap-2.5">
                       {[
                         { label: "All Questions", value: "all" },
                         { label: "Tried Only", value: "tried" },
                         { label: "Not Tried Only", value: "not-tried" },
                       ].map((item) => (
-                        <button
+                        <Pill
                           key={item.value}
+                          selected={attemptFilter === item.value}
                           onClick={() => setAttemptFilter(item.value)}
-                          className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${
-                            attemptFilter === item.value
-                              ? "bg-zinc-900 text-white shadow-md"
-                              : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                          }`}
                         >
                           {item.label}
-                        </button>
+                        </Pill>
                       ))}
                     </div>
-                  </div>
+                  </FilterSection>
                 </div>
               </div>
 
               {/* Footer */}
               <div className="bg-white border-t border-zinc-100 px-6 py-4 flex-shrink-0 relative z-10">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div className="text-[13px] font-medium text-zinc-500 transition-all duration-300">
-                    Showing{" "}
-                    <span className="text-zinc-900 font-semibold bg-zinc-100 px-2 py-0.5 rounded-md mx-1">
-                      {isLoadingCount ? "..." : filteredCount}
-                    </span>{" "}
-                    matching questions
+                    {filteredCount === 0 && !isLoadingCount ? (
+                      <span className="text-zinc-400">
+                        No questions match these filters — try widening your
+                        selection.
+                      </span>
+                    ) : (
+                      <>
+                        Showing{" "}
+                        <span className="text-zinc-900 font-semibold bg-zinc-100 px-2 py-0.5 rounded-md mx-1">
+                          {isLoadingCount ? "…" : filteredCount}
+                        </span>{" "}
+                        matching questions
+                      </>
+                    )}
+                    {countIsStale && (
+                      <span className="block text-[11px] text-amber-600 mt-0.5">
+                        Couldn't refresh the count — showing an estimate.
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={handleStartPractice}
-                    disabled={isLoadingCount || filteredCount === 0}
-                    className="px-8 py-3 bg-zinc-900 text-white text-[13px] rounded-full font-medium shadow-md hover:bg-black transition-all duration-300 ease-out active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                    disabled={
+                      isLoadingCount ||
+                      filteredCount === 0 ||
+                      isStartingPractice
+                    }
+                    className={`px-8 py-3 bg-zinc-900 text-white text-[13px] rounded-full font-medium shadow-md hover:bg-black transition-all duration-300 ease-out active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center gap-2 flex-shrink-0 ${FOCUS_RING}`}
                   >
                     {isStartingPractice ? (
                       <>
@@ -649,5 +630,76 @@ export function PracticeConfigPopup({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function FilterSection({
+  label,
+  selectedCount,
+  totalCount,
+  onSelectAll,
+  onClearAll,
+  children,
+}: {
+  label: string;
+  selectedCount?: number;
+  totalCount?: number;
+  onSelectAll?: () => void;
+  onClearAll?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3.5">
+      <div className="flex justify-between items-center">
+        <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest">
+          {label}
+        </label>
+        {(onSelectAll || onClearAll) && (
+          <div className="flex gap-3">
+            {onSelectAll &&
+              selectedCount !== undefined &&
+              totalCount !== undefined &&
+              selectedCount !== totalCount && (
+                <button
+                  onClick={onSelectAll}
+                  className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+                >
+                  Select all
+                </button>
+              )}
+            {onClearAll && selectedCount !== undefined && selectedCount > 0 && (
+              <button
+                onClick={onClearAll}
+                className="text-[11px] font-medium text-zinc-400 hover:text-zinc-900 transition-colors duration-200"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Pill({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-300 ease-out active:scale-95 flex items-center justify-center ${FOCUS_RING} ${
+        selected ? PILL_SELECTED : PILL_UNSELECTED
+      }`}
+    >
+      {children}
+    </button>
   );
 }

@@ -65,15 +65,17 @@ const schools = [
 
 // ==========================================
 // ISOLATED TICKER COMPONENT
-// Memoized so it NEVER re-renders when the text changes
+// Memoized so it NEVER re-renders when the text changes.
+//
+// NOTE: previously this tracked per-image "loaded" state via a Set that was
+// never read anywhere (dead code), and was additionally broken because both
+// duplicated ticker tracks reused the same 0..N index, so load events from
+// group 2 collided with group 1 in the Set. Removed entirely — the ticker
+// doesn't need to react to individual image load state, and if we ever do
+// want per-logo load state again, group1/group2 need distinct key namespaces
+// (e.g. `g1-${index}` / `g2-${index}`) rather than colliding on `index`.
 // ==========================================
 const LogoTicker = memo(() => {
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-
-  const handleImageLoad = (index: number) => {
-    setLoadedImages((prev) => new Set(prev).add(index));
-  };
-
   return (
     <div className="absolute bottom-0 left-0 right-0 h-18.75 sm:h-21.25 md:h-25 w-full bg-transparent flex flex-col justify-center z-20">
       <div className="max-w-7xl mx-auto w-full flex flex-col items-center">
@@ -125,7 +127,12 @@ const LogoTicker = memo(() => {
                       height="60"
                       loading="eager"
                       className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
-                      onLoad={() => handleImageLoad(index)}
+                      // If a logo fails to load, hide it instead of leaving a
+                      // broken-image glyph floating in the ticker.
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display =
+                          "none";
+                      }}
                     />
                   </div>
                 </a>
@@ -151,7 +158,10 @@ const LogoTicker = memo(() => {
                       height="60"
                       loading="eager"
                       className="h-9 sm:h-10 md:h-12 w-auto object-contain grayscale opacity-40 hover:opacity-100 hover:grayscale-0 transition-opacity duration-300"
-                      onLoad={() => handleImageLoad(index)}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display =
+                          "none";
+                      }}
                     />
                   </div>
                 </a>
@@ -174,7 +184,10 @@ export function Hero() {
   const words = ["Free", "Super", "Open"];
   const [wordIndex, setWordIndex] = useState(0);
 
-  // Track image load state
+  // Track image load state.
+  // imgLoaded === true  -> render the real <img>, hide skeleton
+  // imgError  === true  -> render a graceful fallback, hide skeleton
+  // both false           -> still loading, show skeleton
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -195,7 +208,7 @@ export function Hero() {
     if (!el) return;
 
     // Handles the case where the browser already resolved the image
-    // (cached, or resolved before React attached the onLoad listener)
+    // (cached, or resolved before React attached the onLoad listener).
     if (el.complete) {
       if (el.naturalWidth > 0) {
         setImgLoaded(true);
@@ -207,9 +220,16 @@ export function Hero() {
     }
 
     // Safety net: if neither load nor error fires within a few seconds
-    // (flaky network, dropped event, etc.), reveal anyway rather than
-    // leaving a skeleton up forever.
-    const timeout = setTimeout(() => setImgLoaded(true), 6000);
+    // (flaky network, dropped event, etc.), fall back to the error state
+    // rather than forcing opacity-100 on an <img> that never actually
+    // resolved (which previously showed a broken-image icon).
+    const timeout = setTimeout(() => {
+      if (el.complete && el.naturalWidth > 0) {
+        setImgLoaded(true);
+      } else {
+        setImgError(true);
+      }
+    }, 6000);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -366,6 +386,22 @@ export function Hero() {
             `}
           />
         )}
+
+        {/* Graceful fallback: previously an error left this whole region
+            completely blank (both the skeleton and the <img> branches were
+            false). Now we at least keep the layout height and show a subtle
+            placeholder instead of a hole in the page. */}
+        {imgError && (
+          <div
+            className="block mx-auto flex items-center justify-center
+            w-[150%] max-w-[150%] h-[35vh] bg-neutral-50
+            sm:w-[90%] sm:max-w-none sm:h-auto sm:aspect-[375/280] md:max-w-375
+          "
+            role="img"
+            aria-label="Illustration failed to load"
+          />
+        )}
+
         <div className="absolute bottom-0 left-0 right-0 h-48 md:h-64 bg-linear-to-t from-white/90 from-30% via-white/80 via-60% to-transparent pointer-events-none" />
       </motion.div>
 

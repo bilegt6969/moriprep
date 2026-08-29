@@ -1,22 +1,22 @@
 import { db } from "@/lib/firebase";
 import {
-    Attempt,
-    DSATQuestion,
-    QuestionReport,
-    UserProgress,
-    UserStats,
+  Attempt,
+  DSATQuestion,
+  QuestionReport,
+  UserProgress,
+  UserStats,
 } from "@/types/dsat";
 import {
-    arrayUnion,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    increment,
-    query,
-    setDoc,
-    updateDoc,
-    where,
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  query,
+  setDoc,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 
 // Firestore helper functions for Practice questions
@@ -63,6 +63,7 @@ async function updateUserQuestionStats(
   userId: string,
   question: DSATQuestion,
   isCorrect: boolean,
+  isFirstAttempt: boolean,
 ): Promise<void> {
   if (!db) return;
 
@@ -82,10 +83,12 @@ async function updateUserQuestionStats(
   if (docSnap.exists()) {
     // Incrementally update existing stats
     const updateData: any = {
-      totalAnswered: increment(1),
       updatedAt: new Date().toISOString(),
     };
 
+    if (isFirstAttempt) {
+      updateData.totalAnswered = increment(1);
+    }
     if (isCorrect) {
       updateData.totalCorrect = increment(1);
     } else {
@@ -94,7 +97,9 @@ async function updateUserQuestionStats(
 
     // Update domain stats
     if (sanitizedDomain) {
-      updateData[`domainCounts.${sanitizedDomain}.answered`] = increment(1);
+      if (isFirstAttempt) {
+        updateData[`domainCounts.${sanitizedDomain}.answered`] = increment(1);
+      }
       if (isCorrect) {
         updateData[`domainCounts.${sanitizedDomain}.correct`] = increment(1);
       } else {
@@ -104,7 +109,9 @@ async function updateUserQuestionStats(
 
     // Update skill stats
     if (sanitizedSkill) {
-      updateData[`skillCounts.${sanitizedSkill}.answered`] = increment(1);
+      if (isFirstAttempt) {
+        updateData[`skillCounts.${sanitizedSkill}.answered`] = increment(1);
+      }
       if (isCorrect) {
         updateData[`skillCounts.${sanitizedSkill}.correct`] = increment(1);
       } else {
@@ -114,8 +121,10 @@ async function updateUserQuestionStats(
 
     // Update difficulty stats
     if (sanitizedDifficulty) {
-      updateData[`difficultyCounts.${sanitizedDifficulty}.answered`] =
-        increment(1);
+      if (isFirstAttempt) {
+        updateData[`difficultyCounts.${sanitizedDifficulty}.answered`] =
+          increment(1);
+      }
       if (isCorrect) {
         updateData[`difficultyCounts.${sanitizedDifficulty}.correct`] =
           increment(1);
@@ -125,9 +134,35 @@ async function updateUserQuestionStats(
       }
     }
 
+    // Joint counts — needed so question-stats can return an EXACT number when
+    // domain/skill AND difficulty filters are combined, instead of estimating
+    // via a proportional ratio (1D counts alone can't answer that query).
+    if (sanitizedSkill && sanitizedDifficulty) {
+      const key = `${sanitizedSkill}__${sanitizedDifficulty}`;
+      if (isFirstAttempt) {
+        updateData[`skillDifficultyCounts.${key}.answered`] = increment(1);
+      }
+      if (isCorrect) {
+        updateData[`skillDifficultyCounts.${key}.correct`] = increment(1);
+      } else {
+        updateData[`skillDifficultyCounts.${key}.incorrect`] = increment(1);
+      }
+    }
+    if (sanitizedDomain && sanitizedDifficulty) {
+      const key = `${sanitizedDomain}__${sanitizedDifficulty}`;
+      if (isFirstAttempt) {
+        updateData[`domainDifficultyCounts.${key}.answered`] = increment(1);
+      }
+      if (isCorrect) {
+        updateData[`domainDifficultyCounts.${key}.correct`] = increment(1);
+      } else {
+        updateData[`domainDifficultyCounts.${key}.incorrect`] = increment(1);
+      }
+    }
+
     await updateDoc(userStatsRef, updateData);
   } else {
-    // Create new user stats document
+    // Create new user stats document (isFirstAttempt is always true here)
     const newStats: any = {
       totalAnswered: 1,
       totalCorrect: isCorrect ? 1 : 0,
@@ -135,6 +170,8 @@ async function updateUserQuestionStats(
       domainCounts: {},
       skillCounts: {},
       difficultyCounts: {},
+      skillDifficultyCounts: {},
+      domainDifficultyCounts: {},
       updatedAt: new Date().toISOString(),
     };
 
@@ -156,6 +193,26 @@ async function updateUserQuestionStats(
 
     if (sanitizedDifficulty) {
       newStats.difficultyCounts[sanitizedDifficulty] = {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+        incorrect: isCorrect ? 0 : 1,
+      };
+    }
+
+    // Joint counts for new doc
+    if (sanitizedSkill && sanitizedDifficulty) {
+      newStats.skillDifficultyCounts[
+        `${sanitizedSkill}__${sanitizedDifficulty}`
+      ] = {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+        incorrect: isCorrect ? 0 : 1,
+      };
+    }
+    if (sanitizedDomain && sanitizedDifficulty) {
+      newStats.domainDifficultyCounts[
+        `${sanitizedDomain}__${sanitizedDifficulty}`
+      ] = {
         answered: 1,
         correct: isCorrect ? 1 : 0,
         incorrect: isCorrect ? 0 : 1,
@@ -186,6 +243,7 @@ export async function saveUserProgress(
   };
 
   const docSnap = await getDoc(progressRef);
+  const isFirstAttempt = !docSnap.exists();
 
   if (docSnap.exists()) {
     // Add new attempt to existing array
@@ -208,7 +266,7 @@ export async function saveUserProgress(
 
   // Update user question stats for practice configuration
   if (question) {
-    await updateUserQuestionStats(userId, question, isCorrect);
+    await updateUserQuestionStats(userId, question, isCorrect, isFirstAttempt);
   }
 }
 

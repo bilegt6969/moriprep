@@ -18,8 +18,10 @@ import {
     getDoc,
     getFirestore,
     onSnapshot,
+    query,
     serverTimestamp,
     setDoc,
+    where,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
@@ -80,11 +82,13 @@ export {
     getDownloadURL,
     googleProvider as googleProvider,
     onSnapshot,
+    query,
     ref,
     serverTimestamp,
     setDoc,
     storage,
     updateProfile,
-    uploadBytes
+    uploadBytes,
+    where
 };
 

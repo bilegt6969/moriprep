@@ -1,8 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function CallToAction() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+
   return (
     <section className="relative bg-[#FBFAF9] overflow-hidden py-6 sm:py-8 md:py-[4.875rem] md:pb-[5.75rem] w-full">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-10 relative">
@@ -17,14 +21,32 @@ export default function CallToAction() {
               pointer-events-none
             "
           >
-            <Image
-              src="/character/moriprep.png"
-              alt="Mori Prep Character"
-              width={495}
-              height={179}
-              className="object-contain w-[300px] sm:w-[360px] md:w-auto h-auto"
-              priority
-            />
+            <div className="relative w-[300px] sm:w-[360px] md:w-[495px] aspect-[495/179]">
+              {!isLoaded && !isError && (
+                <div
+                  className="absolute inset-0 z-0 animate-pulse rounded-xl bg-gray-200"
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* Illustration is decorative, so a failed load just quietly
+                  leaves empty space rather than showing an error glyph —
+                  but we still stop the skeleton from pulsing forever. */}
+              {!isError && (
+                <Image
+                  src="/character/moriprep.png"
+                  alt="Mori Prep Character"
+                  fill
+                  sizes="(min-width: 768px) 495px, 360px"
+                  className={`object-contain transition-opacity duration-500 ${
+                    isLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                  priority
+                  onLoad={() => setIsLoaded(true)}
+                  onError={() => setIsError(true)}
+                />
+              )}
+            </div>
           </div>
 
           {/* Content */}

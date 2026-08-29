@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { FC, useState } from "react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,6 +23,70 @@ const itemVariants = {
       duration: 0.6,
     },
   },
+};
+
+// Same pattern used in FeatureShowcase's ImageWithSkeleton: pulse while
+// loading, swap to a graceful fallback on error instead of leaving Next.js's
+// default broken-image box sitting in the column.
+const MockupImage: FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  return (
+    <div className="relative mx-auto w-full max-w-[450px] aspect-[450/887]">
+      {!isLoaded && !isError && (
+        <div
+          className="absolute inset-0 z-0 animate-pulse rounded-t-xl bg-gray-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {isError && (
+        <div
+          className="absolute inset-0 z-0 flex items-center justify-center rounded-t-xl bg-gray-100 text-gray-400"
+          role="img"
+          aria-label={`${alt} failed to load`}
+        >
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M4 16l4.5-4.5a2 2 0 012.8 0L15 15l1.2-1.2a2 2 0 012.8 0L21 16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
+      )}
+
+      {!isError && (
+        <Image
+          src={src}
+          alt={alt}
+          width={450}
+          height={887}
+          sizes="(min-width: 768px) 33vw, 90vw"
+          className={`relative z-10 h-auto w-full rounded-t-xl transition-opacity duration-500 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setIsError(true)}
+        />
+      )}
+    </div>
+  );
 };
 
 export function SendReceiveSwap() {
@@ -52,15 +117,10 @@ export function SendReceiveSwap() {
             variants={itemVariants}
           >
             <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
-              <div className="relative mx-auto w-full max-w-[450px]">
-                <Image
-                  src="/assets/practice.png"
-                  alt="Practice phone mockup"
-                  width={450}
-                  height={887}
-                  className="h-auto w-full rounded-t-xl"
-                />
-              </div>
+              <MockupImage
+                src="/assets/practice.png"
+                alt="Practice phone mockup"
+              />
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">
               <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full">
@@ -98,15 +158,10 @@ export function SendReceiveSwap() {
             variants={itemVariants}
           >
             <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
-              <div className="relative mx-auto w-full max-w-[450px]">
-                <Image
-                  src="/assets/resources.png"
-                  alt="Resources phone mockup"
-                  width={450}
-                  height={887}
-                  className="h-auto w-full rounded-t-xl"
-                />
-              </div>
+              <MockupImage
+                src="/assets/resources.png"
+                alt="Resources phone mockup"
+              />
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">
               <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full">
@@ -137,15 +192,10 @@ export function SendReceiveSwap() {
             variants={itemVariants}
           >
             <div className="mx-auto w-full overflow-hidden rounded-xl bg-[#FBFAF9] px-4 pt-4">
-              <div className="relative mx-auto w-full max-w-[450px]">
-                <Image
-                  src="/assets/domains.png"
-                  alt="Domains phone mockup"
-                  width={450}
-                  height={887}
-                  className="h-auto w-full rounded-t-xl"
-                />
-              </div>
+              <MockupImage
+                src="/assets/domains.png"
+                alt="Domains phone mockup"
+              />
             </div>
             <div className="flex items-center justify-center gap-[0.45rem]">
               <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full">

@@ -13,6 +13,12 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
   const isBannerVisible = useBannerVisible();
   const router = useRouter();
 
+  // Check if this is a practice session (has question_id) OR if on practice/rw page
+  const isPracticeSession =
+    searchParams.has("question_id") ||
+    pathname?.includes("/practice/rw") ||
+    pathname?.includes("/practice/math");
+
   // Check authentication for practice pages
   useEffect(() => {
     if (!auth) return;
@@ -26,15 +32,12 @@ function PracticeLayoutContent({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [pathname, router]);
 
-  // Hide sidebar on actual practice sessions (when question_id is present)
-  const isPracticeSession = searchParams.has("question_id");
-
   // Only show navbar with sidebar when not in an actual practice session
-  return isPracticeSession ? (
-    <>{children}</>
-  ) : (
-    <AppNavbar>{children}</AppNavbar>
-  );
+  if (isPracticeSession) {
+    return <>{children}</>;
+  }
+
+  return <AppNavbar>{children}</AppNavbar>;
 }
 
 export default function PracticeLayout({

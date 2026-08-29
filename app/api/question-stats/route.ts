@@ -1,12 +1,125 @@
 import { db, doc, getDoc } from "@/lib/firebase";
 import { NextRequest, NextResponse } from "next/server";
 
-// Sanitize field names to match the script
+const isDev = process.env.NODE_ENV !== "production";
+const log = (...args: unknown[]) => {
+  if (isDev) console.log(...args);
+};
+
+// Sanitize field names to match the offline stats-generation script.
 function sanitizeFieldName(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9]/g, "_")
     .replace(/_{2,}/g, "_")
     .replace(/^_|_$/g, "");
+}
+
+function toNumber(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parseListParam(searchParams: URLSearchParams, key: string): string[] {
+  const comma = searchParams.get(key);
+  const fromComma = comma ? comma.split(",").map((v) => v.trim()) : [];
+  const repeated = searchParams.getAll(key).map((v) => v.trim());
+  return [...new Set([...fromComma, ...repeated])].filter(Boolean);
+}
+
+/**
+ * Ratio of "answered" volume that falls within the selected difficulties.
+ * Used to approximate a domain/skill count when a difficulty filter is
+ * layered on top, since we don't store a joint domain+skill x difficulty
+ * breakdown. Handles both the global shape (`{ [difficulty]: number }`) and
+ * the per-user shape (`{ [difficulty]: { answered, correct, incorrect } }`).
+ * Returns 1 (no-op) when there's no difficulty filter or nothing to compare
+ * against.
+ */
+function getDifficultyRatio(
+  difficultyCounts: Record<string, unknown> | undefined,
+  difficulties: string[],
+): number {
+  if (difficulties.length === 0) return 1;
+  const counts = difficultyCounts || {};
+  const valueOf = (entry: unknown) =>
+    toNumber(typeof entry === "number" ? entry : (entry as any)?.answered);
+
+  const matched = difficulties.reduce(
+    (sum, diff) => sum + valueOf(counts[sanitizeFieldName(diff)]),
+    0,
+  );
+  const total = Object.values(counts).reduce(
+    (sum: number, entry) => sum + valueOf(entry),
+    0,
+  );
+
+  return total > 0 ? matched / total : 1;
+}
+
+function sumGlobalCounts(
+  source: Record<string, unknown> | undefined,
+  keys: string[],
+): number {
+  return keys.reduce(
+    (sum, key) => sum + toNumber(source?.[sanitizeFieldName(key)]),
+    0,
+  );
+}
+
+type UserBucket = { answered: number; correct: number; incorrect: number };
+
+function sumUserCounts(
+  source:
+    | Record<
+        string,
+        { answered?: unknown; correct?: unknown; incorrect?: unknown }
+      >
+    | undefined,
+  keys: string[],
+): UserBucket {
+  return keys.reduce<UserBucket>(
+    (acc, key) => {
+      const entry = source?.[sanitizeFieldName(key)];
+      acc.answered += toNumber(entry?.answered);
+      acc.correct += toNumber(entry?.correct);
+      acc.incorrect += toNumber(entry?.incorrect);
+      return acc;
+    },
+    { answered: 0, correct: 0, incorrect: 0 },
+  );
+}
+
+function sumJointUserCounts(
+  jointCounts:
+    | Record<
+        string,
+        { answered?: unknown; correct?: unknown; incorrect?: unknown } | number
+      >
+    | undefined,
+  primaryKeys: string[], // sanitized skills or domains
+  difficulties: string[], // sanitized
+): UserBucket | null {
+  if (!jointCounts) return null;
+  let sawAnyKey = false;
+  const bucket: UserBucket = { answered: 0, correct: 0, incorrect: 0 };
+  const valueOf = (entry: unknown) =>
+    toNumber(typeof entry === "number" ? entry : (entry as any)?.answered);
+
+  for (const p of primaryKeys) {
+    for (const d of difficulties) {
+      const key = `${p}__${d}`;
+      const entry = jointCounts[key];
+      if (entry !== undefined) sawAnyKey = true;
+      bucket.answered += valueOf(entry);
+      // global shape has no correct/incorrect breakdown per key — only
+      // populate those when the entry is the richer per-user object shape
+      if (typeof entry === "object" && entry !== null) {
+        bucket.correct += toNumber(entry.correct);
+        bucket.incorrect += toNumber(entry.incorrect);
+      }
+    }
+  }
+  return sawAnyKey ? bucket : null;
 }
 
 export async function GET(request: NextRequest) {
@@ -20,154 +133,101 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const domain = searchParams.get("domain");
-    const skill = searchParams.get("skill");
-    const difficulty = searchParams.get("difficulty");
     const userId = searchParams.get("userId");
+    const combinedDomains = parseListParam(searchParams, "domain");
+    const combinedSkills = parseListParam(searchParams, "skill");
+    const difficulties = parseListParam(searchParams, "difficulty");
+    const hasFilters =
+      combinedDomains.length > 0 ||
+      combinedSkills.length > 0 ||
+      difficulties.length > 0;
 
-    console.log("=== question-stats API called ===");
-    console.log("domain:", domain);
-    console.log("skill:", skill);
-    console.log("difficulty:", difficulty);
-    console.log("userId:", userId);
-    console.log(
-      "All searchParams:",
-      Object.fromEntries(searchParams.entries()),
-    );
+    log("=== question-stats API called ===", {
+      userId,
+      combinedDomains,
+      combinedSkills,
+      difficulties,
+    });
 
-    // Handle multiple domains (comma-separated or multiple params)
-    const domains = domain ? domain.split(",").map((d) => d.trim()) : [];
-    const allDomains = searchParams.getAll("domain").map((d) => d.trim());
-    const combinedDomains = [...new Set([...domains, ...allDomains])];
-
-    // Handle multiple skills (comma-separated or multiple params)
-    const skills = skill ? skill.split(",").map((s) => s.trim()) : [];
-    const allSkills = searchParams.getAll("skill").map((s) => s.trim());
-    const combinedSkills = [...new Set([...skills, ...allSkills])];
-
-    // Handle multiple difficulties (comma-separated)
-    const difficulties = difficulty
-      ? difficulty.split(",").map((d) => d.trim())
-      : [];
-
-    console.log("Parsed domains:", combinedDomains);
-    console.log("Parsed skills:", combinedSkills);
-    console.log("Parsed difficulties:", difficulties);
-
-    // If userId is provided, fetch user-specific stats
+    // ---- Per-user stats ----
     if (userId) {
-      const userStatsRef = doc(db, "userQuestionStats", userId);
-      const userStatsDoc = await getDoc(userStatsRef);
+      const userStatsDoc = await getDoc(doc(db, "userQuestionStats", userId));
 
       if (!userStatsDoc.exists()) {
-        console.log("User stats not found in Firebase for user:", userId);
-        // Return empty user stats if not found
-        return NextResponse.json({
-          totalAnswered: 0,
-          totalCorrect: 0,
-          totalIncorrect: 0,
-          domainCounts: {},
-          skillCounts: {},
-          difficultyCounts: {},
-        });
+        log("User stats not found in Firebase for user:", userId);
+        return NextResponse.json({ answered: 0, correct: 0, incorrect: 0 });
       }
 
       const userStats = userStatsDoc.data();
-      console.log("Fetched user stats from Firebase for user:", userId);
 
-      // If no filters, return full user stats with consistent structure
-      if (
-        combinedDomains.length === 0 &&
-        combinedSkills.length === 0 &&
-        difficulties.length === 0
-      ) {
-        console.log("No filters, returning full user stats");
+      if (!hasFilters) {
         return NextResponse.json({
-          answered: userStats.totalAnswered || 0,
-          correct: userStats.totalCorrect || 0,
-          incorrect: userStats.totalIncorrect || 0,
+          answered: toNumber(userStats.totalAnswered),
+          correct: toNumber(userStats.totalCorrect),
+          incorrect: toNumber(userStats.totalIncorrect),
         });
       }
 
-      // Calculate filtered count based on filters using sanitized keys
-      let answered = 0;
-      let correct = 0;
-      let incorrect = 0;
+      // Skill-level stats are the most specific and are used whenever skills
+      // are selected — the client always keeps `skill` in sync with the
+      // selected `domain`, so this also covers the "domain + skill" case.
+      let bucket: UserBucket | null = null;
 
-      console.log("Calculating filtered user stats...");
+      // Exact path: skill/domain AND difficulty both selected — use joint counts.
+      if (difficulties.length > 0 && combinedSkills.length > 0) {
+        bucket = sumJointUserCounts(
+          userStats?.skillDifficultyCounts,
+          combinedSkills.map(sanitizeFieldName),
+          difficulties.map(sanitizeFieldName),
+        );
+      } else if (difficulties.length > 0 && combinedDomains.length > 0) {
+        bucket = sumJointUserCounts(
+          userStats?.domainDifficultyCounts,
+          combinedDomains.map(sanitizeFieldName),
+          difficulties.map(sanitizeFieldName),
+        );
+      }
 
-      // If domains and skills are both provided, use skill-level stats (more specific)
-      if (combinedDomains.length > 0 && combinedSkills.length > 0) {
-        console.log(
-          "Using skill-level stats for domains:",
-          combinedDomains,
-          "skills:",
-          combinedSkills,
-        );
-        combinedSkills.forEach((skill) => {
-          const sanitizedSkill = sanitizeFieldName(skill);
-          const skillData = userStats?.skillCounts?.[sanitizedSkill];
-          if (skillData) {
-            answered += skillData.answered;
-            correct += skillData.correct;
-            incorrect += skillData.incorrect;
-          }
-        });
-      } else if (combinedDomains.length > 0) {
-        console.log("Using domain-level stats for domains:", combinedDomains);
-        combinedDomains.forEach((domain) => {
-          const sanitizedDomain = sanitizeFieldName(domain);
-          const domainData = userStats?.domainCounts?.[sanitizedDomain];
-          if (domainData) {
-            answered += domainData.answered;
-            correct += domainData.correct;
-            incorrect += domainData.incorrect;
-          }
-        });
-      } else if (combinedSkills.length > 0) {
-        console.log("Using skill-level stats for skills:", combinedSkills);
-        combinedSkills.forEach((skill) => {
-          const sanitizedSkill = sanitizeFieldName(skill);
-          const skillData = userStats?.skillCounts?.[sanitizedSkill];
-          if (skillData) {
-            answered += skillData.answered;
-            correct += skillData.correct;
-            incorrect += skillData.incorrect;
-          }
-        });
-      } else if (difficulties.length > 0) {
-        console.log(
-          "Using difficulty-level stats for difficulties:",
-          difficulties,
-        );
-        difficulties.forEach((diff) => {
-          const sanitizedDiff = sanitizeFieldName(diff);
-          const diffData = userStats?.difficultyCounts?.[sanitizedDiff];
-          if (diffData) {
-            answered += diffData.answered;
-            correct += diffData.correct;
-            incorrect += diffData.incorrect;
-          }
-        });
+      if (bucket === null) {
+        // No filters combined that need a join, OR pre-migration data with no
+        // joint buckets yet — fall back to the existing 1D + ratio estimate.
+        if (combinedSkills.length > 0) {
+          bucket = sumUserCounts(userStats?.skillCounts, combinedSkills);
+        } else if (combinedDomains.length > 0) {
+          bucket = sumUserCounts(userStats?.domainCounts, combinedDomains);
+        } else {
+          bucket = sumUserCounts(userStats?.difficultyCounts, difficulties);
+        }
+        if (
+          difficulties.length > 0 &&
+          (combinedDomains.length > 0 || combinedSkills.length > 0)
+        ) {
+          const ratio = getDifficultyRatio(
+            userStats?.difficultyCounts,
+            difficulties,
+          );
+          bucket = {
+            answered: Math.round(bucket.answered * ratio),
+            correct: Math.round(bucket.correct * ratio),
+            incorrect: Math.round(bucket.incorrect * ratio),
+          };
+        }
       }
 
       console.log(
-        "Filtered user stats - answered:",
-        answered,
-        "correct:",
-        correct,
-        "incorrect:",
-        incorrect,
+        "joint bucket answered:",
+        bucket?.answered,
+        "vs distinct client count: 29 (from rw page log)",
       );
-      return NextResponse.json({ answered, correct, incorrect });
+      log("Filtered user stats:", bucket);
+      return NextResponse.json(bucket);
     }
 
-    // Fetch global stats from Firebase
-    const statsRef = doc(db, "questionStats", "summary");
-    const statsDoc = await getDoc(statsRef);
+    // ---- Global stats ----
+    const statsDoc = await getDoc(doc(db, "questionStats", "summary"));
 
     if (!statsDoc.exists()) {
-      console.log("Question stats not found in Firebase");
+      log("Question stats not found in Firebase");
       return NextResponse.json(
         { error: "Question stats not found" },
         { status: 404 },
@@ -175,59 +235,59 @@ export async function GET(request: NextRequest) {
     }
 
     const stats = statsDoc.data();
-    console.log("Fetched question stats from Firebase");
 
-    // If no filters, return full stats
-    if (
-      combinedDomains.length === 0 &&
-      combinedSkills.length === 0 &&
-      difficulties.length === 0
-    ) {
-      console.log("No filters, returning full global stats");
-      return NextResponse.json(stats);
+    if (!hasFilters) {
+      // Always include a `count` field so the response shape is consistent
+      // whether or not filters are active. Adjust the field name below if
+      // your `questionStats/summary` document uses something other than
+      // totalCount/total/count for its grand total.
+      const total = toNumber(stats.totalCount ?? stats.total ?? stats.count);
+      return NextResponse.json({ count: total, ...stats });
     }
 
-    // Calculate filtered count based on filters using sanitized keys
-    let count = 0;
+    let count: number | null = null;
 
-    console.log("Calculating filtered global stats...");
-
-    // If domains and skills are both provided, use skill-level stats (more specific)
-    if (combinedDomains.length > 0 && combinedSkills.length > 0) {
-      console.log(
-        "Using skill-level stats for domains:",
-        combinedDomains,
-        "skills:",
-        combinedSkills,
-      );
-      combinedSkills.forEach((skill) => {
-        const sanitizedSkill = sanitizeFieldName(skill);
-        count += stats?.skillCounts?.[sanitizedSkill] || 0;
-      });
-    } else if (combinedDomains.length > 0) {
-      console.log("Using domain-level stats for domains:", combinedDomains);
-      combinedDomains.forEach((domain) => {
-        const sanitizedDomain = sanitizeFieldName(domain);
-        count += stats?.domainCounts?.[sanitizedDomain] || 0;
-      });
-    } else if (combinedSkills.length > 0) {
-      console.log("Using skill-level stats for skills:", combinedSkills);
-      combinedSkills.forEach((skill) => {
-        const sanitizedSkill = sanitizeFieldName(skill);
-        count += stats?.skillCounts?.[sanitizedSkill] || 0;
-      });
-    } else if (difficulties.length > 0) {
-      console.log(
-        "Using difficulty-level stats for difficulties:",
-        difficulties,
-      );
-      count = difficulties.reduce((sum, diff) => {
-        const sanitizedDiff = sanitizeFieldName(diff);
-        return sum + (stats?.difficultyCounts?.[sanitizedDiff] || 0);
-      }, 0);
+    // Exact path: skill/domain AND difficulty both selected — use joint counts.
+    if (difficulties.length > 0 && combinedSkills.length > 0) {
+      count =
+        sumJointUserCounts(
+          stats?.skillDifficultyCounts,
+          combinedSkills.map(sanitizeFieldName),
+          difficulties.map(sanitizeFieldName),
+        )?.answered ?? null;
+    } else if (difficulties.length > 0 && combinedDomains.length > 0) {
+      count =
+        sumJointUserCounts(
+          stats?.domainDifficultyCounts,
+          combinedDomains.map(sanitizeFieldName),
+          difficulties.map(sanitizeFieldName),
+        )?.answered ?? null;
     }
 
-    console.log("Filtered global count:", count);
+    if (count === null) {
+      // No joint counts available or pre-migration data — fall back to 1D + ratio estimate.
+      // Skill is more specific than domain, so prioritize skill when both are present
+      if (combinedSkills.length > 0) {
+        count = sumGlobalCounts(stats?.skillCounts, combinedSkills);
+      } else if (combinedDomains.length > 0) {
+        count = sumGlobalCounts(stats?.domainCounts, combinedDomains);
+      } else {
+        count = sumGlobalCounts(stats?.difficultyCounts, difficulties);
+      }
+
+      if (
+        difficulties.length > 0 &&
+        (combinedDomains.length > 0 || combinedSkills.length > 0)
+      ) {
+        const ratio = getDifficultyRatio(stats?.difficultyCounts, difficulties);
+        if (ratio > 0) {
+          count = Math.round(count * ratio);
+        }
+        // If ratio is 0, leave count unadjusted rather than zeroing out a real result
+      }
+    }
+
+    log("Filtered global count:", count);
     return NextResponse.json({ count });
   } catch (error) {
     console.error("Error fetching question stats:", error);

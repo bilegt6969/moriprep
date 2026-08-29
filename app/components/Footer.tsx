@@ -2,6 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+
+// NOTE: this component previously existed as three byte-for-byte identical
+// files in the project. This is the single canonical version — delete the
+// other two copies and import this one everywhere instead, so a future fix
+// only has to happen once.
+
+function FooterLogo() {
+  const [isError, setIsError] = useState(false);
+
+  if (isError) {
+    // Decorative logo failing to load shouldn't break the footer layout —
+    // reserve the same box and fail silently rather than showing a
+    // broken-image icon in the header row of the footer.
+    return <div className="h-[10px] w-[32px]" aria-hidden="true" />;
+  }
+
+  return (
+    <Image
+      src="/logo/logo.png"
+      alt="Mori Prep Logo"
+      width={32}
+      height={10}
+      className="grayscale hover:grayscale-30 hover:opacity-80 transition-all"
+      onError={() => setIsError(true)}
+    />
+  );
+}
 
 export function Footer() {
   return (
@@ -10,13 +38,7 @@ export function Footer() {
         {/* Top row on mobile: Logo + Socials side by side */}
         <div className="flex items-center justify-between md:block md:flex-shrink-0 md:pt-[2px]">
           <Link href="/">
-            <Image
-              src="/logo/logo.png"
-              alt="Mori Prep Logo"
-              width={32}
-              height={10}
-              className="grayscale hover:grayscale-30 hover:opacity-80 transition-all"
-            />
+            <FooterLogo />
           </Link>
 
           {/* Socials shown here only on mobile, next to logo */}

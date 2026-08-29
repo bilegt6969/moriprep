@@ -68,7 +68,7 @@ export default function Navbar() {
             <img
               src="/morin.svg"
               alt="Mori Prep"
-              className="h-7 w-auto max-w-[7rem] object-contain"
+              className="h-7 w-auto max-w-[7rem] object-contain grayscale opacity-10"
             />
           </Link>
         </div>

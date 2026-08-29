@@ -17,29 +17,70 @@ const ImageWithSkeleton: FC<ImageWithSkeletonProps> = ({
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   return (
     <div
       className={`relative ${props.fill ? "h-full w-full" : ""} ${wrapperClassName}`}
     >
-      {/* Skeleton Pulse Layer */}
-      {!isLoaded && (
+      {/* Skeleton Pulse Layer — now also clears on error so it can't spin
+          forever if the image 404s or otherwise fails to load. */}
+      {!isLoaded && !isError && (
         <div
           className={`absolute inset-0 z-0 animate-pulse bg-gray-200 ${skeletonClassName}`}
           aria-hidden="true"
         />
       )}
+
+      {/* Fallback shown when the image errors, instead of leaving a
+          permanently-pulsing skeleton with nothing behind it. */}
+      {isError && (
+        <div
+          className={`absolute inset-0 z-0 flex items-center justify-center bg-gray-100 text-gray-400 ${skeletonClassName}`}
+          role="img"
+          aria-label={props.alt || "Image failed to load"}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M4 16l4.5-4.5a2 2 0 012.8 0L15 15l1.2-1.2a2 2 0 012.8 0L21 16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
+      )}
+
       {/* Actual Image */}
-      <Image
-        {...props}
-        className={`${props.className || ""} relative z-10 transition-opacity duration-500 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
-        onLoad={(e) => {
-          setIsLoaded(true);
-          if (props.onLoad) props.onLoad(e);
-        }}
-      />
+      {!isError && (
+        <Image
+          {...props}
+          className={`${props.className || ""} relative z-10 transition-opacity duration-500 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={(e) => {
+            setIsLoaded(true);
+            if (props.onLoad) props.onLoad(e);
+          }}
+          onError={(e) => {
+            setIsError(true);
+            if (props.onError) props.onError(e);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -98,6 +139,57 @@ interface ShowcaseProps {
   imageSrc: string;
   reversed?: boolean;
 }
+
+// --- Video with loading/error state ---
+// Previously the video branch had no loading state at all (no skeleton,
+// no fallback), unlike the image branch right next to it. This brings it
+// in line: shows the poster area as a skeleton until the video reports it
+// can play, and falls back to the poster image if the video errors.
+const VideoWithSkeleton: FC<{ src: string; poster: string }> = ({
+  src,
+  poster,
+}) => {
+  const [isReady, setIsReady] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  if (isError) {
+    return (
+      <ImageWithSkeleton
+        src={poster}
+        alt="Video preview"
+        width={1200}
+        height={800}
+        wrapperClassName="w-full"
+        className="h-auto w-full object-cover"
+        skeletonClassName="aspect-[4/3] w-full"
+      />
+    );
+  }
+
+  return (
+    <div className="relative w-full">
+      {!isReady && (
+        <div
+          className="absolute inset-0 z-0 animate-pulse bg-gray-200 aspect-[4/3] w-full"
+          aria-hidden="true"
+        />
+      )}
+      <video
+        src={src}
+        poster={poster}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className={`relative z-10 h-auto w-full object-cover transition-opacity duration-500 ${
+          isReady ? "opacity-100" : "opacity-0"
+        }`}
+        onCanPlay={() => setIsReady(true)}
+        onError={() => setIsError(true)}
+      />
+    </div>
+  );
+};
 
 // --- Reusable Showcase Section Component ---
 
@@ -164,6 +256,11 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
                   src={demoThumbnailSrc}
                   alt={`${demoTitle} thumbnail`}
                   fill
+                  // Explicit `sizes` — the previous version omitted this on a
+                  // `fill` image, which makes Next.js fall back to serving
+                  // the largest available image regardless of the ~78px
+                  // rendered width (wasted bandwidth + a console warning).
+                  sizes="78px"
                   className="object-cover"
                   skeletonClassName="rounded-md"
                 />
@@ -191,15 +288,7 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
               {/* Inner image/video container with its own rounded corners */}
               <div className="relative w-full overflow-hidden rounded-[12px] bg-white">
                 {videoSrc ? (
-                  <video
-                    src={videoSrc}
-                    poster={imageSrc}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="h-auto w-full object-cover"
-                  />
+                  <VideoWithSkeleton src={videoSrc} poster={imageSrc} />
                 ) : (
                   <ImageWithSkeleton
                     src={imageSrc}
@@ -221,6 +310,16 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
 };
 
 // --- Main Showcase Section Component ---
+//
+// NOTE (not fixed here, needs a decision from you): DSATShowcase and the
+// default-exported FeaturesPage below render the *same* two sections but
+// point at different asset paths for what looks like the same images
+// (`/assets/image.png` / `/assets/image copy.png` vs
+// `/videos/promo-watch.png` / `/videos/promo-activity.png`). That's almost
+// certainly a copy/paste leftover — whichever path doesn't actually exist
+// in `public/` will silently fail to load (now at least shown as the
+// fallback state above instead of hanging forever). Worth confirming which
+// set of paths is the real one and deleting the other component.
 
 export function DSATShowcase() {
   return (
