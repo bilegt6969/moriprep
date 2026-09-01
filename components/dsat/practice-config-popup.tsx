@@ -84,7 +84,12 @@ export function PracticeConfigPopup({
         const config = JSON.parse(savedConfig);
         setSelectedDifficulties(config.difficulties ?? allDifficulties);
         setSelectedDomains(config.domains ?? domains);
-        setSelectedSkills(config.skills ?? allSkills);
+        // Filter out any skills that no longer exist in the current allSkills
+        const savedSkills = config.skills ?? allSkills;
+        const validSkills = savedSkills.filter((skill: string) =>
+          allSkills.includes(skill),
+        );
+        setSelectedSkills(validSkills);
         setStatusFilter(config.statusFilter || "all");
         setAttemptFilter(config.attemptFilter || "all");
       } catch (e) {
@@ -457,7 +462,7 @@ export function PracticeConfigPopup({
                             transition={{ duration: 0.25, ease: "easeInOut" }}
                             className="overflow-hidden"
                           >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                               {selectedDomains.map((domain) => {
                                 const domainSkillList =
                                   domainSkills[domain] || [];
@@ -469,18 +474,18 @@ export function PracticeConfigPopup({
                                 return (
                                   <div
                                     key={domain}
-                                    className="rounded-2xl border border-zinc-100 bg-zinc-50/60 p-3.5"
+                                    className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
                                   >
-                                    <div className="flex items-center justify-between mb-2 px-0.5 gap-2">
-                                      <span className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide leading-tight">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
                                         {domain}
                                       </span>
-                                      <span className="text-[10px] font-medium text-zinc-400 flex-shrink-0">
+                                      <span className="text-xs font-semibold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
                                         {selectedInDomain}/
                                         {domainSkillList.length}
                                       </span>
                                     </div>
-                                    <div className="flex flex-col gap-1">
+                                    <div className="space-y-1.5">
                                       {domainSkillList.map((skill) => {
                                         const isSelected =
                                           selectedSkills.includes(skill);
@@ -492,26 +497,26 @@ export function PracticeConfigPopup({
                                                 toggleValue(prev, skill),
                                               )
                                             }
-                                            className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] font-medium transition-colors duration-150 ${FOCUS_RING} ${
+                                            className={`flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-all duration-150 ${FOCUS_RING} ${
                                               isSelected
-                                                ? "bg-white text-zinc-900 shadow-sm"
-                                                : "text-zinc-500 hover:bg-white/60 hover:text-zinc-700"
+                                                ? "bg-zinc-900 text-white shadow-md"
+                                                : "bg-zinc-50 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800"
                                             }`}
                                           >
-                                            <span
-                                              className={`flex-shrink-0 w-4 h-4 rounded-[5px] border flex items-center justify-center transition-colors ${
+                                            <div
+                                              className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                                                 isSelected
-                                                  ? "bg-zinc-900 border-zinc-900"
-                                                  : "border-zinc-300"
+                                                  ? "bg-white border-white"
+                                                  : "border-zinc-300 bg-white"
                                               }`}
                                             >
                                               {isSelected && (
                                                 <Check
-                                                  className="w-3 h-3 text-white"
+                                                  className="w-3 h-3 text-zinc-900"
                                                   strokeWidth={3}
                                                 />
                                               )}
-                                            </span>
+                                            </div>
                                             {skill}
                                           </button>
                                         );

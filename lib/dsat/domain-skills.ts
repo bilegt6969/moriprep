@@ -3,8 +3,7 @@ export const domainSkills: Record<string, string[]> = {
   "Information and Ideas": [
     "Central Ideas and Details",
     "Inferences",
-    "Command of Evidence — Textual",
-    "Command of Evidence — Quantitative",
+    "Command of Evidence",
   ],
   "Craft and Structure": [
     "Words in Context",
