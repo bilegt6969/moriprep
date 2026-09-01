@@ -203,15 +203,13 @@ export function PracticeConfigPopup({
             const totalAvailable =
               globalData.count ?? globalData.total ?? DEFAULT_TOTAL_QUESTIONS;
             const finalCount = totalAvailable - count;
-            setFilteredCount(finalCount);
+            setFilteredCount(Math.max(0, finalCount));
           } else {
-            setFilteredCount(count);
+            if (statusFilter === "correct") count = userData.correct || 0;
+            else if (statusFilter === "incorrect")
+              count = userData.incorrect || 0;
+            setFilteredCount(Math.max(0, count));
           }
-          if (statusFilter === "correct") count = userData.correct || 0;
-          else if (statusFilter === "incorrect")
-            count = userData.incorrect || 0;
-
-          setFilteredCount(Math.max(0, count));
         } else if (hasContentFilters) {
           const response = await fetch(
             `/api/question-stats?${buildParams().toString()}`,
