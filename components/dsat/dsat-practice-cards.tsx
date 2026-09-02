@@ -1,10 +1,11 @@
 "use client";
 
+import { MathPracticeConfigPopup } from "@/components/dsat/math-practice-config-popup";
+import { RWPracticeConfigPopup } from "@/components/dsat/rw-practice-config-popup";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "hooks/use-reduced-motion";
 import { ChevronRight, LockIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { PracticeConfigPopup } from "./practice-config-popup";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
@@ -46,45 +47,51 @@ const initialPracticeAreas = [
     id: "math",
     title: "Mathematics",
     greeting: "Expert problem sets",
-    questions: "2,390",
-    focus: "Advanced Algebra",
+    questions: "Loading...",
+    focus: "Advanced Math",
     description: "Enter any topic, and we'll supply the perfect problem set.",
     color: "bg-[#7DD3FC]", // Matching the blue from the reference
     textColor: "text-neutral-900",
-    available: false,
-    buttonText: "Coming Soon",
+    available: true,
+    buttonText: "Start Practicing",
   },
 ];
 
 export function DSATPracticeCards() {
   const reduce = useReducedMotion();
-  const [isConfigPopupOpen, setIsConfigPopupOpen] = useState(false);
+  const [isRWConfigPopupOpen, setIsRWConfigPopupOpen] = useState(false);
+  const [isMathConfigPopupOpen, setIsMathConfigPopupOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [practiceAreas, setPracticeAreas] = useState(initialPracticeAreas);
 
   useEffect(() => {
     setIsMounted(true);
-    // Fetch total questions from Firebase stats
-    fetch("/api/question-stats")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.total) {
-          setTotalQuestions(data.total);
-          // Update the practice areas with the actual count
-          setPracticeAreas((prev) => {
-            const updated = [...prev];
-            updated[0].questions = data.total.toLocaleString();
-            return updated;
-          });
-        }
+    // Fetch total questions from Firebase stats for both RW and Math
+    Promise.all([
+      fetch("/api/question-stats").then((res) => res.json()),
+      fetch("/api/question-stats?test=Math").then((res) => res.json()),
+    ])
+      .then(([rwData, mathData]) => {
+        setPracticeAreas((prev) => {
+          const updated = [...prev];
+          if (rwData.total) {
+            updated[0].questions = rwData.total.toLocaleString();
+          }
+          if (mathData.total || mathData.count) {
+            updated[1].questions = (
+              mathData.total || mathData.count
+            ).toLocaleString();
+          }
+          return updated;
+        });
       })
       .catch((error) => {
         console.error("Error fetching question stats:", error);
       });
   }, []);
 
-  const handleStartPractice = (config: any) => {
+  const handleStartRWPractice = (config: any) => {
     const params = new URLSearchParams();
 
     if (config.difficulties.length > 0) {
@@ -105,6 +112,30 @@ export function DSATPracticeCards() {
 
     const queryString = params.toString();
     const url = `/practice/rw${queryString ? `?${queryString}` : ""}`;
+    window.location.href = url;
+  };
+
+  const handleStartMathPractice = (config: any) => {
+    const params = new URLSearchParams();
+
+    if (config.difficulties.length > 0) {
+      params.set("difficulties", config.difficulties.join(","));
+    }
+    if (config.domains.length > 0) {
+      params.set("domains", config.domains.join(","));
+    }
+    if (config.skills.length > 0) {
+      params.set("skills", config.skills.join(","));
+    }
+    if (config.statusFilter && config.statusFilter !== "all") {
+      params.set("statusFilter", config.statusFilter);
+    }
+    if (config.attemptFilter && config.attemptFilter !== "all") {
+      params.set("attemptFilter", config.attemptFilter);
+    }
+
+    const queryString = params.toString();
+    const url = `/practice/math${queryString ? `?${queryString}` : ""}`;
     window.location.href = url;
   };
 
@@ -199,7 +230,13 @@ export function DSATPracticeCards() {
 
                   {area.available ? (
                     <button
-                      onClick={() => setIsConfigPopupOpen(true)}
+                      onClick={() => {
+                        if (area.id === "reading-writing") {
+                          setIsRWConfigPopupOpen(true);
+                        } else if (area.id === "math") {
+                          setIsMathConfigPopupOpen(true);
+                        }
+                      }}
                       className="group flex items-center gap-2 bg-white/20 hover:bg-white/30 text-neutral-900 px-6 py-3 rounded-full font-semibold transition-all backdrop-blur-sm"
                     >
                       {area.buttonText}
@@ -218,10 +255,15 @@ export function DSATPracticeCards() {
         </motion.div>
       </section>
 
-      <PracticeConfigPopup
-        isOpen={isConfigPopupOpen}
-        onClose={() => setIsConfigPopupOpen(false)}
-        onStartPractice={handleStartPractice}
+      <RWPracticeConfigPopup
+        isOpen={isRWConfigPopupOpen}
+        onClose={() => setIsRWConfigPopupOpen(false)}
+        onStartPractice={handleStartRWPractice}
+      />
+      <MathPracticeConfigPopup
+        isOpen={isMathConfigPopupOpen}
+        onClose={() => setIsMathConfigPopupOpen(false)}
+        onStartPractice={handleStartMathPractice}
       />
     </>
   );

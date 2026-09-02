@@ -134,6 +134,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get("userId");
+    const test = searchParams.get("test") || "Reading and Writing";
     const combinedDomains = parseListParam(searchParams, "domain");
     const combinedSkills = parseListParam(searchParams, "skill");
     const difficulties = parseListParam(searchParams, "difficulty");
@@ -144,6 +145,7 @@ export async function GET(request: NextRequest) {
 
     log("=== question-stats API called ===", {
       userId,
+      test,
       combinedDomains,
       combinedSkills,
       difficulties,
@@ -151,7 +153,10 @@ export async function GET(request: NextRequest) {
 
     // ---- Per-user stats ----
     if (userId) {
-      const userStatsDoc = await getDoc(doc(db, "userQuestionStats", userId));
+      const userStatsDocName = test === "Math" ? `${userId}-math` : userId;
+      const userStatsDoc = await getDoc(
+        doc(db, "userQuestionStats", userStatsDocName),
+      );
 
       if (!userStatsDoc.exists()) {
         log("User stats not found in Firebase for user:", userId);
@@ -224,7 +229,8 @@ export async function GET(request: NextRequest) {
     }
 
     // ---- Global stats ----
-    const statsDoc = await getDoc(doc(db, "questionStats", "summary"));
+    const statsDocName = test === "Math" ? "summary-math" : "summary";
+    const statsDoc = await getDoc(doc(db, "questionStats", statsDocName));
 
     if (!statsDoc.exists()) {
       log("Question stats not found in Firebase");
