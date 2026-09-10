@@ -631,18 +631,29 @@ function MathPracticeContent() {
       setSelectedAnswer(null);
       setShowExplanation(false);
       setIsCorrect(null);
+      setWrongAnswers(new Set());
       setHistoryIndex(-1);
     }
   };
 
   const goToNext = () => {
     if (currentQuestionIndex < questionsData.length - 1) {
+      // Reset state for next question
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setIsCorrect(null);
+      setWrongAnswers(new Set());
       goToQuestion(currentQuestionIndex + 1);
     }
   };
 
   const goToPrevious = () => {
     if (currentQuestionIndex > 0) {
+      // Reset state for previous question
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setIsCorrect(null);
+      setWrongAnswers(new Set());
       goToQuestion(currentQuestionIndex - 1);
     }
   };

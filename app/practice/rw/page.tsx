@@ -1091,6 +1091,15 @@ function RWPracticePageContent() {
   }
 
   function handleNextQuestion() {
+    // Reset state for next question
+    setSelectedAnswer("");
+    setHighlightedAnswer("");
+    setJustAnswered(false);
+    setShowExplanation(false);
+    setWrongAnswers(new Set());
+    setEliminatedChoices(new Set());
+    setIsTimerPaused(false);
+
     if (isRemixMode && selectedQuestion) {
       // Add current question to history before navigating
       setNavigationHistory((prev) => [...prev, selectedQuestion.question_id]);
@@ -1122,6 +1131,15 @@ function RWPracticePageContent() {
   }
 
   function handlePreviousQuestion() {
+    // Reset state for previous question
+    setSelectedAnswer("");
+    setHighlightedAnswer("");
+    setJustAnswered(false);
+    setShowExplanation(false);
+    setWrongAnswers(new Set());
+    setEliminatedChoices(new Set());
+    setIsTimerPaused(false);
+
     if (isRemixMode) {
       // Go back through navigation history
       if (navigationHistory.length > 0) {
@@ -1153,6 +1171,14 @@ function RWPracticePageContent() {
     if (!isRemixMode) {
       setNavigationHistory([]);
     }
+    // Reset state when switching to remix mode
+    setSelectedAnswer("");
+    setHighlightedAnswer("");
+    setJustAnswered(false);
+    setShowExplanation(false);
+    setWrongAnswers(new Set());
+    setEliminatedChoices(new Set());
+    setIsTimerPaused(false);
   }
 
   function handleGoBack() {
@@ -1163,6 +1189,14 @@ function RWPracticePageContent() {
     setIsReturningToSelection(false);
     setSelectedQuestion(filteredQuestions[index] || null);
     setShowQuestionPicker(false);
+    // Reset state when selecting a new question
+    setSelectedAnswer("");
+    setHighlightedAnswer("");
+    setJustAnswered(false);
+    setShowExplanation(false);
+    setWrongAnswers(new Set());
+    setEliminatedChoices(new Set());
+    setIsTimerPaused(false);
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
