@@ -245,7 +245,7 @@ export async function saveUserProgress(
   const docSnap = await getDoc(progressRef);
   const isFirstAttempt = !docSnap.exists();
 
-  const baseData = {
+  const baseData: any = {
     userId,
     questionId,
     attempts: [newAttempt],
