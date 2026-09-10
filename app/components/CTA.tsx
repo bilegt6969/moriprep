@@ -21,7 +21,9 @@ export default function CallToAction() {
               pointer-events-none
             "
           >
-            <div className="relative w-[300px] sm:w-[360px] md:w-[495px] aspect-[495/179]">
+            {/* Intentionally large arbitrary values - exceeds standard Tailwind spacing for prominent CTA image */}
+            {/* Using actual image aspect ratio (1080x1920 = 9/16) */}
+            <div className="relative w-300 sm:w-350 md:w-400 lg:w-450 xl:w-500 aspect-9/16">
               {!isLoaded && !isError && (
                 <div
                   className="absolute inset-0 z-0 animate-pulse rounded-xl bg-gray-200"
@@ -37,10 +39,11 @@ export default function CallToAction() {
                   src="/character/moriprep.png"
                   alt="Mori Prep Character"
                   fill
-                  sizes="(min-width: 768px) 495px, 360px"
+                  sizes="(min-width: 1280px) 2000px, (min-width: 1024px) 1800px, (min-width: 768px) 1600px, (min-width: 640px) 1400px, 1200px"
                   className={`object-contain transition-opacity duration-500 ${
                     isLoaded ? "opacity-100" : "opacity-0"
                   }`}
+                  style={{ objectPosition: "center" }}
                   priority
                   onLoad={() => setIsLoaded(true)}
                   onError={() => setIsError(true)}

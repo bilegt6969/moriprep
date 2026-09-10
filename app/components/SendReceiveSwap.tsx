@@ -33,7 +33,7 @@ const MockupImage: FC<{ src: string; alt: string }> = ({ src, alt }) => {
   const [isError, setIsError] = useState(false);
 
   return (
-    <div className="relative mx-auto w-full max-w-[450px] aspect-[450/887]">
+    <div className="relative mx-auto w-full max-w-[450px]">
       {!isLoaded && !isError && (
         <div
           className="absolute inset-0 z-0 animate-pulse rounded-t-xl bg-gray-200"
@@ -75,8 +75,8 @@ const MockupImage: FC<{ src: string; alt: string }> = ({ src, alt }) => {
         <Image
           src={src}
           alt={alt}
-          width={450}
-          height={887}
+          width={800}
+          height={800}
           sizes="(min-width: 768px) 33vw, 90vw"
           className={`relative z-10 h-auto w-full rounded-t-xl transition-opacity duration-500 ${
             isLoaded ? "opacity-100" : "opacity-0"

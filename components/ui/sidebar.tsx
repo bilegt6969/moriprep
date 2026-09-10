@@ -8,17 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -466,13 +466,13 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding,background-color] duration-150 ease-in-out group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-neutral-100/50 hover:text-neutral-900 focus-visible:ring-2 active:bg-neutral-200/50 active:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-neutral-100/50 data-open:hover:text-neutral-900 data-active:bg-neutral-900/5 data-active:font-medium data-active:text-neutral-900 [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
+  "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg p-2 text-left text-sm text-neutral-500 dark:text-neutral-400 ring-sidebar-ring outline-hidden transition-[width,height,padding,background-color,box-shadow] duration-150 ease-in-out group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-white/70 hover:text-neutral-900 hover:shadow-sm focus-visible:ring-2 active:bg-white active:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:text-neutral-900 data-active:bg-white data-active:shadow-sm data-active:font-medium data-active:text-neutral-900 dark:hover:bg-neutral-900/60 dark:data-active:bg-neutral-800 [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
     variants: {
       variant: {
-        default: "hover:bg-neutral-100/50 hover:text-neutral-900",
+        default: "hover:bg-white/70 hover:text-neutral-900",
         outline:
-          "bg-transparent shadow-none hover:bg-neutral-100/50 hover:text-neutral-900",
+          "bg-transparent shadow-none hover:bg-white/70 hover:text-neutral-900",
       },
       size: {
         default: "h-8 text-sm",
@@ -666,7 +666,7 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        "flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-lg px-2 text-neutral-600/80 ring-sidebar-ring outline-hidden group-data-[collapsible=icon]:hidden hover:bg-neutral-100/50 hover:text-neutral-900 focus-visible:ring-2 active:bg-neutral-200/50 active:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[size=md]:text-sm data-[size=sm]:text-xs data-active:bg-neutral-900/5 data-active:text-neutral-900 data-active:font-medium [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-neutral-500",
+        "flex h-8 min-w-0 items-center gap-2 overflow-hidden rounded-lg px-2 text-neutral-500 ring-sidebar-ring outline-hidden group-data-[collapsible=icon]:hidden hover:bg-white/70 hover:text-neutral-900 focus-visible:ring-2 active:bg-white active:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[size=md]:text-sm data-[size=sm]:text-xs data-active:bg-white data-active:text-neutral-900 data-active:font-medium data-active:shadow-sm [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-neutral-400",
         className,
       )}
       {...props}
@@ -675,29 +675,29 @@ function SidebarMenuSubButton({
 }
 
 export {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupAction,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarInput,
-    SidebarInset,
-    SidebarMenu,
-    SidebarMenuAction,
-    SidebarMenuBadge,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarMenuSkeleton,
-    SidebarMenuSub,
-    SidebarMenuSubButton,
-    SidebarMenuSubItem,
-    SidebarProvider,
-    SidebarRail,
-    SidebarSeparator,
-    SidebarTrigger,
-    useSidebar
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar
 };
 

@@ -2,14 +2,14 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart2,
-  ChevronDown,
-  CircleDollarSign,
-  ClipboardList,
-  Home,
-  Info,
-  Library,
-  User,
+    BarChart2,
+    ChevronDown,
+    CircleDollarSign,
+    ClipboardList,
+    Home,
+    Info,
+    Library,
+    User,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -26,7 +26,7 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const mainNavItems = [
-    { name: "Home", href: "/", icon: Home },
+    { name: "Overview", href: "/", icon: Home },
     { name: "Practice Tests", href: "/tests", icon: ClipboardList },
     {
       name: "Question Banks",

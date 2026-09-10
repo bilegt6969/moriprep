@@ -1,46 +1,45 @@
 "use client";
 
 import {
-  AnimatedSidebar,
-  AnimatedSidebarClose,
-  AnimatedSidebarContent,
-  AnimatedSidebarFooter,
-  AnimatedSidebarGroup,
-  AnimatedSidebarGroupContent,
-  AnimatedSidebarGroupLabel,
-  AnimatedSidebarHeader,
-  AnimatedSidebarInset,
-  AnimatedSidebarMenu,
-  AnimatedSidebarMenuButton,
-  AnimatedSidebarMenuItem,
-  AnimatedSidebarMenuSub,
-  AnimatedSidebarMenuSubButton,
-  AnimatedSidebarMenuSubItem,
-  AnimatedSidebarProvider,
-  AnimatedSidebarRail,
-  AnimatedSidebarTrigger,
-  useAnimatedSidebar,
+    AnimatedSidebar,
+    AnimatedSidebarClose,
+    AnimatedSidebarContent,
+    AnimatedSidebarFooter,
+    AnimatedSidebarGroup,
+    AnimatedSidebarGroupContent,
+    AnimatedSidebarGroupLabel,
+    AnimatedSidebarHeader,
+    AnimatedSidebarInset,
+    AnimatedSidebarMenu,
+    AnimatedSidebarMenuButton,
+    AnimatedSidebarMenuItem,
+    AnimatedSidebarMenuSub,
+    AnimatedSidebarMenuSubButton,
+    AnimatedSidebarMenuSubItem,
+    AnimatedSidebarProvider,
+    AnimatedSidebarRail,
+    AnimatedSidebarTrigger,
+    useAnimatedSidebar,
 } from "@/components/motion/animated-sidebar";
-import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
+import { EASE_OUT } from "@/lib/ease";
 import {
-  collection,
-  db,
-  auth as firebaseAuth,
-  onSnapshot,
-  query,
-  where,
+    collection,
+    db,
+    auth as firebaseAuth,
+    onSnapshot,
+    query,
+    where,
 } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
-  BarChart3,
-  BookOpen,
-  ChevronsUpDown,
-  History,
-  LogOut,
-  Settings,
-  Trophy,
-  X,
+    BarChart3,
+    BookOpen,
+    History,
+    LogOut,
+    Settings,
+    Trophy,
+    X,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
@@ -157,7 +156,7 @@ const SidebarToggleIcon = ({
 );
 
 const navigationItems = [
-  { label: "Home", href: "/home", icon: HomeIcon },
+  { label: "Overview", href: "/home", icon: HomeIcon },
   { label: "Test", href: "/practice", icon: TestIcon },
   {
     label: "Lessons",
@@ -175,7 +174,7 @@ const navigationItems = [
 ];
 
 const settingsItems = [
-  { label: "General settings", href: "/settings", icon: Settings },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 // Shared class strings so active/hover states are byte-for-byte identical
@@ -334,7 +333,7 @@ function AppNavbarContent({
     const activeSetting = settingsItems.find((item) =>
       isPathActive(pathname, item.href),
     );
-    return activeSetting?.label ?? "Home";
+    return activeSetting?.label ?? "Overview";
   }, [pathname]);
 
   return (
@@ -351,7 +350,7 @@ function AppNavbarContent({
           px-1 (4px) + the menu button's own px-3 (12px) = 28px. The header
           below reproduces that exact stack — px-3 here (12px) + pl-4 on the
           row (16px) — instead of guessing at a padding value, so the
-          wordmark's left edge lands on the same 28px line as "Home"/"Test"
+          wordmark's left edge lands on the same 28px line as "Overview"/"Test"
           rather than ~8px short of it.
         */}
         <AnimatedSidebarHeader className="px-3 pt-6 pb-3">
@@ -517,7 +516,7 @@ function AppNavbarContent({
           </AnimatedSidebarGroup>
         </AnimatedSidebarContent>
 
-        <AnimatedSidebarFooter className="p-3 pt-2">
+        <AnimatedSidebarFooter className="p-3 pt-2 border-t border-neutral-200 dark:border-neutral-800">
           <ProfileMenu user={user} onSignOut={handleSignOut} />
         </AnimatedSidebarFooter>
 
@@ -577,25 +576,23 @@ function ProfileMenu({
   onSignOut: () => void;
 }) {
   const { open, isMobile } = useAnimatedSidebar();
-  const reduce = useReducedMotion();
   const collapsed = !isMobile && !open;
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const menuId = "profile-dropdown-menu";
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!logoutConfirmOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setMenuOpen(false);
+        setLogoutConfirmOpen(false);
       }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") setLogoutConfirmOpen(false);
     };
 
     document.addEventListener("mousedown", handlePointerDown);
@@ -604,10 +601,10 @@ function ProfileMenu({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [menuOpen]);
+  }, [logoutConfirmOpen]);
 
   useEffect(() => {
-    if (collapsed) setMenuOpen(false);
+    if (collapsed) setLogoutConfirmOpen(false);
   }, [collapsed]);
 
   if (!user) {
@@ -639,52 +636,39 @@ function ProfileMenu({
   return (
     <div ref={containerRef} className="relative">
       <AnimatePresence>
-        {menuOpen && !collapsed && (
+        {logoutConfirmOpen && !collapsed && (
           <motion.div
-            id={menuId}
-            role="menu"
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.15, ease: EASE_OUT }}
-            className="absolute bottom-[calc(100%+8px)] left-0 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[14px] border border-black/[0.04] bg-white/85 backdrop-blur-2xl p-1 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
+            className="absolute bottom-[calc(100%+8px)] left-0 w-56 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[14px] border border-black/[0.04] bg-white/85 backdrop-blur-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
           >
-            <a
-              href="/settings"
-              role="menuitem"
-              className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-black/[0.04]"
-              onClick={() => setMenuOpen(false)}
-            >
-              <Settings className="size-4 text-zinc-500" aria-hidden="true" />
-              Settings
-            </a>
-            <div className="my-1 h-px w-full bg-black/[0.04]" />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                onSignOut();
-              }}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[13px] font-medium text-red-500 transition-colors hover:bg-red-50"
-            >
-              <LogOut className="size-4" aria-hidden="true" />
-              Sign out
-            </button>
+            <p className="text-[13px] font-medium text-zinc-900 mb-3">
+              Are you sure you want to sign out?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="flex-1 px-3 py-2 text-[13px] font-medium text-zinc-700 rounded-[10px] transition-colors hover:bg-black/[0.04]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setLogoutConfirmOpen(false);
+                  onSignOut();
+                }}
+                className="flex-1 px-3 py-2 text-[13px] font-medium text-red-600 rounded-[10px] transition-colors hover:bg-red-50"
+              >
+                Sign out
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.button
-        type="button"
-        onClick={() => setMenuOpen((value) => !value)}
-        whileTap={reduce ? undefined : { scale: 0.98 }}
-        transition={SPRING_PRESS}
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        aria-controls={menuOpen ? menuId : undefined}
-        className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2 text-left transition-colors hover:bg-black/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-      >
+      <div className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2">
         {photoURL ? (
           <img
             src={photoURL}
@@ -706,13 +690,19 @@ function ProfileMenu({
                 {user.email || "user@moriprep.xyz"}
               </span>
             </div>
-            <ChevronsUpDown
-              aria-hidden="true"
-              className="size-[14px] shrink-0 text-zinc-400"
-            />
+            <button
+              type="button"
+              onClick={() => setLogoutConfirmOpen((value) => !value)}
+              className="p-1 rounded-full hover:bg-black/[0.04] transition-colors"
+            >
+              <LogOut
+                aria-hidden="true"
+                className="size-[14px] shrink-0 text-red-600 hover:text-red-700"
+              />
+            </button>
           </>
         )}
-      </motion.button>
+      </div>
     </div>
   );
 }

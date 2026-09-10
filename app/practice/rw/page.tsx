@@ -1,41 +1,41 @@
 "use client";
 
 import {
-  saveAnsweredQuestions,
-  saveQuestionReport,
-  saveUserProgress,
-  updateUserStats,
+    saveAnsweredQuestions,
+    saveQuestionReport,
+    saveUserProgress,
+    updateUserStats,
 } from "@/lib/dsat/questions";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertCircle,
-  Bookmark,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Command,
-  Copy,
-  Flag,
-  Highlighter,
-  History,
-  Info,
-  List,
-  Maximize2,
-  Minimize2,
-  Moon,
-  MoreVertical,
-  Pause,
-  Play,
-  Shuffle,
-  Trash2,
-  Underline as UnderlineIcon,
-  X,
-  ZoomIn,
-  ZoomOut,
+    AlertCircle,
+    Bookmark,
+    Check,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Command,
+    Copy,
+    Flag,
+    Highlighter,
+    History,
+    Info,
+    List,
+    Maximize2,
+    Minimize2,
+    Moon,
+    MoreVertical,
+    Pause,
+    Play,
+    Shuffle,
+    Trash2,
+    Underline as UnderlineIcon,
+    X,
+    ZoomIn,
+    ZoomOut,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -321,7 +321,7 @@ function RWPracticePageContent() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const [leftPaneWidth, setLeftPaneWidth] = useState(50);
+  const [leftPaneWidth, setLeftPaneWidth] = useState(60);
   const [isResizing, setIsResizing] = useState(false);
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -1612,19 +1612,50 @@ function RWPracticePageContent() {
   const memoizedPassage = useMemo(() => {
     if (!selectedQuestion?.passage) return null;
 
-    const htmlContent =
-      selectedQuestion.has_underline && selectedQuestion.underlined_text
-        ? selectedQuestion.passage.replace(
-            selectedQuestion.underlined_text,
-            `<u class="bg-yellow-200 px-1">${selectedQuestion.underlined_text}</u>`,
-          )
-        : selectedQuestion.passage;
+    let htmlContent = selectedQuestion.passage;
+
+    // Handle underline
+    if (selectedQuestion.has_underline && selectedQuestion.underlined_text) {
+      htmlContent = htmlContent.replace(
+        selectedQuestion.underlined_text,
+        `<u class="bg-gray-200 px-1">${selectedQuestion.underlined_text}</u>`,
+      );
+    }
+
+    // Handle dual text (Text 1 and Text 2)
+    const hasText1 = htmlContent.includes("Text 1");
+    const hasText2 = htmlContent.includes("Text 2");
+
+    if (hasText1 && hasText2) {
+      // Split by "Text 2" and format both
+      const parts = htmlContent.split("Text 2");
+      const text1Part = parts[0].replace(
+        "Text 1",
+        "<strong>Text 1</strong><br><br>",
+      );
+      const text2Part = parts[1]
+        ? `<br><br><strong>Text 2</strong><br><br>${parts[1]}`
+        : "";
+      htmlContent = text1Part + text2Part;
+    }
 
     return (
-      <div className="mb-6" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      <>
+        {selectedQuestion.introduction && (
+          <div
+            className="mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] font-serif"
+            dangerouslySetInnerHTML={{ __html: selectedQuestion.introduction }}
+          />
+        )}
+        <div
+          className={`mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] font-serif ${selectedQuestion.introduction ? "pl-12" : ""}`}
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
+      </>
     );
   }, [
     selectedQuestion?.passage,
+    selectedQuestion?.introduction,
     selectedQuestion?.has_underline,
     selectedQuestion?.underlined_text,
   ]);

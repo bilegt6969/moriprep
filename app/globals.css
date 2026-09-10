@@ -652,3 +652,15 @@ body:has(.hide-footer-on-success) > :last-child {
   user-select: text !important;
   -webkit-user-select: text !important;
 }
+
+/* Highlighter styles */
+.dsat-highlight {
+  display: inline;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.dsat-highlight:hover {
+  outline: 2px solid rgba(0, 0, 0, 0.1);
+  outline-offset: 1px;
+}

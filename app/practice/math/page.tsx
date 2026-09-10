@@ -3,35 +3,44 @@
 import DesmosCalculator from "@/components/dsat/DesmosCalculator";
 import { mathDomainSkills } from "@/lib/dsat/math-domain-skills";
 import {
-  saveAnsweredQuestions,
-  saveUserProgress,
-  updateUserStats,
+    saveAnsweredQuestions,
+    saveUserProgress,
+    updateUserStats,
 } from "@/lib/dsat/questions";
 import { DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertCircle,
-  Bookmark,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Command,
-  Copy,
-  Flag,
-  List,
-  Maximize2,
-  Minimize2,
-  Moon,
-  MoreVertical,
-  Pause,
-  Play,
-  Shuffle,
-  X,
+    AlertCircle,
+    Bookmark,
+    Check,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Command,
+    Copy,
+    Flag,
+    Highlighter,
+    List,
+    Maximize2,
+    Minimize2,
+    Moon,
+    MoreVertical,
+    Pause,
+    Play,
+    Shuffle,
+    Trash2,
+    Underline as UnderlineIcon,
+    X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, {
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 const springTransition = {
   type: "spring" as const,
@@ -154,7 +163,7 @@ function MathPracticeContent() {
   const [reportDetails, setReportDetails] = useState("");
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [isHighlightActive, setIsHighlightActive] = useState(false);
+  const [isHighlightActive, setIsHighlightActive] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [highlightedAnswer, setHighlightedAnswer] = useState<string>("");
@@ -164,8 +173,291 @@ function MathPracticeContent() {
   const [isCrossOutMode, setIsCrossOutMode] = useState(false);
   const [wrongAnswers, setWrongAnswers] = useState<Set<string>>(new Set());
   const [showCalculator, setShowCalculator] = useState(false);
+  const [highlightMenu, setHighlightMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
+  const [currentSelection, setCurrentSelection] = useState<Range | null>(null);
+  const [activeHighlightColor, setActiveHighlightColor] =
+    useState("bg-blue-200/80");
+  const [showUnderlineSubmenu, setShowUnderlineSubmenu] = useState(false);
+  const [menuDisplayColor, setMenuDisplayColor] = useState<string | null>(
+    "bg-yellow-200/80",
+  );
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
+  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const HIGHLIGHT_COLORS: Record<string, string> = {
+    "bg-yellow-200/80": "rgb(253, 230, 138)",
+    "bg-blue-200/80": "rgb(191, 219, 254)",
+    "bg-pink-200/80": "rgb(251, 207, 232)",
+  };
+
+  const getHighlightColorClass = useCallback(
+    (span: HTMLElement): string | null => {
+      const bg = span.style.backgroundColor;
+      const match = Object.entries(HIGHLIGHT_COLORS).find(
+        ([, rgb]) => rgb === bg,
+      );
+      return match ? match[0] : null;
+    },
+    [],
+  );
+
+  const cleanupSelectionAndMenu = useCallback(() => {
+    window.getSelection()?.removeAllRanges();
+    setCurrentSelection(null);
+    setHighlightMenu({ visible: false, x: 0, y: 0 });
+    setShowUnderlineSubmenu(false);
+  }, []);
+
+  // Helper function to wrap range with span (handles multi-node selections)
+  const wrapRangeMultiNode = (range: Range, span: HTMLElement) => {
+    if (range.collapsed) return;
+
+    const startNode = range.startContainer;
+    const endNode = range.endContainer;
+
+    // If start and end are the same node, simple case
+    if (startNode === endNode) {
+      if (startNode.nodeType === Node.TEXT_NODE) {
+        const textNode = startNode as Text;
+        const parent = textNode.parentNode;
+        if (parent) {
+          const beforeText =
+            textNode.textContent?.substring(0, range.startOffset) || "";
+          const highlightedText =
+            textNode.textContent?.substring(
+              range.startOffset,
+              range.endOffset,
+            ) || "";
+          const afterText =
+            textNode.textContent?.substring(range.endOffset) || "";
+
+          if (beforeText) {
+            parent.insertBefore(document.createTextNode(beforeText), textNode);
+          }
+          span.textContent = highlightedText;
+          parent.insertBefore(span, textNode);
+          if (afterText) {
+            parent.insertBefore(document.createTextNode(afterText), textNode);
+          }
+          parent.removeChild(textNode);
+        }
+      }
+      return;
+    }
+
+    // For multi-node selections, use extractContents and insertContents
+    const fragment = range.extractContents();
+    span.appendChild(fragment);
+    range.insertNode(span);
+  };
+
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (text.length === 0) {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    setCurrentSelection(range);
+
+    const rect = range.getBoundingClientRect();
+    const menuWidth = 320;
+    const menuHeight = 50;
+    const edgePadding = 16;
+    let menuX = rect.left + rect.width / 2;
+    let menuY = rect.top - 10;
+    const minX = menuWidth / 2 + edgePadding;
+    const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+    menuX = Math.max(minX, Math.min(menuX, maxX));
+    if (menuY < menuHeight + edgePadding) {
+      menuY = rect.bottom + 10 + menuHeight;
+    }
+    setHighlightMenu({ visible: true, x: menuX, y: menuY });
+  }, [cleanupSelectionAndMenu]);
+
+  const applyUnderlineStyle = useCallback(
+    (style: string) => {
+      const targetRange = currentSelection;
+      if (!targetRange || targetRange.collapsed) {
+        cleanupSelectionAndMenu();
+        return;
+      }
+
+      const node = targetRange.commonAncestorContainer;
+      const parentElement =
+        node.nodeType === Node.TEXT_NODE
+          ? node.parentElement
+          : (node as HTMLElement);
+
+      if (parentElement && parentElement.classList.contains("dsat-highlight")) {
+        const hadBg =
+          parentElement.style.backgroundColor &&
+          parentElement.style.backgroundColor !== "transparent";
+
+        if (style === "none") {
+          parentElement.classList.remove(
+            "underline",
+            "decoration-2",
+            "decoration-gray-400",
+            "decoration-solid",
+            "decoration-dashed",
+            "decoration-dotted",
+          );
+        } else {
+          parentElement.classList.add(
+            "underline",
+            "decoration-2",
+            "decoration-gray-400",
+            `decoration-${style}`,
+          );
+        }
+
+        // Pure underline highlight (no background) with underline removed
+        // has nothing left to show — unwrap it. Otherwise just leave the
+        // background color in place.
+        const hasBg =
+          parentElement.style.backgroundColor &&
+          parentElement.style.backgroundColor !== "transparent";
+        if (!hasBg) {
+          const parent = parentElement.parentNode;
+          if (parent) {
+            while (parentElement.firstChild)
+              parent.insertBefore(parentElement.firstChild, parentElement);
+            parent.removeChild(parentElement);
+          }
+        }
+        cleanupSelectionAndMenu();
+        return;
+      }
+
+      if (style === "none") {
+        cleanupSelectionAndMenu();
+        return;
+      }
+
+      const span = document.createElement("span");
+      span.className = `dsat-highlight underline decoration-2 decoration-gray-400 decoration-${style}`;
+      try {
+        wrapRangeMultiNode(targetRange, span);
+      } catch (e) {
+        console.error("Underline error:", e);
+      }
+      cleanupSelectionAndMenu();
+    },
+    [currentSelection, cleanupSelectionAndMenu],
+  );
+
+  const applyHighlight = useCallback(
+    (colorClass: string, overrideRange?: Range) => {
+      const targetRange = overrideRange || currentSelection;
+      if (!targetRange || targetRange.collapsed) {
+        cleanupSelectionAndMenu();
+        return;
+      }
+
+      setActiveHighlightColor(colorClass);
+
+      const bgColor =
+        colorClass === "bg-yellow-200/80"
+          ? "#fde68a"
+          : colorClass === "bg-pink-200/80"
+            ? "#fbcfe8"
+            : "#bfdbfe";
+
+      const node = targetRange.commonAncestorContainer;
+      const parentElement =
+        node.nodeType === Node.TEXT_NODE
+          ? node.parentElement
+          : (node as HTMLElement);
+
+      if (parentElement && parentElement.classList.contains("dsat-highlight")) {
+        const hadUnderline = parentElement.classList.contains("underline");
+        const decorationStyle = [
+          "decoration-solid",
+          "decoration-dashed",
+          "decoration-dotted",
+        ].find((c) => parentElement.classList.contains(c));
+        parentElement.style.backgroundColor = bgColor;
+        parentElement.className = "dsat-highlight";
+        if (hadUnderline) {
+          parentElement.classList.add(
+            "underline",
+            "decoration-2",
+            "decoration-gray-400",
+          );
+          if (decorationStyle) parentElement.classList.add(decorationStyle);
+        }
+        cleanupSelectionAndMenu();
+        return;
+      }
+
+      const span = document.createElement("span");
+      span.classList.add("dsat-highlight");
+      span.style.backgroundColor = bgColor;
+      span.style.padding = "2px 0";
+      span.style.borderRadius = "2px";
+
+      try {
+        wrapRangeMultiNode(targetRange, span);
+      } catch (e) {
+        console.error("Highlight error:", e);
+      }
+      cleanupSelectionAndMenu();
+    },
+    [currentSelection, cleanupSelectionAndMenu],
+  );
+
+  const clearHighlights = useCallback(() => {
+    const container = questionRef.current;
+    if (container) {
+      const highlights = container.querySelectorAll(".dsat-highlight");
+      highlights.forEach((highlight) => {
+        const parent = highlight.parentNode;
+        if (parent) {
+          while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+          }
+          parent.removeChild(highlight);
+        }
+      });
+    }
+  }, []);
+
+  const handleWordDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isHighlightActive) return;
+
+      if (e.detail === 2) {
+        setTimeout(() => {
+          const selection = window.getSelection();
+
+          if (
+            selection &&
+            !selection.isCollapsed &&
+            selection.toString().trim().length > 0
+          ) {
+            const range = selection.getRangeAt(0);
+            setCurrentSelection(range);
+            applyHighlight(activeHighlightColor || "bg-yellow-200", range);
+          }
+        }, 10);
+      }
+    },
+    [isHighlightActive, activeHighlightColor, applyHighlight],
+  );
 
   // Get filters from URL
   const domainParam = searchParams.get("domain");
@@ -394,6 +686,67 @@ function MathPracticeContent() {
     });
   };
 
+  // Clear highlights when highlight tool is disabled
+  useEffect(() => {
+    if (!isHighlightActive) {
+      clearHighlights();
+    }
+  }, [isHighlightActive, clearHighlights]);
+
+  // Setup text selection listener for highlighting
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!isHighlightActive) return;
+
+      const target = e.target as HTMLElement;
+
+      // Clicks inside the highlight toolbar (color swatches, underline submenu,
+      // copy/trash) shouldn't trigger a re-check of the text selection — that
+      // re-check can close the toolbar/submenu a moment after it opens.
+      if (target.closest(".dsat-highlight-toolbar")) return;
+
+      const highlightSpan = target.closest(
+        ".dsat-highlight",
+      ) as HTMLElement | null;
+
+      if (highlightSpan) {
+        // Don't call window.getSelection().addRange() here — the native
+        // selection visually competes with the custom pastel background
+        // (under `selection:bg-cyan-200`) and makes the highlight look like
+        // it disappeared. Build a Range for reference only, no visible select.
+        const range = document.createRange();
+        range.selectNodeContents(highlightSpan);
+        setCurrentSelection(range);
+        setMenuDisplayColor(getHighlightColorClass(highlightSpan));
+
+        const rect = highlightSpan.getBoundingClientRect();
+        const menuWidth = 320;
+        const menuHeight = 50;
+        const edgePadding = 16;
+        let menuX = rect.left + rect.width / 2;
+        let menuY = rect.top - 10;
+        const minX = menuWidth / 2 + edgePadding;
+        const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+        menuX = Math.max(minX, Math.min(menuX, maxX));
+        if (menuY < menuHeight + edgePadding) {
+          menuY = rect.bottom + 10 + menuHeight;
+        }
+        setHighlightMenu({ visible: true, x: menuX, y: menuY });
+        return;
+      }
+
+      setTimeout(() => {
+        handleTextSelection();
+      }, 10);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isHighlightActive, getHighlightColorClass, handleTextSelection]);
+
   // Reset question state when the actual question changes
   useEffect(() => {
     setSelectedAnswer(null);
@@ -401,7 +754,8 @@ function MathPracticeContent() {
     setIsCorrect(null);
     setHighlightedAnswer("");
     setEliminatedChoices(new Set());
-  }, [currentQuestion?.question_id]);
+    clearHighlights();
+  }, [currentQuestion?.question_id, clearHighlights]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -569,6 +923,23 @@ function MathPracticeContent() {
 
         {/* Right: Tools & Badges */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/3 relative">
+          <button
+            onClick={() => setIsHighlightActive(!isHighlightActive)}
+            className={`flex flex-col items-center justify-center rounded-2xl px-5 py-1.5 transition-colors ${isHighlightActive ? "bg-cyan-100/50 text-cyan-400" : "text-gray-500 hover:text-black hover:bg-gray-50"}`}
+          >
+            <Highlighter
+              size={16}
+              strokeWidth={2.5}
+              className={isHighlightActive ? "text-cyan-400" : "text-gray-500"}
+            />
+            <span
+              className="text-[10px] font-bold tracking-wide mt-0.5"
+              style={{ color: isHighlightActive ? "#2DD4BF" : "" }}
+            >
+              Highlight
+            </span>
+          </button>
+
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
@@ -640,6 +1011,112 @@ function MathPracticeContent() {
 
       {/* Main Content - Single column for math (no passage) */}
       <main className="flex flex-col flex-1 overflow-hidden relative">
+        {/* Highlighter Tool Popover */}
+        {highlightMenu.visible && (
+          <div
+            className="dsat-highlight-toolbar fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
+            style={{
+              top: highlightMenu.y,
+              left: highlightMenu.x,
+              transform: "translate(-50%, -100%)",
+            }}
+          >
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyHighlight("bg-yellow-200/80")}
+              className={`w-7 h-7 rounded-full bg-[#fde68a] border-2 transition-transform ${menuDisplayColor === "bg-yellow-200/80" ? "border-black" : "border-transparent"}`}
+            />
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyHighlight("bg-blue-200/80")}
+              className={`w-7 h-7 rounded-full bg-[#bfdbfe] border-2 transition-transform ${menuDisplayColor === "bg-blue-200/80" ? "border-black" : "border-transparent"}`}
+            />
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => applyHighlight("bg-pink-200/80")}
+              className={`w-7 h-7 rounded-full bg-[#fbcfe8] border-2 transition-transform ${menuDisplayColor === "bg-pink-200/80" ? "border-black" : "border-transparent"}`}
+            />
+            <div className="w-[1px] h-6 bg-gray-200 mx-1" />
+            <div className="relative">
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowUnderlineSubmenu((v) => !v);
+                }}
+                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <UnderlineIcon size={18} />
+              </button>
+              {showUnderlineSubmenu && (
+                <div
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 py-1 w-16 z-50 flex flex-col items-center"
+                >
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyUnderlineStyle("solid")}
+                    className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  >
+                    <span className="text-base font-serif border-b-2 border-gray-700 leading-none px-1">
+                      U
+                    </span>
+                  </button>
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyUnderlineStyle("dashed")}
+                    className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  >
+                    <span className="text-base font-serif border-b-2 border-dashed border-gray-700 leading-none px-1">
+                      U
+                    </span>
+                  </button>
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyUnderlineStyle("dotted")}
+                    className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  >
+                    <span className="text-base font-serif border-b-2 border-dotted border-gray-700 leading-none px-1">
+                      U
+                    </span>
+                  </button>
+                  <div className="w-8 h-px bg-gray-100 my-1" />
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyUnderlineStyle("none")}
+                    className="w-full py-2 text-xs text-gray-500 hover:bg-gray-50 rounded-lg"
+                  >
+                    None
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const text = currentSelection?.toString() || "";
+                navigator.clipboard.writeText(text).catch((err) => {
+                  console.error("Clipboard write failed:", err);
+                });
+                setHighlightMenu({ visible: false, x: 0, y: 0 });
+              }}
+              className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Copy size={18} />
+            </button>
+            <button
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                clearHighlights();
+                setHighlightMenu({ visible: false, x: 0, y: 0 });
+              }}
+              className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        )}
+
         {/* Question Pane - Full width for math */}
         <div className="w-full overflow-y-auto bg-white flex flex-col relative">
           {/* Question Header Bar matching RW */}
@@ -735,7 +1212,11 @@ function MathPracticeContent() {
           </div>
 
           {/* Question Area */}
-          <div className="p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6">
+          <div
+            ref={questionRef}
+            className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+            onMouseDown={handleWordDoubleClick}
+          >
             {isPaused ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Pause className="w-16 h-16 text-gray-400 mb-4" />

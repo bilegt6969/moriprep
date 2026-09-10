@@ -1,26 +1,25 @@
 "use client";
 
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuAction,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
-    ArrowRightIcon,
-    FolderIcon,
-    MoreHorizontalIcon,
-    Trash2Icon,
+  ArrowRightIcon,
+  FolderIcon,
+  MoreHorizontalIcon,
+  Trash2Icon,
 } from "lucide-react";
 
 export function NavProjects({
@@ -35,16 +34,14 @@ export function NavProjects({
   const { isMobile } = useSidebar();
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-      <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium px-3 pt-3">
-        Lessons
-      </SidebarGroupLabel>
-      <SidebarMenu className="p-2 space-y-1">
+    // No card wrapper (bg/border/shadow) or uppercase label — continues the flat list
+    <SidebarGroup className="p-0 group-data-[collapsible=icon]:hidden">
+      <SidebarMenu className="gap-0.5">
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
               tooltip={item.name}
-              className="rounded-xl transition-all duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className="h-10 rounded-xl transition-all duration-200"
               onClick={() => (window.location.href = item.url)}
             >
               {item.icon}
@@ -83,8 +80,8 @@ export function NavProjects({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70 rounded-xl transition-all duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-            <MoreHorizontalIcon className="text-sidebar-foreground/70" />
+          <SidebarMenuButton className="h-10 rounded-xl text-neutral-400">
+            <MoreHorizontalIcon className="text-neutral-400" />
             <span>More</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

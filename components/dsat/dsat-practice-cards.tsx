@@ -4,7 +4,7 @@ import { MathPracticeConfigPopup } from "@/components/dsat/math-practice-config-
 import { RWPracticeConfigPopup } from "@/components/dsat/rw-practice-config-popup";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "hooks/use-reduced-motion";
-import { ChevronRight, LockIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Calculator } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
@@ -29,62 +29,27 @@ const slideUp = {
   },
 };
 
-// Updated data structure to match the new dashboard aesthetic
-const initialPracticeAreas = [
-  {
-    id: "reading-writing",
-    title: "Reading & Writing",
-    greeting: "Ready to practice?",
-    questions: "Loading...",
-    focus: "4 Domains",
-    description: "Our system adapts to your reading comprehension level.",
-    color: "bg-[#FFC800]", // Matching the yellow from the reference
-    textColor: "text-neutral-900",
-    available: true,
-    buttonText: "Start Practicing",
-  },
-  {
-    id: "math",
-    title: "Mathematics",
-    greeting: "Expert problem sets",
-    questions: "Loading...",
-    focus: "Advanced Math",
-    description: "Enter any topic, and we'll supply the perfect problem set.",
-    color: "bg-[#7DD3FC]", // Matching the blue from the reference
-    textColor: "text-neutral-900",
-    available: true,
-    buttonText: "Start Practicing",
-  },
-];
-
 export function DSATPracticeCards() {
   const reduce = useReducedMotion();
   const [isRWConfigPopupOpen, setIsRWConfigPopupOpen] = useState(false);
   const [isMathConfigPopupOpen, setIsMathConfigPopupOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [totalQuestions, setTotalQuestions] = useState<number>(0);
-  const [practiceAreas, setPracticeAreas] = useState(initialPracticeAreas);
+  const [rwQuestions, setRwQuestions] = useState("Loading...");
+  const [mathQuestions, setMathQuestions] = useState("Loading...");
 
   useEffect(() => {
     setIsMounted(true);
-    // Fetch total questions from Firebase stats for both RW and Math
     Promise.all([
       fetch("/api/question-stats").then((res) => res.json()),
       fetch("/api/question-stats?test=Math").then((res) => res.json()),
     ])
       .then(([rwData, mathData]) => {
-        setPracticeAreas((prev) => {
-          const updated = [...prev];
-          if (rwData.total) {
-            updated[0].questions = rwData.total.toLocaleString();
-          }
-          if (mathData.total || mathData.count) {
-            updated[1].questions = (
-              mathData.total || mathData.count
-            ).toLocaleString();
-          }
-          return updated;
-        });
+        if (rwData.total) {
+          setRwQuestions(rwData.total.toLocaleString());
+        }
+        if (mathData.total || mathData.count) {
+          setMathQuestions((mathData.total || mathData.count).toLocaleString());
+        }
       })
       .catch((error) => {
         console.error("Error fetching question stats:", error);
@@ -94,21 +59,15 @@ export function DSATPracticeCards() {
   const handleStartRWPractice = (config: any) => {
     const params = new URLSearchParams();
 
-    if (config.difficulties.length > 0) {
+    if (config.difficulties.length > 0)
       params.set("difficulties", config.difficulties.join(","));
-    }
-    if (config.domains.length > 0) {
+    if (config.domains.length > 0)
       params.set("domains", config.domains.join(","));
-    }
-    if (config.skills.length > 0) {
-      params.set("skills", config.skills.join(","));
-    }
-    if (config.statusFilter && config.statusFilter !== "all") {
+    if (config.skills.length > 0) params.set("skills", config.skills.join(","));
+    if (config.statusFilter && config.statusFilter !== "all")
       params.set("statusFilter", config.statusFilter);
-    }
-    if (config.attemptFilter && config.attemptFilter !== "all") {
+    if (config.attemptFilter && config.attemptFilter !== "all")
       params.set("attemptFilter", config.attemptFilter);
-    }
 
     const queryString = params.toString();
     const url = `/practice/rw${queryString ? `?${queryString}` : ""}`;
@@ -118,21 +77,15 @@ export function DSATPracticeCards() {
   const handleStartMathPractice = (config: any) => {
     const params = new URLSearchParams();
 
-    if (config.difficulties.length > 0) {
+    if (config.difficulties.length > 0)
       params.set("difficulties", config.difficulties.join(","));
-    }
-    if (config.domains.length > 0) {
+    if (config.domains.length > 0)
       params.set("domains", config.domains.join(","));
-    }
-    if (config.skills.length > 0) {
-      params.set("skills", config.skills.join(","));
-    }
-    if (config.statusFilter && config.statusFilter !== "all") {
+    if (config.skills.length > 0) params.set("skills", config.skills.join(","));
+    if (config.statusFilter && config.statusFilter !== "all")
       params.set("statusFilter", config.statusFilter);
-    }
-    if (config.attemptFilter && config.attemptFilter !== "all") {
+    if (config.attemptFilter && config.attemptFilter !== "all")
       params.set("attemptFilter", config.attemptFilter);
-    }
 
     const queryString = params.toString();
     const url = `/practice/math${queryString ? `?${queryString}` : ""}`;
@@ -141,117 +94,91 @@ export function DSATPracticeCards() {
 
   return (
     <>
-      {/* Pure white background as requested */}
-      <section className="min-h-screen w-full px-4 py-12 md:px-8 lg:px-12 bg-white relative font-sans">
-        {/* Header Section */}
+      <section className="min-h-screen w-full px-4 py-8 md:px-8 lg:px-12 font-sans">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-5xl mx-auto mb-10"
+          transition={{ duration: 0.6 }}
+          className="max-w-6xl mx-auto"
         >
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 mb-2">
-            Practice Overview
-          </h1>
-          <p className="text-neutral-500 text-lg">
-            Choose your domain and start improving today.
-          </p>
-        </motion.div>
+          {/* Header */}
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-8"
+          >
+            Practice, learn, review. All in one place.
+          </motion.h1>
 
-        {/* Dashboard Cards Container */}
-        <motion.div
-          variants={containerVariants}
-          initial={isMounted ? "hidden" : "visible"}
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="max-w-5xl mx-auto flex flex-col gap-4 md:gap-6"
-        >
-          {practiceAreas.map((area) => (
+          {/* Two Main Cards */}
+          <motion.div
+            variants={containerVariants}
+            initial={isMounted ? "hidden" : "visible"}
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            {/* Reading & Writing Card */}
             <motion.div
-              key={area.id}
               variants={slideUp}
-              className={`w-full aspect-square md:aspect-auto ${area.color} rounded-[32px] p-8 md:p-10 relative overflow-hidden transition-transform duration-300 ${
-                !reduce && area.available ? "hover:scale-[1.01]" : ""
-              }`}
-              suppressHydrationWarning
+              className="bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl p-8 shadow-lg text-white"
             >
-              <div className="flex flex-col md:flex-row justify-between h-full gap-8 md:gap-4 relative z-10">
-                {/* Left Side: Headers and Stats */}
-                <div className="flex flex-col justify-between h-full min-h-[160px]">
-                  <div>
-                    <h3
-                      className={`text-lg md:text-xl font-medium mb-1 opacity-80 ${area.textColor}`}
-                    >
-                      {area.greeting}
-                    </h3>
-                    <h2
-                      className={`text-4xl md:text-5xl font-bold tracking-tight ${area.textColor}`}
-                    >
-                      {area.title}
-                    </h2>
-                  </div>
-
-                  {/* Stats Row - Mimicking the "Total holding" layout */}
-                  <div className="flex gap-12 mt-12">
-                    <div>
-                      <p
-                        className={`text-sm mb-1 opacity-70 ${area.textColor}`}
-                      >
-                        Total questions
-                      </p>
-                      <p
-                        className={`text-2xl font-semibold tracking-tight ${area.textColor}`}
-                      >
-                        {area.questions}
-                      </p>
-                    </div>
-                    <div>
-                      <p
-                        className={`text-sm mb-1 opacity-70 ${area.textColor}`}
-                      >
-                        Focus area
-                      </p>
-                      <p
-                        className={`text-2xl font-semibold tracking-tight ${area.textColor}`}
-                      >
-                        {area.focus}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side: Action Button */}
-                <div className="flex flex-col justify-end items-start md:items-end">
-                  <p
-                    className={`hidden md:block max-w-[240px] text-right mb-6 text-sm opacity-80 ${area.textColor}`}
-                  >
-                    {area.description}
-                  </p>
-
-                  {area.available ? (
-                    <button
-                      onClick={() => {
-                        if (area.id === "reading-writing") {
-                          setIsRWConfigPopupOpen(true);
-                        } else if (area.id === "math") {
-                          setIsMathConfigPopupOpen(true);
-                        }
-                      }}
-                      className="group flex items-center gap-2 bg-white/20 hover:bg-white/30 text-neutral-900 px-6 py-3 rounded-full font-semibold transition-all backdrop-blur-sm"
-                    >
-                      {area.buttonText}
-                      <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2 bg-black/5 text-neutral-900/50 px-6 py-3 rounded-full font-semibold cursor-not-allowed">
-                      <LockIcon className="w-4 h-4" />
-                      {area.buttonText}
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center gap-3 mb-6">
+                <BookOpen className="w-8 h-8" />
+                <h2 className="text-2xl font-bold">Reading & Writing</h2>
               </div>
+
+              <div className="mb-6">
+                <p className="text-blue-100 text-sm mb-2">Total Questions</p>
+                <p className="text-4xl font-bold">{rwQuestions}</p>
+              </div>
+
+              <p className="text-blue-100 mb-8 flex-1">
+                Master reading comprehension with adaptive questions across 4
+                domains: Information and Ideas, Craft and Structure, Standard
+                English Conventions, and Expression of Ideas.
+              </p>
+
+              <button
+                onClick={() => setIsRWConfigPopupOpen(true)}
+                className="group flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-blue-50 transition-all"
+              >
+                Start Practicing
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </button>
             </motion.div>
-          ))}
+
+            {/* Math Card */}
+            <motion.div
+              variants={slideUp}
+              className="bg-linear-to-br from-purple-500 to-purple-600 rounded-2xl p-8 shadow-lg text-white"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <Calculator className="w-8 h-8" />
+                <h2 className="text-2xl font-bold">Mathematics</h2>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-purple-100 text-sm mb-2">Total Questions</p>
+                <p className="text-4xl font-bold">{mathQuestions}</p>
+              </div>
+
+              <p className="text-purple-100 mb-8 flex-1">
+                Tackle complex math problems with our advanced problem sets
+                covering Algebra, Advanced Math, Geometry, Statistics, and Data
+                Analysis.
+              </p>
+
+              <button
+                onClick={() => setIsMathConfigPopupOpen(true)}
+                className="group flex items-center gap-2 bg-white text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all"
+              >
+                Start Practicing
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </button>
+            </motion.div>
+          </motion.div>
         </motion.div>
       </section>
 

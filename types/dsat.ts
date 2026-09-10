@@ -24,6 +24,7 @@ export interface DSATQuestion {
   domain: string;
   skill: string;
   difficulty: string;
+  introduction?: string;
   passage: string;
   prompt: string;
   question: string;

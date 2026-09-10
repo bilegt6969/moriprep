@@ -21,15 +21,16 @@ export function NavSecondary({
   }[];
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
+    // No card wrapper (bg/border/shadow) — continues the flat list
     <SidebarGroup
       {...props}
-      className="rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm"
+      className="p-0 border-b border-neutral-200 dark:border-neutral-800"
     >
       <SidebarGroupContent>
-        <SidebarMenu className="p-2 space-y-1">
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="sm" className="rounded-xl">
+              <SidebarMenuButton asChild size="sm" className="h-10 rounded-xl">
                 <a href={item.url}>
                   {item.icon}
                   <span>{item.title}</span>

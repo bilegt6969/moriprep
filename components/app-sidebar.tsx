@@ -6,33 +6,31 @@ import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-  AudioLinesIcon,
-  BarChart3,
-  BookOpenIcon,
-  FileText,
-  FrameIcon,
-  GalleryVerticalEndIcon,
-  LayoutDashboard,
-  MapIcon,
-  PieChartIcon,
-  Settings,
-  TerminalIcon,
+    BarChart3,
+    BookOpenIcon,
+    ChevronLeftIcon,
+    FileText,
+    FrameIcon,
+    LayoutDashboard,
+    MapIcon,
+    PieChartIcon,
+    Settings,
 } from "lucide-react";
 
 // Apple-style icon configuration: slightly smaller, thinner strokes (matches SF Symbols)
+// Lighter default color to match the muted, flat look of the reference design.
 const iconProps = {
   size: 18,
   strokeWidth: 1.5,
-  className: "text-neutral-600 dark:text-neutral-400",
+  className: "text-neutral-400 dark:text-neutral-500",
 };
 
 const data = {
@@ -41,26 +39,9 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: <GalleryVerticalEndIcon {...iconProps} />,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: <AudioLinesIcon {...iconProps} />,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: <TerminalIcon {...iconProps} />,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
-      title: "Home",
+      title: "Overview",
       url: "/",
       icon: <LayoutDashboard {...iconProps} />,
       isActive: true,
@@ -148,24 +129,30 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar
-      collapsible="icon"
-      className="border-r-0 bg-transparent shadow-none dark:bg-transparent"
-      {...props}
-    >
-      {/* Increased padding for an airy, uncrowded feel */}
-      <SidebarHeader className="px-3 pt-4 pb-2">
-        <TeamSwitcher teams={data.teams} />
+    // "inset" makes the sidebar blend into the page's root background, while
+    // <SidebarInset> (wrapping your main content — see note below) becomes a
+    // rounded, shadowed card that floats over it, like the reference image.
+    <Sidebar collapsible="icon" variant="inset" {...props}>
+      {/* Pill "Back" button replaces the team switcher, matching the reference header */}
+      <SidebarHeader className="px-3 pt-4 pb-2 group-data-[collapsible=icon]:px-2">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="flex w-fit items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2"
+        >
+          <ChevronLeftIcon size={16} strokeWidth={2} />
+          <span className="group-data-[collapsible=icon]:hidden">Back</span>
+        </button>
       </SidebarHeader>
 
-      {/* Gap handles spacing between different nav sections organically */}
-      <SidebarContent className="px-3 gap-y-4">
+      {/* Flat, continuous list — no boxed/shadowed sections, tight spacing like the reference */}
+      <SidebarContent className="px-3 gap-y-1">
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} />
       </SidebarContent>
 
-      <SidebarFooter className="px-2 pb-4">
+      <SidebarFooter className="px-2 pb-4 border-t border-neutral-200 dark:border-neutral-800">
         <NavUser user={data.user} />
       </SidebarFooter>
 
