@@ -2,12 +2,12 @@
 
 import { auth, db } from "@/lib/firebase";
 import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  query,
-  where,
+    collection,
+    doc,
+    getDoc,
+    onSnapshot,
+    query,
+    where,
 } from "firebase/firestore";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
@@ -140,6 +140,7 @@ export default function AnalyticsPage() {
   const [openSections, setOpenSections] = useState({
     progress: true,
     activity: true,
+    detailed: true,
   });
 
   useEffect(() => {
@@ -228,6 +229,98 @@ export default function AnalyticsPage() {
 
   const domainStats = getDomainStats();
 
+  // Calculate detailed domain and skill stats
+  const getDetailedStats = () => {
+    if (!userAnswers.length) return { domains: [], skills: [] };
+
+    const domainDetailedStats: any = {};
+    const skillDetailedStats: any = {};
+
+    userAnswers.forEach((progress) => {
+      const domain = progress.domain || "General";
+      const skill = progress.skill || "General";
+
+      // Domain stats
+      if (!domainDetailedStats[domain]) {
+        domainDetailedStats[domain] = {
+          total: 0,
+          correct: 0,
+          totalTime: 0,
+          correctTime: 0,
+        };
+      }
+      domainDetailedStats[domain].total++;
+
+      if (progress.attempts && progress.attempts.length > 0) {
+        const lastAttempt = progress.attempts[progress.attempts.length - 1];
+        if (lastAttempt.isCorrect) {
+          domainDetailedStats[domain].correct++;
+          domainDetailedStats[domain].correctTime += lastAttempt.timeSpent || 0;
+        }
+        domainDetailedStats[domain].totalTime += lastAttempt.timeSpent || 0;
+      }
+
+      // Skill stats
+      if (!skillDetailedStats[skill]) {
+        skillDetailedStats[skill] = {
+          total: 0,
+          correct: 0,
+          totalTime: 0,
+          correctTime: 0,
+        };
+      }
+      skillDetailedStats[skill].total++;
+
+      if (progress.attempts && progress.attempts.length > 0) {
+        const lastAttempt = progress.attempts[progress.attempts.length - 1];
+        if (lastAttempt.isCorrect) {
+          skillDetailedStats[skill].correct++;
+          skillDetailedStats[skill].correctTime += lastAttempt.timeSpent || 0;
+        }
+        skillDetailedStats[skill].totalTime += lastAttempt.timeSpent || 0;
+      }
+    });
+
+    const formatTime = (ms: number) => {
+      if (ms === 0) return "0s";
+      const seconds = Math.floor(ms / 1000);
+      if (seconds < 60) return `${seconds}s`;
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes}m ${remainingSeconds}s`;
+    };
+
+    const domains = Object.entries(domainDetailedStats)
+      .map(([domain, stats]: [string, any]) => ({
+        domain,
+        total: stats.total,
+        accuracy: Math.round((stats.correct / stats.total) * 100),
+        avgTime: formatTime(stats.totalTime / stats.total),
+        correctAvgTime:
+          stats.correct > 0
+            ? formatTime(stats.correctTime / stats.correct)
+            : "N/A",
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    const skills = Object.entries(skillDetailedStats)
+      .map(([skill, stats]: [string, any]) => ({
+        skill,
+        total: stats.total,
+        accuracy: Math.round((stats.correct / stats.total) * 100),
+        avgTime: formatTime(stats.totalTime / stats.total),
+        correctAvgTime:
+          stats.correct > 0
+            ? formatTime(stats.correctTime / stats.correct)
+            : "N/A",
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    return { domains, skills };
+  };
+
+  const detailedStats = getDetailedStats();
+
   // Calculate practice streak
   const calculatePracticeStreak = () => {
     if (userAnswers.length === 0) return 0;
@@ -293,7 +386,7 @@ export default function AnalyticsPage() {
   // Get daily goal from user data
   const dailyGoal = userData?.dailyGoal || 20;
 
-  const toggleSection = (key: "progress" | "activity") =>
+  const toggleSection = (key: "progress" | "activity" | "detailed") =>
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   if (isLoading) {
@@ -491,6 +584,121 @@ export default function AnalyticsPage() {
                       />
                     ));
                   })()}
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Green Detailed Stats Accordion */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="rounded-[20px] bg-[#C8E6C9] overflow-hidden"
+          >
+            <button
+              onClick={() => toggleSection("detailed")}
+              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
+            >
+              <span className="text-[16px] md:text-[18px] font-semibold text-[#2E7D32]">
+                Detailed Analytics
+              </span>
+              <span className="w-9 h-9 rounded-xl border-2 border-[#2E7D32]/50 bg-white/40 flex items-center justify-center text-[#2E7D32]">
+                <ChevronDownIcon open={openSections.detailed} />
+              </span>
+            </button>
+            {openSections.detailed && (
+              <div className="px-5 md:px-6 pb-6 space-y-6">
+                {/* Domain Stats */}
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#2E7D32] mb-3">
+                    By Domain
+                  </h3>
+                  {detailedStats.domains.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-5 gap-2 pb-2 text-[11px] font-medium text-[#2E7D32]/60">
+                        <span>Domain</span>
+                        <span>Total</span>
+                        <span>Accuracy</span>
+                        <span>Avg Time</span>
+                        <span>Correct Avg</span>
+                      </div>
+                      <div className="space-y-2">
+                        {detailedStats.domains.map((row) => (
+                          <div
+                            key={row.domain}
+                            className="grid grid-cols-5 gap-2 items-baseline text-[13px] md:text-[14px]"
+                          >
+                            <span className="font-semibold text-[#2E7D32] truncate">
+                              {row.domain}
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.total}
+                            </span>
+                            <span className="font-semibold text-[#2E7D32]">
+                              {row.accuracy}%
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.avgTime}
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.correctAvgTime}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-[13px] text-[#2E7D32]/60 italic">
+                      No domain data available yet
+                    </p>
+                  )}
+                </div>
+
+                {/* Skill Stats */}
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#2E7D32] mb-3">
+                    By Skill
+                  </h3>
+                  {detailedStats.skills.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-5 gap-2 pb-2 text-[11px] font-medium text-[#2E7D32]/60">
+                        <span>Skill</span>
+                        <span>Total</span>
+                        <span>Accuracy</span>
+                        <span>Avg Time</span>
+                        <span>Correct Avg</span>
+                      </div>
+                      <div className="space-y-2">
+                        {detailedStats.skills.map((row) => (
+                          <div
+                            key={row.skill}
+                            className="grid grid-cols-5 gap-2 items-baseline text-[13px] md:text-[14px]"
+                          >
+                            <span className="font-semibold text-[#2E7D32] truncate">
+                              {row.skill}
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.total}
+                            </span>
+                            <span className="font-semibold text-[#2E7D32]">
+                              {row.accuracy}%
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.avgTime}
+                            </span>
+                            <span className="text-[#2E7D32]/80">
+                              {row.correctAvgTime}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-[13px] text-[#2E7D32]/60 italic">
+                      No skill data available yet
+                    </p>
+                  )}
                 </div>
               </div>
             )}

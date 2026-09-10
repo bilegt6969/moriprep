@@ -1,22 +1,22 @@
 import { db } from "@/lib/firebase";
 import {
-  Attempt,
-  DSATQuestion,
-  QuestionReport,
-  UserProgress,
-  UserStats,
+    Attempt,
+    DSATQuestion,
+    QuestionReport,
+    UserProgress,
+    UserStats,
 } from "@/types/dsat";
 import {
-  arrayUnion,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  query,
-  setDoc,
-  updateDoc,
-  where,
+    arrayUnion,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    increment,
+    query,
+    setDoc,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 
 // Firestore helper functions for Practice questions
@@ -245,20 +245,39 @@ export async function saveUserProgress(
   const docSnap = await getDoc(progressRef);
   const isFirstAttempt = !docSnap.exists();
 
+  const baseData = {
+    userId,
+    questionId,
+    attempts: [newAttempt],
+    lastAttemptedAt: new Date().toISOString(),
+  };
+
+  // Add domain and skill information if question is provided
+  if (question) {
+    baseData.domain = question.domain;
+    baseData.skill = question.skill;
+  }
+
   if (docSnap.exists()) {
     // Add new attempt to existing array
     await updateDoc(progressRef, {
       attempts: arrayUnion(newAttempt),
       lastAttemptedAt: new Date().toISOString(),
     });
+
+    // Update domain and skill if they weren't set before
+    if (question) {
+      const existingData = docSnap.data();
+      if (!existingData.domain || !existingData.skill) {
+        await updateDoc(progressRef, {
+          domain: question.domain,
+          skill: question.skill,
+        });
+      }
+    }
   } else {
     // Create new document with first attempt
-    await setDoc(progressRef, {
-      userId,
-      questionId,
-      attempts: [newAttempt],
-      lastAttemptedAt: new Date().toISOString(),
-    });
+    await setDoc(progressRef, baseData);
   }
 
   // Update user stats
