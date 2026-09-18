@@ -44,6 +44,47 @@ export interface DSATQuestion {
   raw_text: string;
 }
 
+// SAT Math Question Bank types
+export interface MathExpression {
+  id: string;
+  image_path: string | null;
+  page?: number;
+  bbox?: number[];
+  width_pt?: number | null;
+  height_pt?: number | null;
+  line_height_pt?: number | null;
+  display_em?: number | null;
+  text?: string | null;
+  ocr_guess?: string | null;
+}
+
+export interface Figure extends MathExpression {
+  type?: string; // "graphic" or "table"
+}
+
+export interface SATMathQuestion {
+  question_id: string;
+  assessment: string;
+  test: string;
+  domain: string;
+  skill: string;
+  difficulty: string;
+  question_type: "mcq" | "spr"; // multiple choice or student-produced response
+  question: string;
+  math_expressions: MathExpression[];
+  has_figure: boolean;
+  figures: Figure[];
+  choices: {
+    [key: string]: string;
+  };
+  correct_answer: string;
+  correct_answer_text: string | null;
+  rationale: string;
+  parse_status: "strict" | "partial_fallback";
+  source_page: number;
+  duplicate_question_id?: boolean;
+}
+
 export interface Attempt {
   answer: string;
   isCorrect: boolean;

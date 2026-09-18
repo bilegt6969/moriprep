@@ -321,7 +321,7 @@ function RWPracticePageContent() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const [leftPaneWidth, setLeftPaneWidth] = useState(60);
+  const [leftPaneWidth, setLeftPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [hasSavedConfig, setHasSavedConfig] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

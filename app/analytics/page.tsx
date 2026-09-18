@@ -134,6 +134,12 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [userAnswers, setUserAnswers] = useState<any[]>([]);
+  const [availableDomains, setAvailableDomains] = useState<Set<string>>(
+    new Set(),
+  );
+  const [availableSkills, setAvailableSkills] = useState<Set<string>>(
+    new Set(),
+  );
 
   // UI States
   const [hideScore, setHideScore] = useState(false);
@@ -153,6 +159,49 @@ export default function AnalyticsPage() {
         if (userDoc.exists()) {
           console.log("User data:", userDoc.data());
           setUserData({ name: user.displayName, ...userDoc.data() });
+        }
+
+        // Fetch available domains and skills from question data
+        try {
+          console.log("Fetching Reading & Writing question data...");
+          const rwResponse = await fetch(
+            "/api/questions?test=Reading and Writing",
+          );
+
+          console.log("RW response status:", rwResponse.status);
+
+          const rwQuestions = await rwResponse.json();
+
+          console.log(
+            "RW questions type:",
+            typeof rwQuestions,
+            "is array:",
+            Array.isArray(rwQuestions),
+          );
+
+          const domains = new Set<string>();
+          const skills = new Set<string>();
+
+          // Process only Reading & Writing questions
+          if (Array.isArray(rwQuestions)) {
+            rwQuestions.forEach((q: any) => {
+              // Fix domain names to match official SAT naming convention
+              let domain = q.domain;
+              if (domain === "Standard English Convention") {
+                domain = "Standard English Conventions";
+              }
+              if (domain) domains.add(domain);
+              if (q.skill) skills.add(q.skill);
+            });
+          }
+
+          console.log("Available RW domains:", Array.from(domains));
+          console.log("Available RW skills:", Array.from(skills));
+
+          setAvailableDomains(domains);
+          setAvailableSkills(skills);
+        } catch (error) {
+          console.error("Error fetching question data:", error);
         }
 
         // Fetch Analytics from userProgress collection
@@ -199,8 +248,60 @@ export default function AnalyticsPage() {
     if (!userAnswers.length) return [];
 
     const domainStats: any = {};
+
+    // Initialize all available domains with zero stats
+    availableDomains.forEach((domain) => {
+      domainStats[domain] = { correct: 0, total: 0 };
+    });
+
+    // Fill in actual user data
     userAnswers.forEach((progress) => {
-      const domain = progress.domain || "General";
+      let domain = progress.domain || "General";
+      const skill = progress.skill || "General";
+
+      // Fix domain names to match official SAT naming convention
+      // Handle various possible variations in domain names
+      if (domain === "Standard English Convention") {
+        domain = "Standard English Conventions";
+      } else if (domain === "Information and Idea") {
+        domain = "Information and Ideas";
+      } else if (domain === "Expression of Idea") {
+        domain = "Expression of Ideas";
+      } else if (domain === "Craft and Structure") {
+        domain = "Craft and Structure"; // already correct
+      }
+
+      // Fallback: if domain is not in available domains, try to match based on skill
+      if (!availableDomains.has(domain) && skill) {
+        if (
+          skill.includes("Information") ||
+          skill.includes("Central Ideas") ||
+          skill.includes("Inferences") ||
+          skill.includes("Command of Evidence")
+        ) {
+          domain = "Information and Ideas";
+        } else if (
+          skill.includes("Expression") ||
+          skill.includes("Rhetorical") ||
+          skill.includes("Transitions")
+        ) {
+          domain = "Expression of Ideas";
+        } else if (
+          skill.includes("Craft") ||
+          skill.includes("Structure") ||
+          skill.includes("Words in Context") ||
+          skill.includes("Cross-Text")
+        ) {
+          domain = "Craft and Structure";
+        } else if (
+          skill.includes("Standard English") ||
+          skill.includes("Boundaries") ||
+          skill.includes("Form")
+        ) {
+          domain = "Standard English Conventions";
+        }
+      }
+
       if (!domainStats[domain]) {
         domainStats[domain] = { correct: 0, total: 0 };
       }
@@ -219,8 +320,9 @@ export default function AnalyticsPage() {
       .map(([domain, stats]: [string, any]) => ({
         domain,
         type: /math/i.test(domain) ? "Math" : "R&W",
-        accuracy: Math.round((stats.correct / stats.total) * 100),
-        share: (stats.total / total) * 100,
+        accuracy:
+          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+        share: total > 0 ? (stats.total / total) * 100 : 0,
         total: stats.total,
       }))
       .sort((a, b) => b.total - a.total)
@@ -236,9 +338,72 @@ export default function AnalyticsPage() {
     const domainDetailedStats: any = {};
     const skillDetailedStats: any = {};
 
+    // Initialize all available domains and skills with zero stats
+    availableDomains.forEach((domain) => {
+      domainDetailedStats[domain] = {
+        total: 0,
+        correct: 0,
+        totalTime: 0,
+        correctTime: 0,
+      };
+    });
+
+    availableSkills.forEach((skill) => {
+      skillDetailedStats[skill] = {
+        total: 0,
+        correct: 0,
+        totalTime: 0,
+        correctTime: 0,
+      };
+    });
+
+    // Fill in actual user data
     userAnswers.forEach((progress) => {
-      const domain = progress.domain || "General";
+      let domain = progress.domain || "General";
       const skill = progress.skill || "General";
+
+      // Fix domain names to match official SAT naming convention
+      // Handle various possible variations in domain names
+      if (domain === "Standard English Convention") {
+        domain = "Standard English Conventions";
+      } else if (domain === "Information and Idea") {
+        domain = "Information and Ideas";
+      } else if (domain === "Expression of Idea") {
+        domain = "Expression of Ideas";
+      } else if (domain === "Craft and Structure") {
+        domain = "Craft and Structure"; // already correct
+      }
+
+      // Fallback: if domain is not in available domains, try to match based on skill
+      if (!availableDomains.has(domain) && skill) {
+        if (
+          skill.includes("Information") ||
+          skill.includes("Central Ideas") ||
+          skill.includes("Inferences") ||
+          skill.includes("Command of Evidence")
+        ) {
+          domain = "Information and Ideas";
+        } else if (
+          skill.includes("Expression") ||
+          skill.includes("Rhetorical") ||
+          skill.includes("Transitions")
+        ) {
+          domain = "Expression of Ideas";
+        } else if (
+          skill.includes("Craft") ||
+          skill.includes("Structure") ||
+          skill.includes("Words in Context") ||
+          skill.includes("Cross-Text")
+        ) {
+          domain = "Craft and Structure";
+        } else if (
+          skill.includes("Standard English") ||
+          skill.includes("Boundaries") ||
+          skill.includes("Form")
+        ) {
+          domain = "Standard English Conventions";
+        }
+      }
 
       // Domain stats
       if (!domainDetailedStats[domain]) {
@@ -294,8 +459,10 @@ export default function AnalyticsPage() {
       .map(([domain, stats]: [string, any]) => ({
         domain,
         total: stats.total,
-        accuracy: Math.round((stats.correct / stats.total) * 100),
-        avgTime: formatTime(stats.totalTime / stats.total),
+        accuracy:
+          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+        avgTime:
+          stats.total > 0 ? formatTime(stats.totalTime / stats.total) : "0s",
         correctAvgTime:
           stats.correct > 0
             ? formatTime(stats.correctTime / stats.correct)
@@ -307,8 +474,10 @@ export default function AnalyticsPage() {
       .map(([skill, stats]: [string, any]) => ({
         skill,
         total: stats.total,
-        accuracy: Math.round((stats.correct / stats.total) * 100),
-        avgTime: formatTime(stats.totalTime / stats.total),
+        accuracy:
+          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+        avgTime:
+          stats.total > 0 ? formatTime(stats.totalTime / stats.total) : "0s",
         correctAvgTime:
           stats.correct > 0
             ? formatTime(stats.correctTime / stats.correct)

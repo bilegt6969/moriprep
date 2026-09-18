@@ -1,25 +1,25 @@
 "use client";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
+    SidebarGroup,
+    SidebarMenu,
+    SidebarMenuAction,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  ArrowRightIcon,
-  FolderIcon,
-  MoreHorizontalIcon,
-  Trash2Icon,
+    ArrowRightIcon,
+    FolderIcon,
+    MoreHorizontalIcon,
+    Trash2Icon,
 } from "lucide-react";
 
 export function NavProjects({
@@ -36,7 +36,7 @@ export function NavProjects({
   return (
     // No card wrapper (bg/border/shadow) or uppercase label — continues the flat list
     <SidebarGroup className="p-0 group-data-[collapsible=icon]:hidden">
-      <SidebarMenu className="gap-0.5">
+      <SidebarMenu className="gap-0">
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton

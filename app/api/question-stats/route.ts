@@ -1,10 +1,32 @@
 import { db, doc, getDoc } from "@/lib/firebase";
+import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 
 const isDev = process.env.NODE_ENV !== "production";
 const log = (...args: unknown[]) => {
   if (isDev) console.log(...args);
 };
+
+// Cache for local question data
+let cachedLocalMathQuestions: any = null;
+let cachedLocalRWQuestions: any = null;
+
+function loadLocalQuestions(testType: string) {
+  if (testType === "Math") {
+    // Always reload to pick up changes during development
+    const mathPath = path.join(process.cwd(), "math_questions.json");
+    const data = JSON.parse(fs.readFileSync(mathPath, "utf8"));
+    log("Loaded local math questions:", data.length);
+    return data;
+  } else {
+    // Always reload to pick up changes during development
+    const rwPath = path.join(process.cwd(), "questions.json");
+    const data = JSON.parse(fs.readFileSync(rwPath, "utf8"));
+    log("Loaded local RW questions:", data.length);
+    return data;
+  }
+}
 
 // Sanitize field names to match the offline stats-generation script.
 function sanitizeFieldName(name: string): string {
@@ -229,72 +251,34 @@ export async function GET(request: NextRequest) {
     }
 
     // ---- Global stats ----
-    const statsDocName = test === "Math" ? "summary-math" : "summary";
-    const statsDoc = await getDoc(doc(db, "questionStats", statsDocName));
+    // Use local JSON file instead of Firebase for accurate counts
+    const questionsData = loadLocalQuestions(test);
 
-    if (!statsDoc.exists()) {
-      log("Question stats not found in Firebase");
-      return NextResponse.json(
-        { error: "Question stats not found" },
-        { status: 404 },
+    if (!hasFilters) {
+      const total = questionsData.length;
+      return NextResponse.json({ count: total });
+    }
+
+    let filtered = questionsData;
+
+    if (combinedDomains.length > 0) {
+      filtered = filtered.filter((q: any) =>
+        combinedDomains.includes(q.domain),
       );
     }
 
-    const stats = statsDoc.data();
-
-    if (!hasFilters) {
-      // Always include a `count` field so the response shape is consistent
-      // whether or not filters are active. Adjust the field name below if
-      // your `questionStats/summary` document uses something other than
-      // totalCount/total/count for its grand total.
-      const total = toNumber(stats.totalCount ?? stats.total ?? stats.count);
-      return NextResponse.json({ count: total, ...stats });
+    if (combinedSkills.length > 0) {
+      filtered = filtered.filter((q: any) => combinedSkills.includes(q.skill));
     }
 
-    let count: number | null = null;
-
-    // Exact path: skill/domain AND difficulty both selected — use joint counts.
-    if (difficulties.length > 0 && combinedSkills.length > 0) {
-      count =
-        sumJointUserCounts(
-          stats?.skillDifficultyCounts,
-          combinedSkills.map(sanitizeFieldName),
-          difficulties.map(sanitizeFieldName),
-        )?.answered ?? null;
-    } else if (difficulties.length > 0 && combinedDomains.length > 0) {
-      count =
-        sumJointUserCounts(
-          stats?.domainDifficultyCounts,
-          combinedDomains.map(sanitizeFieldName),
-          difficulties.map(sanitizeFieldName),
-        )?.answered ?? null;
+    if (difficulties.length > 0) {
+      filtered = filtered.filter((q: any) =>
+        difficulties.includes(q.difficulty),
+      );
     }
 
-    if (count === null) {
-      // No joint counts available or pre-migration data — fall back to 1D + ratio estimate.
-      // Skill is more specific than domain, so prioritize skill when both are present
-      if (combinedSkills.length > 0) {
-        count = sumGlobalCounts(stats?.skillCounts, combinedSkills);
-      } else if (combinedDomains.length > 0) {
-        count = sumGlobalCounts(stats?.domainCounts, combinedDomains);
-      } else {
-        count = sumGlobalCounts(stats?.difficultyCounts, difficulties);
-      }
-
-      if (
-        difficulties.length > 0 &&
-        (combinedDomains.length > 0 || combinedSkills.length > 0)
-      ) {
-        const ratio = getDifficultyRatio(stats?.difficultyCounts, difficulties);
-        if (ratio > 0) {
-          count = Math.round(count * ratio);
-        }
-        // If ratio is 0, leave count unadjusted rather than zeroing out a real result
-      }
-    }
-
-    log("Filtered global count:", count);
-    return NextResponse.json({ count });
+    log("Filtered global count:", filtered.length);
+    return NextResponse.json({ count: filtered.length });
   } catch (error) {
     console.error("Error fetching question stats:", error);
     return NextResponse.json(

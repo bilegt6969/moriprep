@@ -164,19 +164,30 @@ export function DSATPracticeCards() {
                 <p className="text-4xl font-bold">{mathQuestions}</p>
               </div>
 
-              <p className="text-purple-100 mb-8 flex-1">
+              <p className="text-purple-100 mb-6 flex-1">
                 Tackle complex math problems with our advanced problem sets
                 covering Algebra, Advanced Math, Geometry, Statistics, and Data
                 Analysis.
               </p>
 
-              <button
-                onClick={() => setIsMathConfigPopupOpen(true)}
-                className="group flex items-center gap-2 bg-white text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all"
-              >
-                Start Practicing
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsMathConfigPopupOpen(true)}
+                  className="group flex items-center gap-2 bg-white text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all"
+                >
+                  Start Practicing
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </button>
+                <button
+                  onClick={() =>
+                    (window.location.href = "/practice/math/question-bank")
+                  }
+                  className="group flex items-center gap-2 bg-purple-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-300 transition-all"
+                >
+                  Question Bank
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>

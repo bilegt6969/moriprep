@@ -1,18 +1,18 @@
 "use client";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  SidebarGroup,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+    SidebarGroup,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { ChevronRightIcon } from "lucide-react";
 
@@ -33,7 +33,7 @@ export function NavMain({
   return (
     // No card wrapper (bg/border/shadow) or uppercase label — flat, continuous list like the reference
     <SidebarGroup className="p-0">
-      <SidebarMenu className="gap-0.5">
+      <SidebarMenu className="gap-0">
         {items.map((item) => (
           <Collapsible
             key={item.title}
@@ -45,18 +45,21 @@ export function NavMain({
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  className="h-10 rounded-xl"
+                  className="h-10 rounded-xl transition-all duration-200 hover:bg-neutral-100"
                 >
                   {item.icon}
                   <span>{item.title}</span>
-                  <ChevronRightIcon className="ml-auto text-neutral-400 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-data-[state=open]/collapsible:rotate-90" />
+                  <ChevronRightIcon className="ml-auto text-neutral-400 transition-transform duration-200 ease-out group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild className="rounded-lg">
+                      <SidebarMenuSubButton
+                        asChild
+                        className="rounded-lg transition-all duration-200 hover:bg-neutral-100"
+                      >
                         <a href={subItem.url}>
                           <span>{subItem.title}</span>
                         </a>

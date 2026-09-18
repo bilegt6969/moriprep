@@ -1,45 +1,47 @@
 "use client";
 
 import {
-    AnimatedSidebar,
-    AnimatedSidebarClose,
-    AnimatedSidebarContent,
-    AnimatedSidebarFooter,
-    AnimatedSidebarGroup,
-    AnimatedSidebarGroupContent,
-    AnimatedSidebarGroupLabel,
-    AnimatedSidebarHeader,
-    AnimatedSidebarInset,
-    AnimatedSidebarMenu,
-    AnimatedSidebarMenuButton,
-    AnimatedSidebarMenuItem,
-    AnimatedSidebarMenuSub,
-    AnimatedSidebarMenuSubButton,
-    AnimatedSidebarMenuSubItem,
-    AnimatedSidebarProvider,
-    AnimatedSidebarRail,
-    AnimatedSidebarTrigger,
-    useAnimatedSidebar,
+  AnimatedSidebar,
+  AnimatedSidebarClose,
+  AnimatedSidebarContent,
+  AnimatedSidebarFooter,
+  AnimatedSidebarGroup,
+  AnimatedSidebarGroupContent,
+  AnimatedSidebarGroupLabel,
+  AnimatedSidebarHeader,
+  AnimatedSidebarInset,
+  AnimatedSidebarMenu,
+  AnimatedSidebarMenuButton,
+  AnimatedSidebarMenuItem,
+  AnimatedSidebarMenuSub,
+  AnimatedSidebarMenuSubButton,
+  AnimatedSidebarMenuSubItem,
+  AnimatedSidebarProvider,
+  AnimatedSidebarRail,
+  AnimatedSidebarTrigger,
+  useAnimatedSidebar,
 } from "@/components/motion/animated-sidebar";
 import { EASE_OUT } from "@/lib/ease";
 import {
-    collection,
-    db,
-    auth as firebaseAuth,
-    onSnapshot,
-    query,
-    where,
+  collection,
+  db,
+  auth as firebaseAuth,
+  onSnapshot,
+  query,
+  where,
 } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
-    BarChart3,
-    BookOpen,
-    History,
-    LogOut,
-    Settings,
-    Trophy,
-    X,
+  BarChart3,
+  BookOpen,
+  ChevronsUpDown,
+  HelpCircle,
+  History,
+  LogOut,
+  Settings,
+  Trophy,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
@@ -95,6 +97,75 @@ const TestIcon = ({ className }: { className?: string }) => (
       d="M12.9375 15.75C14.4908 15.75 15.75 14.4908 15.75 12.9375C15.75 11.3842 14.4908 10.125 12.9375 10.125C11.3842 10.125 10.125 11.3842 10.125 12.9375C10.125 14.4908 11.3842 15.75 12.9375 15.75Z"
       stroke="currentColor"
       strokeWidth="1.5"
+    />
+  </svg>
+);
+
+const DashboardIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 18 18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    color="currentColor"
+    className={className}
+  >
+    <rect
+      x="2"
+      y="2"
+      width="6"
+      height="6"
+      rx="1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="10"
+      y="2"
+      width="6"
+      height="6"
+      rx="1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="2"
+      y="10"
+      width="6"
+      height="6"
+      rx="1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="10"
+      y="10"
+      width="6"
+      height="6"
+      rx="1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
+const CommunityIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 18 18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    color="currentColor"
+    className={className}
+  >
+    <path
+      d="M9 9C11.2091 9 13 7.20914 13 5C13 2.79086 11.2091 1 9 1C6.79086 1 5 2.79086 5 5C5 7.20914 6.79086 9 9 9Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M1 17C1 14.2386 3.23858 12 9 12C14.7614 12 17 14.2386 17 17"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
     />
   </svg>
 );
@@ -155,23 +226,65 @@ const SidebarToggleIcon = ({
   </motion.svg>
 );
 
-const navigationItems = [
-  { label: "Overview", href: "/home", icon: HomeIcon },
-  { label: "Test", href: "/practice", icon: TestIcon },
+// Nav items are grouped (Main / Learn / Progress / Community) to mirror the
+// Messaging / Audience / Developers clustering from the reference design.
+// Adjust the grouping below if a different IA is preferred — the render
+// logic just maps over `navGroups`, so reshuffling items between groups or
+// renaming groups is a one-line change.
+const navGroups: {
+  label: string | null;
+  items: Array<{
+    label: string;
+    href?: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    hasSubmenu?: boolean;
+    subItems?: Array<{ label: string; href: string }>;
+  }>;
+}[] = [
   {
-    label: "Lessons",
-    icon: BookOpen,
-    hasSubmenu: true,
-    subItems: [
-      { label: "Math", href: "/resources/math" },
-      { label: "Reading & Writing", href: "/resources/rw" },
+    label: null,
+    items: [
+      { label: "Overview", href: "/home", icon: HomeIcon },
+      { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
+      { label: "Test", href: "/practice", icon: TestIcon },
     ],
   },
-  { label: "Resources", href: "/resources", icon: ResourcesIcon },
-  { label: "History", href: "/history", icon: History },
-  { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  {
+    label: "Learn",
+    items: [
+      {
+        label: "Lessons",
+        icon: BookOpen,
+        hasSubmenu: true,
+        subItems: [
+          { label: "Math", href: "/resources/math" },
+          { label: "Reading & Writing", href: "/resources/rw" },
+        ],
+      },
+      { label: "Resources", href: "/resources", icon: ResourcesIcon },
+      { label: "Blog", href: "/blog", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Progress",
+    items: [
+      { label: "History", href: "/history", icon: History },
+      { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
+      { label: "Analytics", href: "/analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Community",
+    items: [
+      { label: "Community", href: "/community", icon: CommunityIcon },
+      { label: "Help", href: "/support", icon: HelpCircle },
+    ],
+  },
 ];
+
+// Flattened for the pathname → active-label lookup, so we don't have to
+// duplicate the nested loop everywhere we need "what's the current page".
+const navigationItems = navGroups.flatMap((group) => group.items);
 
 const settingsItems = [
   { label: "Settings", href: "/settings", icon: Settings },
@@ -196,6 +309,11 @@ const NAV_ITEM_BASE = "transition-colors duration-150";
 const NAV_ITEM_ACTIVE = "text-zinc-900 font-semibold";
 const NAV_ITEM_INACTIVE =
   "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-black/[0.035] rounded-xl";
+
+// Section label style lifted from the reference: plain gray-500, normal
+// (not uppercase/tracked) — quieter than the old all-caps/letterspaced
+// "SETTINGS" label so groups read as gentle separators, not shouty headers.
+const NAV_GROUP_LABEL = "text-[12px] font-medium text-zinc-400 px-3 mb-1.5";
 
 function isPathActive(pathname: string, href?: string) {
   if (!href) return false;
@@ -341,157 +459,164 @@ function AppNavbarContent({
       <AnimatedSidebar
         ariaLabel="Mori Prep navigation"
         collapsible="icon"
-        variant="sidebar"
-        className="bg-[#f5f5f7]/80 border-r border-black/[0.04] backdrop-blur-3xl"
+        variant="inset"
+        className="bg-[#f5f5f7]/80 backdrop-blur-3xl"
       >
         {/*
-          The icon column's left edge sits 28px from the sidebar's left
-          edge: AnimatedSidebarContent's px-3 (12px) + AnimatedSidebarGroup's
-          px-1 (4px) + the menu button's own px-3 (12px) = 28px. The header
-          below reproduces that exact stack — px-3 here (12px) + pl-4 on the
-          row (16px) — instead of guessing at a padding value, so the
-          wordmark's left edge lands on the same 28px line as "Overview"/"Test"
-          rather than ~8px short of it.
+          Header now mirrors the reference: a small icon mark in a rounded
+          square, the wordmark beside it, and a chevrons-up-down affordance
+          on the far right that doubles as the sidebar's expand/collapse
+          trigger. The icon column's left edge still sits 28px from the
+          sidebar's left edge (AnimatedSidebarContent's px-3 [12px] +
+          AnimatedSidebarGroup's px-1 [4px] + the menu button's own px-3
+          [12px] = 28px) — px-3 here (12px) + pl-4 on the row (16px)
+          reproduces that same stack so the logo mark and "Overview" share
+          a left edge.
         */}
         <AnimatedSidebarHeader className="px-3 pt-6 pb-3">
-          <div className="flex h-8 items-center justify-between gap-2 pl-4 pr-1">
-            <div className="flex items-center gap-2.5 min-w-0 relative h-8">
-              <AnimatePresence initial={false} mode="wait">
-                {collapsed ? (
-                  <motion.div
-                    key="mark"
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.85 }}
-                    transition={{
-                      duration: LOGO_MORPH_DURATION * 0.4,
-                      delay: LOGO_MORPH_DURATION * 0.3,
-                      ease: EASE_OUT,
-                    }}
-                  >
-                    <Image
-                      src="/logo/logo.png"
-                      alt="Mori Prep"
-                      width={96}
-                      height={30}
-                      className="h-7 w-auto object-contain shrink-0"
-                      priority
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="wordmark"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: LOGO_MORPH_DURATION * 0.4,
-                      delay: LOGO_MORPH_DURATION * 0.35,
-                      ease: EASE_OUT,
-                    }}
-                  >
-                    <Image
-                      src="/morin.svg"
-                      alt="Mori Prep"
-                      width={110}
-                      height={26}
-                      className="h-6 w-auto object-contain shrink-0 drop-shadow-sm"
-                      priority
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          <AnimatedSidebarTrigger className="flex h-11 w-full items-center gap-2.5 rounded-[12px] pl-4 pr-2 transition-colors hover:bg-black/[0.03]">
+            <div className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-[9px] bg-gradient-to-b from-zinc-100 to-zinc-200 ring-1 ring-black/[0.04]">
+              <Image
+                src="/logo/logo.png"
+                alt="Mori Prep"
+                width={32}
+                height={32}
+                className="size-full object-contain p-1"
+                priority
+              />
             </div>
-            <AnimatedSidebarClose className="grid size-7 shrink-0 place-items-center rounded-full text-zinc-400 hover:text-zinc-900 hover:bg-black/[0.05] transition-colors md:hidden">
-              <X aria-hidden="true" className="size-4" />
-            </AnimatedSidebarClose>
-          </div>
+
+            <AnimatePresence initial={false}>
+              {!collapsed && (
+                <motion.div
+                  key="wordmark"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{
+                    duration: LOGO_MORPH_DURATION,
+                    ease: EASE_OUT,
+                  }}
+                  className="flex min-w-0 flex-1 items-center justify-between gap-2 overflow-hidden"
+                >
+                  <Image
+                    src="/morin.svg"
+                    alt="Mori Prep"
+                    width={110}
+                    height={26}
+                    className="h-5 w-auto shrink-0 object-contain"
+                    priority
+                  />
+                  <ChevronsUpDown
+                    aria-hidden="true"
+                    className="size-3.5 shrink-0 text-zinc-400"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </AnimatedSidebarTrigger>
+
+          <AnimatedSidebarClose className="absolute right-2 top-6 grid size-7 shrink-0 place-items-center rounded-full text-zinc-400 hover:text-zinc-900 hover:bg-black/[0.05] transition-colors md:hidden">
+            <X aria-hidden="true" className="size-4" />
+          </AnimatedSidebarClose>
         </AnimatedSidebarHeader>
 
         <AnimatedSidebarContent className="px-3 pt-2">
-          <AnimatedSidebarGroup className="pb-4">
-            <AnimatedSidebarGroupContent>
-              <AnimatedSidebarMenu className="gap-1">
-                {navigationItems.map((item) => {
-                  const isActive = item.hasSubmenu
-                    ? item.subItems?.some((sub) =>
-                        isPathActive(pathname, sub.href),
-                      )
-                    : isPathActive(pathname, item.href);
+          {navGroups.map((group, groupIndex) => (
+            <AnimatedSidebarGroup
+              key={group.label ?? `group-${groupIndex}`}
+              className={groupIndex === 0 ? "pb-1" : "pb-1 pt-4"}
+            >
+              {group.label && !collapsed && (
+                <AnimatedSidebarGroupLabel className={NAV_GROUP_LABEL}>
+                  {group.label}
+                </AnimatedSidebarGroupLabel>
+              )}
+              <AnimatedSidebarGroupContent>
+                <AnimatedSidebarMenu className="gap-1">
+                  {group.items.map((item) => {
+                    const isActive = item.hasSubmenu
+                      ? item.subItems?.some((sub) =>
+                          isPathActive(pathname, sub.href),
+                        )
+                      : isPathActive(pathname, item.href);
 
-                  return (
-                    <AnimatedSidebarMenuItem key={item.label}>
-                      {item.hasSubmenu ? (
-                        <>
+                    return (
+                      <AnimatedSidebarMenuItem key={item.label}>
+                        {item.hasSubmenu ? (
+                          <>
+                            <AnimatedSidebarMenuButton
+                              isActive={isActive}
+                              ariaExpanded={openSubmenu === item.label}
+                              icon={
+                                item.icon && (
+                                  <item.icon className="size-4 shrink-0" />
+                                )
+                              }
+                              className={`${NAV_ITEM_BASE} ${
+                                isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
+                              }`}
+                              onSelect={() => {
+                                setOpenSubmenu((prev) =>
+                                  prev === item.label ? null : item.label,
+                                );
+                              }}
+                            >
+                              {item.label}
+                            </AnimatedSidebarMenuButton>
+                            <AnimatedSidebarMenuSub
+                              open={openSubmenu === item.label}
+                            >
+                              {item.subItems?.map((subItem) => (
+                                <AnimatedSidebarMenuSubItem key={subItem.label}>
+                                  <AnimatedSidebarMenuSubButton
+                                    isActive={isPathActive(
+                                      pathname,
+                                      subItem.href,
+                                    )}
+                                    href={subItem.href}
+                                    className={`!rounded-[8px] text-[13px] px-3 transition-colors ${
+                                      isPathActive(pathname, subItem.href)
+                                        ? "text-zinc-900 font-semibold bg-black/[0.04]"
+                                        : "text-zinc-500 hover:text-zinc-900"
+                                    }`}
+                                  >
+                                    {subItem.label}
+                                  </AnimatedSidebarMenuSubButton>
+                                </AnimatedSidebarMenuSubItem>
+                              ))}
+                            </AnimatedSidebarMenuSub>
+                          </>
+                        ) : (
                           <AnimatedSidebarMenuButton
                             isActive={isActive}
-                            ariaExpanded={openSubmenu === item.label}
                             icon={
                               item.icon && (
                                 <item.icon className="size-4 shrink-0" />
                               )
                             }
+                            href={item.href}
                             className={`${NAV_ITEM_BASE} ${
                               isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
                             }`}
-                            onSelect={() => {
-                              setOpenSubmenu((prev) =>
-                                prev === item.label ? null : item.label,
-                              );
-                            }}
                           >
                             {item.label}
                           </AnimatedSidebarMenuButton>
-                          <AnimatedSidebarMenuSub
-                            open={openSubmenu === item.label}
-                          >
-                            {item.subItems?.map((subItem) => (
-                              <AnimatedSidebarMenuSubItem key={subItem.label}>
-                                <AnimatedSidebarMenuSubButton
-                                  isActive={isPathActive(
-                                    pathname,
-                                    subItem.href,
-                                  )}
-                                  href={subItem.href}
-                                  className={`!rounded-[8px] text-[13px] px-3 transition-colors ${
-                                    isPathActive(pathname, subItem.href)
-                                      ? "text-zinc-900 font-semibold bg-black/[0.04]"
-                                      : "text-zinc-500 hover:text-zinc-900"
-                                  }`}
-                                >
-                                  {subItem.label}
-                                </AnimatedSidebarMenuSubButton>
-                              </AnimatedSidebarMenuSubItem>
-                            ))}
-                          </AnimatedSidebarMenuSub>
-                        </>
-                      ) : (
-                        <AnimatedSidebarMenuButton
-                          isActive={isActive}
-                          icon={
-                            item.icon && (
-                              <item.icon className="size-4 shrink-0" />
-                            )
-                          }
-                          href={item.href}
-                          className={`${NAV_ITEM_BASE} ${
-                            isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
-                          }`}
-                        >
-                          {item.label}
-                        </AnimatedSidebarMenuButton>
-                      )}
-                    </AnimatedSidebarMenuItem>
-                  );
-                })}
-              </AnimatedSidebarMenu>
-            </AnimatedSidebarGroupContent>
-          </AnimatedSidebarGroup>
+                        )}
+                      </AnimatedSidebarMenuItem>
+                    );
+                  })}
+                </AnimatedSidebarMenu>
+              </AnimatedSidebarGroupContent>
+            </AnimatedSidebarGroup>
+          ))}
 
-          <AnimatedSidebarGroup className="mt-auto">
-            <AnimatedSidebarGroupLabel className="text-[11px] font-semibold text-zinc-400 tracking-widest uppercase px-3 mb-1">
-              Settings
-            </AnimatedSidebarGroupLabel>
+          <AnimatedSidebarGroup className="mt-auto pt-4">
+            {!collapsed && (
+              <AnimatedSidebarGroupLabel className={NAV_GROUP_LABEL}>
+                Settings
+              </AnimatedSidebarGroupLabel>
+            )}
             <AnimatedSidebarGroupContent>
               <AnimatedSidebarMenu className="gap-1">
                 {settingsItems.map((item) => {
@@ -524,16 +649,16 @@ function AppNavbarContent({
       </AnimatedSidebar>
 
       {/* Main Content Area */}
-      <AnimatedSidebarInset className="bg-white h-screen overflow-hidden">
+      <AnimatedSidebarInset className="bg-white overflow-hidden md:h-[calc(100vh-1rem)] md:my-2 md:mr-2 md:-ml-4 md:rounded-2xl md:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.15)]">
         <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 sm:gap-4 px-4 sm:px-6 border-b border-zinc-200 bg-white/70 backdrop-blur-2xl">
-          <AnimatedSidebarTrigger className="text-zinc-400 transition-colors hover:text-zinc-900">
+          <AnimatedSidebarTrigger className="text-zinc-400 transition-colors hover:text-zinc-900 md:hidden">
             <SidebarToggleIcon
               aria-hidden="true"
               className="size-5"
               isOpen={sidebarOpen}
             />
           </AnimatedSidebarTrigger>
-          <div className="h-3 w-[1px] bg-zinc-200" />
+          <div className="h-3 w-[1px] bg-zinc-200 md:hidden" />
           <p className="text-[14px] font-semibold text-zinc-800 tracking-tight truncate">
             {activeLabel}
           </p>
@@ -560,7 +685,7 @@ function AppNavbarContent({
           Responsive content padding: tight on mobile, roomier on larger
           screens, instead of a fixed p-8 that eats most of a phone screen.
         */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 bg-zinc-50/20">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </AnimatedSidebarInset>
@@ -613,7 +738,7 @@ function ProfileMenu({
         href="/sign-in"
         className="flex items-center gap-3 rounded-[12px] px-2 py-2 transition-colors hover:bg-black/[0.04]"
       >
-        <div className="grid size-[34px] shrink-0 place-items-center rounded-full bg-zinc-200/50 text-zinc-500 text-xs font-semibold">
+        <div className="grid size-8.5 shrink-0 place-items-center rounded-full bg-zinc-200/50 text-zinc-500 text-xs font-semibold">
           ?
         </div>
         {!collapsed && (
@@ -673,10 +798,10 @@ function ProfileMenu({
           <img
             src={photoURL}
             alt="Profile"
-            className="size-[34px] shrink-0 rounded-full object-cover border border-black/[0.04]"
+            className="size-8.5 shrink-0 rounded-full object-cover border border-black/[0.04]"
           />
         ) : (
-          <div className="grid size-[34px] shrink-0 place-items-center rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 text-white text-[11px] font-semibold">
+          <div className="grid size-8.5 shrink-0 place-items-center rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 text-white text-[11px] font-semibold">
             {initial}
           </div>
         )}

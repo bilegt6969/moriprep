@@ -27,7 +27,7 @@ export function NavSecondary({
       className="p-0 border-b border-neutral-200 dark:border-neutral-800"
     >
       <SidebarGroupContent>
-        <SidebarMenu className="gap-0.5">
+        <SidebarMenu className="gap-0">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild size="sm" className="h-10 rounded-xl">

@@ -7,30 +7,29 @@ import { NavProjects } from "@/components/nav-projects";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarRail,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-    BarChart3,
-    BookOpenIcon,
-    ChevronLeftIcon,
-    FileText,
-    FrameIcon,
-    LayoutDashboard,
-    MapIcon,
-    PieChartIcon,
-    Settings,
+  BarChart3,
+  BookOpenIcon,
+  ChevronLeftIcon,
+  FileText,
+  FrameIcon,
+  LayoutDashboard,
+  MapIcon,
+  PieChartIcon,
+  Settings,
 } from "lucide-react";
 
-// Apple-style icon configuration: slightly smaller, thinner strokes (matches SF Symbols)
-// Lighter default color to match the muted, flat look of the reference design.
+// Full icons with standard styling for better visibility
 const iconProps = {
-  size: 18,
-  strokeWidth: 1.5,
-  className: "text-neutral-400 dark:text-neutral-500",
+  size: 20,
+  strokeWidth: 2,
+  className: "text-neutral-700 dark:text-neutral-300",
 };
 
 const data = {
@@ -146,7 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       {/* Flat, continuous list — no boxed/shadowed sections, tight spacing like the reference */}
-      <SidebarContent className="px-3 gap-y-1">
+      <SidebarContent className="px-3 gap-y-0">
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} />

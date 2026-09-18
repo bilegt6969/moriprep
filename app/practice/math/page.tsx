@@ -1,6 +1,7 @@
 "use client";
 
 import DesmosCalculator from "@/components/dsat/DesmosCalculator";
+import { MathText } from "@/components/MathText";
 import { mathDomainSkills } from "@/lib/dsat/math-domain-skills";
 import {
     saveAnsweredQuestions,
@@ -47,30 +48,6 @@ const springTransition = {
   stiffness: 300,
   damping: 30,
 };
-
-// Helper to replace MATH placeholders with image tags
-function renderMathContent(text: string): React.ReactNode {
-  if (!text) return text;
-
-  // Replace ⟦MATH:id⟧ with image tags
-  const parts = text.split(/⟦MATH:([a-zA-Z0-9_-]+)⟧/g);
-
-  return parts.map((part, index) => {
-    // Even indices are regular text, odd indices are math IDs
-    if (index % 2 === 1) {
-      const mathId = part;
-      return (
-        <img
-          key={mathId}
-          src={`/math_questions_math/${mathId}.png`}
-          alt=""
-          className="inline-block h-6 align-middle mx-0.5"
-        />
-      );
-    }
-    return <span key={`text-${index}`}>{part}</span>;
-  });
-}
 
 // Skeleton Loading Components
 function SkeletonHeader() {
@@ -951,6 +928,24 @@ function MathPracticeContent() {
             </span>
           </button>
 
+          <button
+            onClick={() => setShowCalculator(!showCalculator)}
+            className={`flex flex-col items-center justify-center rounded-2xl px-5 py-1.5 transition-colors ${showCalculator ? "bg-cyan-100/50 text-cyan-400" : "text-gray-500 hover:text-black hover:bg-gray-50"}`}
+          >
+            <span
+              className="font-sans font-bold text-sm"
+              style={{ color: showCalculator ? "#2DD4BF" : "" }}
+            >
+              π
+            </span>
+            <span
+              className="text-[10px] font-bold tracking-wide mt-0.5"
+              style={{ color: showCalculator ? "#2DD4BF" : "" }}
+            >
+              Calculator
+            </span>
+          </button>
+
           <div className="relative">
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
@@ -1128,331 +1123,408 @@ function MathPracticeContent() {
           </div>
         )}
 
-        {/* Question Pane - Full width for math */}
-        <div className="w-full overflow-y-auto bg-white flex flex-col relative">
-          {/* Question Header Bar matching RW */}
-          <div className="px-6 md:px-8 py-3 bg-white sticky top-0 z-10">
-            <div className="max-w-3xl mx-auto flex items-center justify-between gap-2 bg-gray-100 border-2 border-gray-200 rounded-full px-2 py-1.5">
-              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
-                  {currentQuestionIndex + 1}
+        {/* Question Pane - Split with calculator when active */}
+        <div
+          className={`w-full bg-white flex flex-col relative ${showCalculator ? "md:flex-row md:h-[calc(100vh-8rem)]" : ""}`}
+        >
+          {/* Left Side: Header + Question + Answers */}
+          <div
+            className={`${showCalculator ? "md:w-1/2 md:flex md:flex-col md:h-full" : "w-full"}`}
+          >
+            {/* Question Header Bar matching RW */}
+            <div className="px-6 md:px-8 py-3 bg-white sticky top-0 z-10">
+              <div
+                className={`${showCalculator ? "" : "max-w-3xl mx-auto"} flex items-center justify-between gap-2 bg-gray-100 border-2 border-gray-200 rounded-full px-2 py-1.5`}
+              >
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                  <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
+                    {currentQuestionIndex + 1}
+                  </div>
+
+                  {(currentQuestion as any).parse_status ===
+                    "partial_fallback" && (
+                    <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+                      Preview
+                    </span>
+                  )}
+
+                  <button
+                    onClick={toggleMark}
+                    className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-1.5 rounded-full border-2 whitespace-nowrap ${markedQuestions.has(currentQuestionIndex) ? "bg-gray-900 border-gray-900 text-white" : "border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-200"}`}
+                  >
+                    <Bookmark
+                      size={16}
+                      strokeWidth={2.5}
+                      className={
+                        markedQuestions.has(currentQuestionIndex)
+                          ? "text-white fill-white shrink-0"
+                          : "text-gray-600 shrink-0"
+                      }
+                    />
+                    <span className="hidden sm:inline">Mark for Review</span>
+                  </button>
                 </div>
 
-                <button
-                  onClick={toggleMark}
-                  className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-1.5 rounded-full border-2 whitespace-nowrap ${markedQuestions.has(currentQuestionIndex) ? "bg-gray-900 border-gray-900 text-white" : "border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-200"}`}
-                >
-                  <Bookmark
-                    size={16}
-                    strokeWidth={2.5}
-                    className={
-                      markedQuestions.has(currentQuestionIndex)
-                        ? "text-white fill-white shrink-0"
-                        : "text-gray-600 shrink-0"
-                    }
-                  />
-                  <span className="hidden sm:inline">Mark for Review</span>
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => {
+                      if (currentQuestion) {
+                        const questionText = currentQuestion.question || "";
+                        const choices = Object.entries(
+                          currentQuestion.choices || {},
+                        )
+                          .map(([key, value]) => `${key}. ${value}`)
+                          .join("\n");
+                        const fullText = `${questionText}\n\n${choices}`;
+                        navigator.clipboard
+                          .writeText(fullText)
+                          .then(() => {
+                            setToastMessage("Copied to clipboard");
+                            setShowCopyToast(true);
+                            setTimeout(() => setShowCopyToast(false), 2000);
+                          })
+                          .catch((err) => {
+                            console.error("Clipboard write failed:", err);
+                          });
+                      }
+                    }}
+                    className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
+                  >
+                    <Copy size={16} strokeWidth={2} />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedReportOption("");
+                      setReportDetails("");
+                      setShowReportModal(true);
+                    }}
+                    className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-200"
+                  >
+                    <Flag size={16} strokeWidth={2} /> Report
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedReportOption("");
+                      setReportDetails("");
+                      setShowReportModal(true);
+                    }}
+                    className="sm:hidden w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
+                  >
+                    <Flag size={16} strokeWidth={2} />
+                  </button>
+
+                  <button
+                    onClick={() => setIsCrossOutMode(!isCrossOutMode)}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${isCrossOutMode ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 hover:border-gray-300 hover:bg-gray-200"}`}
+                  >
+                    <span className="font-sans font-bold text-xs">S</span>
+                    <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
+                  </button>
+                </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    if (currentQuestion) {
-                      const questionText = currentQuestion.question || "";
-                      const choices = Object.entries(
-                        currentQuestion.choices || {},
-                      )
-                        .map(([key, value]) => `${key}. ${value}`)
-                        .join("\n");
-                      const fullText = `${questionText}\n\n${choices}`;
-                      navigator.clipboard
-                        .writeText(fullText)
-                        .then(() => {
-                          setToastMessage("Copied to clipboard");
-                          setShowCopyToast(true);
-                          setTimeout(() => setShowCopyToast(false), 2000);
-                        })
-                        .catch((err) => {
-                          console.error("Clipboard write failed:", err);
-                        });
-                    }
-                  }}
-                  className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
+            {/* Question Area */}
+            <div
+              ref={questionRef}
+              className={`flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+              onMouseDown={handleWordDoubleClick}
+            >
+              {isPaused ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Pause className="w-16 h-16 text-gray-400 mb-4" />
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Practice Paused
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    Take a break, you can resume anytime
+                  </p>
+                  <button
+                    onClick={() => setIsPaused(false)}
+                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                  >
+                    Resume
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className={`${showCalculator ? "w-full" : "max-w-3xl mx-auto"}`}
                 >
-                  <Copy size={16} strokeWidth={2} />
-                </button>
+                  {/* Question prompt */}
+                  <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] leading-relaxed">
+                    <MathText
+                      text={currentQuestion.question}
+                      mathExpressions={
+                        (currentQuestion as any).math_expressions || []
+                      }
+                      figures={(currentQuestion as any).figures || []}
+                    />
+                  </div>
 
-                <button
-                  onClick={() => {
-                    setSelectedReportOption("");
-                    setReportDetails("");
-                    setShowReportModal(true);
-                  }}
-                  className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-200"
-                >
-                  <Flag size={16} strokeWidth={2} /> Report
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedReportOption("");
-                    setReportDetails("");
-                    setShowReportModal(true);
-                  }}
-                  className="sm:hidden w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 border-2 border-transparent hover:border-gray-300 transition-colors rounded-full hover:bg-gray-200"
-                >
-                  <Flag size={16} strokeWidth={2} />
-                </button>
+                  {/* Answers List */}
+                  {(currentQuestion as any).question_type === "spr" ? (
+                    // Student-Produced Response (SPR) - text input
+                    <div className="space-y-4">
+                      <div className="p-4 border-2 border-gray-300 rounded-xl bg-white">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Your Answer
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedAnswer || ""}
+                          onChange={(e) => setSelectedAnswer(e.target.value)}
+                          disabled={!!selectedAnswer}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg font-mono focus:outline-none focus:border-black disabled:bg-gray-50 disabled:text-gray-400"
+                          placeholder="Enter your answer"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const correct =
+                            selectedAnswer === currentQuestion.correct_answer;
+                          setIsCorrect(correct);
+                          setShowExplanation(true);
+                          if (!correct) {
+                            setWrongAnswers((prev) =>
+                              new Set(prev).add(selectedAnswer),
+                            );
+                          }
+                          if (user) {
+                            const timeSpent = timeElapsed;
+                            saveUserProgress(
+                              user.uid,
+                              currentQuestion.question_id,
+                              selectedAnswer,
+                              correct,
+                              timeSpent,
+                              currentQuestion,
+                            );
+                            updateUserStats(user.uid, correct, timeSpent);
+                          }
+                        }}
+                        disabled={!selectedAnswer}
+                        className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      >
+                        Submit Answer
+                      </button>
+                    </div>
+                  ) : (
+                    // Multiple Choice (MCQ)
+                    <div className="space-y-3">
+                      {Object.entries(currentQuestion.choices).map(
+                        ([key, value]) => {
+                          const isSelected = selectedAnswer === key;
+                          const isHighlighted = highlightedAnswer === key;
+                          const isEliminated = eliminatedChoices.has(key);
+                          const isCorrectAnswer =
+                            key === currentQuestion.correct_answer;
+                          const hasAnswered = !!selectedAnswer;
+                          const isLocked =
+                            !!selectedAnswer &&
+                            selectedAnswer === currentQuestion.correct_answer;
+                          const isWrongSelected =
+                            hasAnswered && isSelected && !isCorrectAnswer;
+                          const isRightAnswerShown =
+                            hasAnswered && isSelected && isCorrectAnswer;
+                          const isPreviouslyWrong = wrongAnswers.has(key);
 
-                <button
-                  onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${isCrossOutMode ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 hover:border-gray-300 hover:bg-gray-200"}`}
-                >
-                  <span className="font-sans font-bold text-xs">S</span>
-                  <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
-                </button>
+                          let borderClass = "border-gray-400";
+                          let bgClass = "bg-white";
+                          let textClass = isEliminated
+                            ? "text-gray-400 line-through"
+                            : "text-[#1C1C1E]";
 
-                <button
-                  onClick={() => setShowCalculator(!showCalculator)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${showCalculator ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 hover:border-gray-300 hover:bg-gray-200"}`}
-                >
-                  <span className="font-sans font-bold text-xs">π</span>
-                </button>
-              </div>
+                          if (isPreviouslyWrong) {
+                            borderClass = "border-red-600";
+                            bgClass = "bg-red-50";
+                          } else if (hasAnswered) {
+                            if (isSelected && isCorrectAnswer) {
+                              borderClass = "border-green-600";
+                              bgClass = "bg-green-50";
+                            } else if (isSelected && !isCorrectAnswer) {
+                              borderClass = "border-red-600";
+                              bgClass = "bg-red-50";
+                            }
+                          } else if (isHighlighted) {
+                            borderClass = "border-sky-500";
+                            bgClass = "bg-white";
+                          } else if (!isEliminated) {
+                            borderClass =
+                              "border-gray-600 hover:border-gray-900";
+                          } else {
+                            borderClass = "border-gray-300 bg-gray-50/40";
+                          }
+
+                          return (
+                            <div
+                              key={key}
+                              onClick={() => handleAnswerHighlight(key)}
+                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${isLocked ? "cursor-default" : "cursor-pointer"}`}
+                            >
+                              <div
+                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
+                                  isRightAnswerShown
+                                    ? "bg-green-600 text-white"
+                                    : isWrongSelected
+                                      ? "bg-red-600 text-white"
+                                      : isHighlighted
+                                        ? "bg-sky-500 text-white"
+                                        : isSelected
+                                          ? "bg-black text-white"
+                                          : isEliminated
+                                            ? "border-2 border-gray-300 text-gray-400"
+                                            : "border-2 border-gray-600 text-[#1C1C1E]"
+                                }`}
+                              >
+                                {isRightAnswerShown ? (
+                                  <Check size={16} strokeWidth={3} />
+                                ) : isWrongSelected ? (
+                                  <X size={16} strokeWidth={3} />
+                                ) : (
+                                  key
+                                )}
+                              </div>
+
+                              <span
+                                className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                              >
+                                <MathText
+                                  text={value as string}
+                                  mathExpressions={
+                                    (currentQuestion as any).math_expressions ||
+                                    []
+                                  }
+                                  figures={
+                                    (currentQuestion as any).figures || []
+                                  }
+                                />
+                              </span>
+
+                              {isHighlighted &&
+                                !isLocked &&
+                                !showExplanation &&
+                                !isPreviouslyWrong && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAnswerSubmit();
+                                    }}
+                                    className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                  >
+                                    Check
+                                  </button>
+                                )}
+
+                              {isWrongSelected && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowExplanation(true);
+                                  }}
+                                  className="flex items-center justify-center px-4 py-2 shrink-0 bg-black hover:bg-gray-800 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                >
+                                  Explain
+                                </button>
+                              )}
+
+                              {isCrossOutMode && !isLocked && (
+                                <button
+                                  onClick={(e) => toggleElimination(e, key)}
+                                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
+                                >
+                                  <div
+                                    className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-500 text-gray-600 group-hover:border-gray-800 group-hover:text-gray-800"}`}
+                                  >
+                                    {key}
+                                    <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
+                                  </div>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  )}
+
+                  {/* Explanation */}
+                  {showExplanation && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={springTransition}
+                      className="mt-6 p-6 rounded-xl border-2 bg-white"
+                      style={{
+                        borderColor: isCorrect ? "#22c55e" : "#ef4444",
+                      }}
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        {isCorrect ? (
+                          <div className="shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                        ) : (
+                          <div className="shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                            <X className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {isCorrect ? "Correct!" : "Incorrect"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {(currentQuestion as any).question_type === "spr"
+                              ? `The correct answer is ${currentQuestion.correct_answer}`
+                              : `The correct answer is ${currentQuestion.correct_answer}: ${currentQuestion.correct_answer_text}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700 leading-relaxed">
+                        <MathText
+                          text={currentQuestion.rationale}
+                          mathExpressions={
+                            (currentQuestion as any).math_expressions || []
+                          }
+                          figures={(currentQuestion as any).figures || []}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Question Area */}
-          <div
-            ref={questionRef}
-            className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
-            onMouseDown={handleWordDoubleClick}
-          >
-            {isPaused ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Pause className="w-16 h-16 text-gray-400 mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Practice Paused
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  Take a break, you can resume anytime
-                </p>
-                <button
-                  onClick={() => setIsPaused(false)}
-                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
-                >
-                  Resume
-                </button>
-              </div>
-            ) : (
-              <div className="max-w-3xl mx-auto">
-                {/* Question prompt */}
-                <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] leading-relaxed">
-                  {renderMathContent(currentQuestion.question)}
-                </div>
-
-                {/* Answers List */}
-                <div className="space-y-3">
-                  {Object.entries(currentQuestion.choices).map(
-                    ([key, value]) => {
-                      const isSelected = selectedAnswer === key;
-                      const isHighlighted = highlightedAnswer === key;
-                      const isEliminated = eliminatedChoices.has(key);
-                      const isCorrectAnswer =
-                        key === currentQuestion.correct_answer;
-                      const hasAnswered = !!selectedAnswer;
-                      const isLocked =
-                        !!selectedAnswer &&
-                        selectedAnswer === currentQuestion.correct_answer;
-                      const isWrongSelected =
-                        hasAnswered && isSelected && !isCorrectAnswer;
-                      const isRightAnswerShown =
-                        hasAnswered && isSelected && isCorrectAnswer;
-                      const isPreviouslyWrong = wrongAnswers.has(key);
-
-                      let borderClass = "border-gray-400";
-                      let bgClass = "bg-white";
-                      let textClass = isEliminated
-                        ? "text-gray-400 line-through"
-                        : "text-[#1C1C1E]";
-
-                      if (isPreviouslyWrong) {
-                        borderClass = "border-red-600";
-                        bgClass = "bg-red-50";
-                      } else if (hasAnswered) {
-                        if (isSelected && isCorrectAnswer) {
-                          borderClass = "border-green-600";
-                          bgClass = "bg-green-50";
-                        } else if (isSelected && !isCorrectAnswer) {
-                          borderClass = "border-red-600";
-                          bgClass = "bg-red-50";
-                        }
-                      } else if (isHighlighted) {
-                        borderClass = "border-sky-500";
-                        bgClass = "bg-white";
-                      } else if (!isEliminated) {
-                        borderClass = "border-gray-600 hover:border-gray-900";
-                      } else {
-                        borderClass = "border-gray-300 bg-gray-50/40";
-                      }
-
-                      return (
-                        <div
-                          key={key}
-                          onClick={() => handleAnswerHighlight(key)}
-                          className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${isLocked ? "cursor-default" : "cursor-pointer"}`}
-                        >
-                          <div
-                            className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
-                              isRightAnswerShown
-                                ? "bg-green-600 text-white"
-                                : isWrongSelected
-                                  ? "bg-red-600 text-white"
-                                  : isHighlighted
-                                    ? "bg-sky-500 text-white"
-                                    : isSelected
-                                      ? "bg-black text-white"
-                                      : isEliminated
-                                        ? "border-2 border-gray-300 text-gray-400"
-                                        : "border-2 border-gray-600 text-[#1C1C1E]"
-                            }`}
-                          >
-                            {isRightAnswerShown ? (
-                              <Check size={16} strokeWidth={3} />
-                            ) : isWrongSelected ? (
-                              <X size={16} strokeWidth={3} />
-                            ) : (
-                              key
-                            )}
-                          </div>
-
-                          <span
-                            className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                          >
-                            {renderMathContent(value as string)}
-                          </span>
-
-                          {isHighlighted &&
-                            !isLocked &&
-                            !showExplanation &&
-                            !isPreviouslyWrong && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAnswerSubmit();
-                                }}
-                                className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                              >
-                                Check
-                              </button>
-                            )}
-
-                          {isWrongSelected && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowExplanation(true);
-                              }}
-                              className="flex items-center justify-center px-4 py-2 shrink-0 bg-black hover:bg-gray-800 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                            >
-                              Explain
-                            </button>
-                          )}
-
-                          {isCrossOutMode && !isLocked && (
-                            <button
-                              onClick={(e) => toggleElimination(e, key)}
-                              className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
-                            >
-                              <div
-                                className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-500 text-gray-600 group-hover:border-gray-800 group-hover:text-gray-800"}`}
-                              >
-                                {key}
-                                <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
-                              </div>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    },
-                  )}
-                </div>
-
-                {/* Explanation */}
-                {showExplanation && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={springTransition}
-                    className="mt-6 p-6 rounded-xl border-2 bg-white"
-                    style={{
-                      borderColor: isCorrect ? "#22c55e" : "#ef4444",
-                    }}
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      {isCorrect ? (
-                        <div className="shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                      ) : (
-                        <div className="shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                          <X className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {isCorrect ? "Correct!" : "Incorrect"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          The correct answer is {currentQuestion.correct_answer}
-                          : {currentQuestion.correct_answer_text}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-700 leading-relaxed">
-                      {renderMathContent(currentQuestion.rationale)}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Desmos Calculator Modal */}
-                <AnimatePresence>
-                  {showCalculator && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[9999] p-4 sm:p-6"
+          {/* Right Side: Calculator Panel */}
+          <AnimatePresence>
+            {showCalculator && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "50%", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="hidden md:block border-l border-gray-200 bg-white overflow-hidden"
+              >
+                <div className="h-full flex flex-col">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Graphing Calculator
+                    </h3>
+                    <button
                       onClick={() => setShowCalculator(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
                     >
-                      <motion.div
-                        initial={{ scale: 0.9, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        exit={{ scale: 0.9, y: 20 }}
-                        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            Graphing Calculator
-                          </h3>
-                          <button
-                            onClick={() => setShowCalculator(false)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                          >
-                            <X size={20} className="text-gray-600" />
-                          </button>
-                        </div>
-                        <div className="p-4">
-                          <DesmosCalculator />
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      <X size={20} className="text-gray-600" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-hidden p-5 sm:p-6 md:p-8">
+                    <DesmosCalculator />
+                  </div>
+                </div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
       </main>
 

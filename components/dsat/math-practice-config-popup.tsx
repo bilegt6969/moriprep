@@ -19,12 +19,12 @@ interface MathPracticeConfig {
 }
 
 import {
-  mathAllSkills,
-  mathDomainSkills,
-  mathDomains,
+    mathAllSkills,
+    mathDomainSkills,
+    mathDomains,
 } from "@/lib/dsat/math-domain-skills";
 const allDifficulties = ["Easy", "Medium", "Hard"];
-const DEFAULT_TOTAL_QUESTIONS = 150;
+const DEFAULT_TOTAL_QUESTIONS = 1925;
 
 const PILL_SELECTED = "bg-zinc-900 text-white shadow-md";
 const PILL_UNSELECTED =
