@@ -84,7 +84,7 @@ const QuestionCard = ({
         whileHover={reduce ? undefined : { scale: 1.01 }}
         whileTap={reduce ? undefined : { scale: 0.98 }}
         onClick={() => {
-          window.location.href = `/practice/rw?question_id=${questionId}`;
+          window.location.href = `/question-rush/rw?question_id=${questionId}`;
         }}
         className="w-full h-full min-h-[220px] rounded-[32px] bg-[#F5F5F7] p-8 flex flex-col justify-between transition-transform duration-300 cursor-pointer"
       >
@@ -345,7 +345,7 @@ export default function HistoryPage() {
               build your history.
             </p>
             <button
-              onClick={() => (window.location.href = "/practice")}
+              onClick={() => (window.location.href = "/question-rush")}
               className="px-8 py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-full font-semibold transition-colors"
             >
               Start Practicing

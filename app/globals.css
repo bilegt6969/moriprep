@@ -110,6 +110,22 @@
   --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --revert-hold: 3000ms;
   --revert-dur: 280ms;
+  /* UIARC waffle chart variables */
+  --font-body: system-ui, -apple-system, sans-serif;
+  --tracking-body: 0;
+  --space-6: 1.5rem;
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(0.985 0 0);
+  --text-secondary: oklch(0.556 0 0);
+  --text-sm: 0.875rem;
+  --text-muted: oklch(0.708 0 0);
+  --text-xs: 0.75rem;
+  --leading-body: 1.5;
+  --duration-considered: 400ms;
+  --duration-fast: 150ms;
+  --duration-standard: 250ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-floating: 0 4px 12px rgba(0, 0, 0, 0.08);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -133,6 +149,10 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  --series-1: oklch(0.55 0.22 264);
+  --series-2: oklch(0.55 0.18 200);
+  --series-3: oklch(0.55 0.15 340);
+  --series-4: oklch(0.55 0.12 120);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);

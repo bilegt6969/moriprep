@@ -14,7 +14,7 @@ export default function OnboardingSection() {
         <div className={styles.contentWrapper}>
           <div className={styles.imageContainer}>
             <Image
-              src="/home/67.png"
+              src="/overview/67.png"
               alt="Onboarding"
               width={400}
               height={200}

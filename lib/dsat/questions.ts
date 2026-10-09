@@ -19,6 +19,31 @@ import {
     where,
 } from "firebase/firestore";
 
+// Fallback in case a question record is missing its domain field
+const SKILL_TO_DOMAIN: Record<string, string> = {
+  "Central Ideas and Details": "Information and Ideas",
+  Inferences: "Information and Ideas",
+  "Command of Evidence — Textual": "Information and Ideas",
+  "Command of Evidence — Quantitative": "Information and Ideas",
+  "Command of Evidence": "Information and Ideas", // Alternative naming
+  "Rhetorical Synthesis": "Expression of Ideas",
+  Transitions: "Expression of Ideas",
+  "Words in Context": "Craft and Structure",
+  "Text Structure and Purpose": "Craft and Structure",
+  "Cross-Text Connections": "Craft and Structure",
+  Boundaries: "Standard English Conventions",
+  "Form, Structure, and Sense": "Standard English Conventions",
+  "Form Structure and Sense": "Standard English Conventions", // Alternative naming
+};
+
+function resolveDomain(question: DSATQuestion): string | null {
+  if (question.domain) return question.domain;
+  if (question.skill && SKILL_TO_DOMAIN[question.skill]) {
+    return SKILL_TO_DOMAIN[question.skill];
+  }
+  return null;
+}
+
 // Firestore helper functions for Practice questions
 export async function getQuestions(filters?: {
   difficulty?: string;
@@ -254,7 +279,7 @@ export async function saveUserProgress(
 
   // Add domain and skill information if question is provided
   if (question) {
-    baseData.domain = question.domain;
+    baseData.domain = resolveDomain(question);
     baseData.skill = question.skill;
   }
 
@@ -270,7 +295,7 @@ export async function saveUserProgress(
       const existingData = docSnap.data();
       if (!existingData.domain || !existingData.skill) {
         await updateDoc(progressRef, {
-          domain: question.domain,
+          domain: resolveDomain(question),
           skill: question.skill,
         });
       }
@@ -343,12 +368,14 @@ export async function updateUserStats(
   if (docSnap.exists()) {
     const stats = docSnap.data() as UserStats;
     const newTotal = stats.totalQuestions + 1;
+    const newAttempts = stats.totalAttempts + 1;
     const newCorrect = stats.correctAnswers + (isCorrect ? 1 : 0);
     const newAverageTime =
       (stats.averageTime * stats.totalQuestions + timeSpent) / newTotal;
 
     await updateDoc(statsRef, {
       totalQuestions: newTotal,
+      totalAttempts: newAttempts,
       correctAnswers: newCorrect,
       averageTime: newAverageTime,
       lastUpdated: new Date().toISOString(),
@@ -357,6 +384,7 @@ export async function updateUserStats(
     await setDoc(statsRef, {
       userId,
       totalQuestions: 1,
+      totalAttempts: 1,
       correctAnswers: isCorrect ? 1 : 0,
       averageTime: timeSpent,
       weakDomains: [],

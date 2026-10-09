@@ -352,7 +352,7 @@ function PanelSkeleton({ kind }: { kind: string }) {
         }
 
         .sk-pill {
-          width: 240px; /* Matched to new visual size */
+          width: 240px;
           height: 48px;
           border-radius: 999px;
         }
@@ -369,7 +369,6 @@ function PanelSkeleton({ kind }: { kind: string }) {
           width: 100%;
           max-width: 320px;
           display: grid;
-          /* minmax(0, 1fr) ensures columns don't blowout from content */
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
         }
@@ -383,7 +382,7 @@ function PanelSkeleton({ kind }: { kind: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Real, animated visuals                                                    */
+/*  Real, animated visuals (Redesigned & Polished)                            */
 /* -------------------------------------------------------------------------- */
 
 function PanelVisual({ kind }: { kind: string }) {
@@ -407,34 +406,38 @@ function PanelVisual({ kind }: { kind: string }) {
   );
 }
 
-/* ---- 1. Track Your Progress: A 4-state infinite card stack with physical departures --- */
+/* ---- 1. Track Your Progress: Premium floating dashboard cards --- */
 
 const STUDY_CARDS = [
   {
     id: 0,
     code: "INFO",
-    color: "#25292E",
+    gradient: "linear-gradient(135deg, #1e293b, #475569)",
+    shadow: "rgba(30,41,59,0.3)",
     label: "Information & Ideas",
     amount: "85% accuracy",
   },
   {
     id: 1,
     code: "ALG",
-    color: "#2775CA",
+    gradient: "linear-gradient(135deg, #2563eb, #60a5fa)",
+    shadow: "rgba(37,99,235,0.3)",
     label: "Algebra",
     amount: "92% accuracy",
   },
   {
     id: 2,
     code: "SEC",
-    color: "#FEBE44",
+    gradient: "linear-gradient(135deg, #d97706, #fbbf24)",
+    shadow: "rgba(217,119,6,0.3)",
     label: "Standard English Conventions",
     amount: "78% accuracy",
   },
   {
     id: 3,
     code: "ADV",
-    color: "#F7931A",
+    gradient: "linear-gradient(135deg, #ea580c, #fb923c)",
+    shadow: "rgba(234,88,12,0.3)",
     label: "Advanced Math",
     amount: "88% accuracy",
   },
@@ -469,18 +472,18 @@ function MonitorVisual() {
           opacity = 1;
           zIndex = 3;
         } else if (isNext) {
-          y = 14;
-          scale = 0.93;
-          opacity = 0.8;
+          y = 16;
+          scale = 0.92;
+          opacity = 0.85;
           zIndex = 2;
         } else if (isNextNext) {
-          y = 28;
-          scale = 0.86;
+          y = 32;
+          scale = 0.84;
           opacity = 0;
           zIndex = 1;
         } else if (isPrev) {
-          y = -28;
-          scale = 1.05;
+          y = -32;
+          scale = 1.08;
           opacity = 0;
           zIndex = 4;
         }
@@ -495,7 +498,13 @@ function MonitorVisual() {
               zIndex,
             }}
           >
-            <span className="monitor__code" style={{ background: card.color }}>
+            <span
+              className="monitor__code"
+              style={{
+                background: card.gradient,
+                boxShadow: `0 4px 12px ${card.shadow}`,
+              }}
+            >
               {card.code}
             </span>
             <div className="monitor__text">
@@ -519,21 +528,21 @@ function MonitorVisual() {
           inset: 0;
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: var(--card-bg, #fff);
-          border-radius: 18px;
+          gap: 14px;
+          background: #ffffff;
+          border-radius: 20px;
           padding: 0 16px;
           box-shadow:
-            0 8px 24px rgba(0, 0, 0, 0.06),
-            0 2px 6px rgba(0, 0, 0, 0.04);
+            0 0 0 1px rgba(0, 0, 0, 0.03),
+            0 12px 32px -8px rgba(0, 0, 0, 0.08);
           transition:
-            transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
-            opacity 0.7s ease;
+            transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+            opacity 0.8s ease;
           will-change: transform, opacity;
         }
         .monitor__code {
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
           flex-shrink: 0;
           display: flex;
@@ -552,6 +561,7 @@ function MonitorVisual() {
           font-size: 12px;
           color: var(--blue, #3784f4);
           font-weight: 600;
+          opacity: 0.9;
         }
         .monitor__domain {
           font-size: 15px;
@@ -569,7 +579,7 @@ function MonitorVisual() {
   );
 }
 
-/* ---- 2. Never Miss a Weak Spot: Seamless width & text slot-machine morph ---- */
+/* ---- 2. Never Miss a Weak Spot: Glowing dynamic notification pill ---- */
 
 function ProtectVisual() {
   const [complete, setComplete] = useState(false);
@@ -593,13 +603,9 @@ function ProtectVisual() {
 
   return (
     <div className="analysis">
-      {/* 
-        FIXED: Increased width values to accommodate the longer text 
-        so it isn't clipped/cut off during or after the transition.
-      */}
       <div
         className={`analysis__pill${complete ? " analysis__pill--complete" : ""}`}
-        style={{ width: complete ? "240px" : "215px" }}
+        style={{ width: complete ? "220px" : "215px" }}
       >
         <div className="analysis__icon-wrap">
           <span className={`analysis__spinner ${complete ? "hidden" : ""}`} />
@@ -648,40 +654,45 @@ function ProtectVisual() {
           position: relative;
           display: flex;
           align-items: center;
-          height: 48px;
-          padding: 0 14px;
+          height: 52px;
+          padding: 0 16px 0 14px;
           border-radius: 999px;
-          background: rgba(55, 132, 244, 0.12);
+          background: #ffffff;
           overflow: hidden;
+          box-shadow:
+            0 0 0 1px rgba(55, 132, 244, 0.15),
+            0 12px 32px -8px rgba(55, 132, 244, 0.25);
           transition:
-            width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
-            background 0.7s ease;
+            width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+            box-shadow 0.8s ease;
         }
         .analysis__pill--complete {
-          background: rgba(68, 198, 127, 0.14);
+          box-shadow:
+            0 0 0 1px rgba(68, 198, 127, 0.2),
+            0 12px 32px -8px rgba(68, 198, 127, 0.3);
         }
         .analysis__icon-wrap {
           position: relative;
-          width: 24px;
-          height: 24px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
-          background: var(--blue, #3784f4);
+          background: linear-gradient(135deg, #3784f4, #60a5fa);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           transition:
-            background 0.7s ease,
-            transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background 0.8s ease,
+            transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .analysis__pill--complete .analysis__icon-wrap {
-          background: var(--green, #44c67f);
-          transform: scale(1.1);
+          background: linear-gradient(135deg, #44c67f, #34d399);
+          transform: scale(1.05);
         }
         .analysis__spinner {
           position: absolute;
-          width: 12px;
-          height: 12px;
+          width: 14px;
+          height: 14px;
           border-radius: 50%;
           border: 2px solid rgba(255, 255, 255, 0.35);
           border-top-color: #fff;
@@ -710,7 +721,7 @@ function ProtectVisual() {
           position: relative;
           flex: 1;
           height: 20px;
-          margin-left: 10px;
+          margin-left: 12px;
         }
         .analysis__label {
           position: absolute;
@@ -721,7 +732,7 @@ function ProtectVisual() {
           white-space: nowrap;
           transition:
             opacity 0.5s ease,
-            transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .analysis__label--analyzing {
           color: var(--blue, #3784f4);
@@ -729,7 +740,7 @@ function ProtectVisual() {
         }
         .analysis__label--analyzing.hidden {
           opacity: 0;
-          transform: translate3d(0, -12px, 0);
+          transform: translate3d(0, -16px, 0);
         }
         .analysis__label--complete {
           color: var(--green, #44c67f);
@@ -737,14 +748,14 @@ function ProtectVisual() {
         }
         .analysis__label--complete.hidden {
           opacity: 0;
-          transform: translate3d(0, 12px, 0);
+          transform: translate3d(0, 16px, 0);
         }
       `}</style>
     </div>
   );
 }
 
-/* ---- 3. Organize Your Practice: Question rows with bouncy sequenced bookmarks ------ */
+/* ---- 3. Organize Your Practice: Polished interactive rows ------ */
 
 const QUESTIONS = [
   {
@@ -752,7 +763,7 @@ const QUESTIONS = [
     sub: "45 questions",
     value: "88% avg",
     change: "+12%",
-    color: "#25292E",
+    gradient: "linear-gradient(135deg, #1e293b, #475569)",
     glyph: "A",
   },
   {
@@ -760,7 +771,7 @@ const QUESTIONS = [
     sub: "32 questions",
     value: "76% avg",
     change: "+8%",
-    color: "#2775CA",
+    gradient: "linear-gradient(135deg, #2563eb, #60a5fa)",
     glyph: "G",
   },
 ];
@@ -779,7 +790,7 @@ function OrganiseVisual() {
     <div className="organise">
       {QUESTIONS.map((t, i) => (
         <div className="organise__row" key={t.name}>
-          <span className="organise__code" style={{ background: t.color }}>
+          <span className="organise__code" style={{ background: t.gradient }}>
             {t.glyph}
           </span>
           <div className="organise__text">
@@ -794,11 +805,11 @@ function OrganiseVisual() {
             aria-label={`Bookmark ${t.name}`}
             tabIndex={-1}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 2.5 15 9l7 1-5 5 1.4 7L12 18.5 5.6 22 7 15 2 10l7-1 3-6.5Z"
                 fill={starred === i ? "#febe44" : "none"}
-                stroke={starred === i ? "#febe44" : "#c7c5c2"}
+                stroke={starred === i ? "#febe44" : "#cbd5e1"}
                 strokeWidth="2"
                 strokeLinejoin="round"
               />
@@ -817,31 +828,38 @@ function OrganiseVisual() {
           max-width: 320px;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
         }
         .organise__row {
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: var(--card-bg, #fff);
-          border-radius: 18px;
-          padding: 12px 16px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-          transition: transform 0.3s ease;
+          gap: 14px;
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 14px 18px;
+          box-shadow:
+            0 0 0 1px rgba(0, 0, 0, 0.03),
+            0 8px 20px -8px rgba(0, 0, 0, 0.05);
+          transition:
+            transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+            box-shadow 0.4s ease;
         }
         .organise__row:hover {
-          transform: translate3d(0, -2px, 0);
+          transform: translate3d(0, -3px, 0);
+          box-shadow:
+            0 0 0 1px rgba(0, 0, 0, 0.04),
+            0 12px 24px -8px rgba(0, 0, 0, 0.08);
         }
         .organise__code {
-          width: 34px;
-          height: 34px;
-          border-radius: 50%;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
           flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #fff;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 700;
         }
         .organise__text {
@@ -857,7 +875,7 @@ function OrganiseVisual() {
         .organise__sub {
           font-size: 13px;
           color: var(--body-muted, #8a8785);
-          margin-top: 2px;
+          margin-top: 3px;
         }
         .organise__star {
           margin-left: auto;
@@ -869,12 +887,13 @@ function OrganiseVisual() {
           transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .organise__star--on {
-          transform: scale(1.3) rotate(-12deg);
+          transform: scale(1.25) rotate(-10deg);
+          filter: drop-shadow(0 4px 8px rgba(254, 190, 68, 0.4));
         }
         .organise__star svg path {
           transition:
-            fill 0.3s ease,
-            stroke 0.3s ease;
+            fill 0.4s ease,
+            stroke 0.4s ease;
         }
         .organise__figures {
           display: flex;
@@ -890,23 +909,39 @@ function OrganiseVisual() {
         }
         .organise__change {
           font-size: 12px;
+          font-weight: 600;
           color: var(--green, #44c67f);
-          margin-top: 2px;
+          margin-top: 3px;
         }
       `}</style>
     </div>
   );
 }
 
-/* ---- 4. See Everything Clearly: Staggered breathing domain tiles ---------------- */
+/* ---- 4. See Everything Clearly: App-like widgets with soft background tints ---- */
 
 const GROUPS = [
-  { name: "Info & Ideas", count: "R&W domain", color: "var(--blue)" },
-  { name: "Craft & Structure", count: "R&W domain", color: "#25292E" },
-  { name: "Expression", count: "R&W domain", color: "var(--yellow)" },
-  { name: "Algebra", count: "Math domain", color: "var(--green)" },
-  { name: "Advanced Math", count: "Math domain", color: "#2775CA" },
-  { name: "Geometry", count: "Math domain", color: "#F7931A" },
+  {
+    name: "Info & Ideas",
+    count: "R&W domain",
+    bg: "#eff6ff",
+    color: "#2563eb",
+  },
+  {
+    name: "Craft & Structure",
+    count: "R&W domain",
+    bg: "#f1f5f9",
+    color: "#334155",
+  },
+  { name: "Expression", count: "R&W domain", bg: "#fef3c7", color: "#d97706" },
+  { name: "Algebra", count: "Math domain", bg: "#ecfdf5", color: "#059669" },
+  {
+    name: "Advanced Math",
+    count: "Math domain",
+    bg: "#eff6ff",
+    color: "#2563eb",
+  },
+  { name: "Geometry", count: "Math domain", bg: "#fff7ed", color: "#ea580c" },
 ];
 
 function ClarityVisual() {
@@ -930,10 +965,18 @@ function ClarityVisual() {
               visible ? "clarity__tile--in" : "clarity__tile--out"
             }`}
             key={g.name}
-            style={{ transitionDelay: `${delay}ms` }}
+            style={{
+              transitionDelay: `${delay}ms`,
+              background: g.bg,
+            }}
           >
-            <span className="clarity__dot" style={{ background: g.color }} />
-            <span className="clarity__name">{g.name}</span>
+            <span
+              className="clarity__dot"
+              style={{ background: g.color, boxShadow: `0 0 8px ${g.color}66` }}
+            />
+            <span className="clarity__name" style={{ color: g.color }}>
+              {g.name}
+            </span>
             <span className="clarity__count">{g.count}</span>
           </div>
         );
@@ -944,48 +987,46 @@ function ClarityVisual() {
           width: 100%;
           max-width: 320px;
           display: grid;
-          /* FIXED: minmax(0, 1fr) forces the columns to not expand past available space */
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
+          gap: 12px;
         }
         .clarity__tile {
-          background: var(--card-bg, #fff);
-          border-radius: 14px;
-          padding: 12px 10px;
+          border-radius: 16px;
+          padding: 14px 12px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+          gap: 8px;
+          border: 1px solid rgba(0, 0, 0, 0.02);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
           transition:
-            opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-            transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+            transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
           will-change: transform, opacity;
-          /* Ensure text wraps nicely inside the constrained tiles */
           word-break: break-word;
         }
         .clarity__tile--out {
           opacity: 0;
-          transform: translate3d(0, 8px, 0) scale(0.92);
+          transform: translate3d(0, 10px, 0) scale(0.92);
         }
         .clarity__tile--in {
           opacity: 1;
           transform: translate3d(0, 0, 0) scale(1);
         }
         .clarity__dot {
-          width: 16px;
-          height: 16px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
+          margin-bottom: 2px;
         }
         .clarity__name {
           font-size: 13px;
-          line-height: 1.2;
-          font-weight: 600;
-          color: var(--heading, #1a1a1a);
-          margin-top: 2px;
+          line-height: 1.25;
+          font-weight: 700;
         }
         .clarity__count {
           font-size: 11px;
           color: var(--body-muted, #8a8785);
+          font-weight: 500;
         }
       `}</style>
     </div>

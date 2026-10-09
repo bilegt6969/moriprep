@@ -51,10 +51,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>{/* Fonts are loaded via next/font/google */}</head>
       <body
-        className="bg-white text-primary antialiased selection:bg-gray-200 selection:text-black"
+        className="bg-background text-foreground antialiased selection:bg-gray-200 selection:text-black dark:selection:bg-gray-700 dark:selection:text-white"
         style={{ fontFamily: "Geist Sans, system-ui, sans-serif" }}
       >
         <BodyWrapper>{children}</BodyWrapper>

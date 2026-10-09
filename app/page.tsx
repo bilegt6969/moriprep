@@ -1,4 +1,11 @@
+"use client";
+
+import { auth } from "@/lib/firebase";
 import Navbar from "components/Heading/Navbar";
+import type { Auth } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import CTA from "./components/CTA";
 import { DSATShowcase } from "./components/DSATShowcase";
 import DetailsSection from "./components/DetailsSection";
@@ -12,12 +19,24 @@ import { SendReceiveSwap } from "./components/SendReceiveSwap";
 import LatestFromFamily from "./components/Testimonials";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
+      if (user) {
+        router.push("/overview");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   return (
     <>
       <Navbar
         siteName="Mori Prep"
         categories={[
-          { label: "Practice", href: "/practice" },
+          { label: "Practice", href: "/question-rush" },
           { label: "Lessons", href: "/resources" },
           { label: "History", href: "/history" },
           { label: "Leaderboard", href: "/leaderboard" },

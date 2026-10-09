@@ -39,7 +39,7 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
         ];
 
   const primaryLinks = [
-    { label: "DSAT", href: "/practice" },
+    { label: "DSAT", href: "/question-rush" },
     { label: "Coding", href: "https://bytecode-smoky.vercel.app/" },
   ];
 

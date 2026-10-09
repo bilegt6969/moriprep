@@ -73,7 +73,7 @@ export default function LeaderboardPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <a
-              href="/practice"
+              href="/question-rush"
               className="inline-block bg-[#1D1D1F] text-white rounded-xl px-8 py-4 text-[15px] font-medium transition-all duration-300 ease-out hover:scale-105 hover:shadow-lg active:scale-95"
             >
               Start Practicing

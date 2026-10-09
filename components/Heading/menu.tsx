@@ -74,7 +74,7 @@ export default function Menu({
       <NavigationMenu.List className="flex items-center gap-8">
         <NavigationMenu.Item>
           <NavigationMenu.Link asChild>
-            <Link href="/practice" className={linkClass}>
+            <Link href="/question-rush" className={linkClass}>
               Practice
             </Link>
           </NavigationMenu.Link>

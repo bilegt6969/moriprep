@@ -534,7 +534,7 @@ const lessons = [
     duration: "45 min",
     category: "Reading",
     level: "Beginner",
-    image: "/home/analytics.png",
+    image: "/overview/analytics.png",
   },
   {
     id: "information-and-ideas",
@@ -544,7 +544,7 @@ const lessons = [
     duration: "60 min",
     category: "Reading",
     level: "Intermediate",
-    image: "/home/calendar.png",
+    image: "/overview/calendar.png",
   },
   {
     id: "standard-english",
@@ -554,7 +554,7 @@ const lessons = [
     duration: "50 min",
     category: "Writing",
     level: "Beginner",
-    image: "/home/browser.png",
+    image: "/overview/browser.png",
   },
   {
     id: "expression-of-ideas",
@@ -564,7 +564,7 @@ const lessons = [
     duration: "55 min",
     category: "Writing",
     level: "Advanced",
-    image: "/home/analytics.png",
+    image: "/overview/analytics.png",
   },
   {
     id: "algebra-functions",
@@ -574,7 +574,7 @@ const lessons = [
     duration: "70 min",
     category: "Math",
     level: "Intermediate",
-    image: "/home/calendar.png",
+    image: "/overview/calendar.png",
   },
   {
     id: "advanced-problem-solving",
@@ -584,7 +584,7 @@ const lessons = [
     duration: "65 min",
     category: "Math",
     level: "Advanced",
-    image: "/home/browser.png",
+    image: "/overview/browser.png",
   },
 ];
 

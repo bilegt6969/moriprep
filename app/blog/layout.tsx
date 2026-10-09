@@ -14,8 +14,8 @@ export default function BlogLayout({
       <Navbar
         siteName="Mori Prep"
         categories={[
-          { label: "Home", href: "/home" },
-          { label: "Practice", href: "/practice" },
+          { label: "Overview", href: "/overview" },
+          { label: "Practice", href: "/question-rush" },
           { label: "Lessons", href: "/resources" },
           { label: "Analytics", href: "/analytics" },
         ]}

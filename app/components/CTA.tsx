@@ -72,7 +72,7 @@ export default function CallToAction() {
             </div>
 
             <Link
-              href="/practice"
+              href="/question-rush"
               className="inline-block mt-2 transition-all duration-200 ease-out font-medium hover:opacity-80 group"
             >
               <div className="relative inline-flex items-center text-[#018DFF] text-[17px] font-medium">

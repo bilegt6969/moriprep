@@ -23,8 +23,6 @@ const ImageWithSkeleton: FC<ImageWithSkeletonProps> = ({
     <div
       className={`relative ${props.fill ? "h-full w-full" : ""} ${wrapperClassName}`}
     >
-      {/* Skeleton Pulse Layer — now also clears on error so it can't spin
-          forever if the image 404s or otherwise fails to load. */}
       {!isLoaded && !isError && (
         <div
           className={`absolute inset-0 z-0 animate-pulse bg-gray-200 ${skeletonClassName}`}
@@ -32,8 +30,6 @@ const ImageWithSkeleton: FC<ImageWithSkeletonProps> = ({
         />
       )}
 
-      {/* Fallback shown when the image errors, instead of leaving a
-          permanently-pulsing skeleton with nothing behind it. */}
       {isError && (
         <div
           className={`absolute inset-0 z-0 flex items-center justify-center bg-gray-100 text-gray-400 ${skeletonClassName}`}
@@ -64,7 +60,6 @@ const ImageWithSkeleton: FC<ImageWithSkeletonProps> = ({
         </div>
       )}
 
-      {/* Actual Image */}
       {!isError && (
         <Image
           {...props}
@@ -138,13 +133,11 @@ interface ShowcaseProps {
   videoSrc?: string;
   imageSrc: string;
   reversed?: boolean;
+  hideTopBorder?: boolean; // <--- ADDED PROP
 }
 
 // --- Video with loading/error state ---
-// Previously the video branch had no loading state at all (no skeleton,
-// no fallback), unlike the image branch right next to it. This brings it
-// in line: shows the poster area as a skeleton until the video reports it
-// can play, and falls back to the poster image if the video errors.
+
 const VideoWithSkeleton: FC<{ src: string; poster: string }> = ({
   src,
   poster,
@@ -205,10 +198,16 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
   videoSrc = "",
   imageSrc,
   reversed = false,
+  hideTopBorder = false, // <--- DESTRUCTURED WITH DEFAULT
 }) => {
   return (
     <section className="w-full overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 py-12 md:grid-cols-2 md:gap-x-[5.75rem] md:px-6 lg:px-10 pt-12 border-t-2 border-[#f2f0ed]">
+      {/* Conditionally applied border below based on `hideTopBorder` */}
+      <div
+        className={`mx-auto grid max-w-6xl grid-cols-1 items-center gap-y-16 px-4 py-12 pt-12 md:grid-cols-2 md:gap-x-[5.75rem] md:px-6 lg:px-10 ${
+          hideTopBorder ? "" : "border-t-2 border-[#f2f0ed]"
+        }`}
+      >
         {/* Text Content Column */}
         <div
           className={`flex flex-col gap-4 ${reversed ? "md:order-2" : "md:order-1"}`}
@@ -256,10 +255,6 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
                   src={demoThumbnailSrc}
                   alt={`${demoTitle} thumbnail`}
                   fill
-                  // Explicit `sizes` — the previous version omitted this on a
-                  // `fill` image, which makes Next.js fall back to serving
-                  // the largest available image regardless of the ~78px
-                  // rendered width (wasted bandwidth + a console warning).
                   sizes="78px"
                   className="object-cover"
                   skeletonClassName="rounded-md"
@@ -278,14 +273,12 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
           </button>
         </div>
 
-        {/* Media / Gray Padded Container (Redesigned) */}
+        {/* Media / Gray Padded Container */}
         <div
           className={`flex items-center justify-center ${reversed ? "md:order-1" : "md:order-2"}`}
         >
           <div className="relative flex w-full max-w-[700px] items-center justify-center">
-            {/* Gray background padding with no shadows */}
             <div className="relative w-full rounded-[24px] bg-[#fafafa] p-2 sm:p-3 lg:p-4">
-              {/* Inner image/video container with its own rounded corners */}
               <div className="relative w-full overflow-hidden rounded-[12px] bg-white">
                 {videoSrc ? (
                   <VideoWithSkeleton src={videoSrc} poster={imageSrc} />
@@ -310,16 +303,6 @@ export const FeatureShowcase: FC<ShowcaseProps> = ({
 };
 
 // --- Main Showcase Section Component ---
-//
-// NOTE (not fixed here, needs a decision from you): DSATShowcase and the
-// default-exported FeaturesPage below render the *same* two sections but
-// point at different asset paths for what looks like the same images
-// (`/assets/image.png` / `/assets/image copy.png` vs
-// `/videos/promo-watch.png` / `/videos/promo-activity.png`). That's almost
-// certainly a copy/paste leftover — whichever path doesn't actually exist
-// in `public/` will silently fail to load (now at least shown as the
-// fallback state above instead of hanging forever). Worth confirming which
-// set of paths is the real one and deleting the other component.
 
 export function DSATShowcase() {
   return (
@@ -327,6 +310,7 @@ export function DSATShowcase() {
       <Navbar siteName="mori Prep" categories={[]} showBanner={true} />
       {/* Question Bank Practice Section */}
       <FeatureShowcase
+        hideTopBorder={true} // <--- REMOVES BORDER FOR THIS SECTION ONLY
         badge="Practice"
         badgeColorClass="text-[#10B981]" // Tailwind Emerald-500
         title={
@@ -377,6 +361,7 @@ export default function FeaturesPage() {
     <main className="flex min-h-screen flex-col bg-white">
       {/* Question Bank Practice Section */}
       <FeatureShowcase
+        hideTopBorder={true} // <--- REMOVES BORDER FOR THIS SECTION ONLY
         badge="Practice"
         badgeColorClass="text-[#10B981]" // Tailwind Emerald-500
         title={

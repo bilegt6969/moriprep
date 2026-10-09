@@ -20,7 +20,7 @@ interface RWPracticeConfig {
 
 import { allSkills, domainSkills, domains } from "@/lib/dsat/domain-skills";
 const allDifficulties = ["Easy", "Medium", "Hard"];
-const DEFAULT_TOTAL_QUESTIONS = 1688;
+const DEFAULT_TOTAL_QUESTIONS = 1845;
 
 const PILL_SELECTED = "bg-zinc-900 text-white shadow-md";
 const PILL_UNSELECTED =
@@ -43,58 +43,30 @@ export function RWPracticeConfigPopup({
   onClose,
   onStartPractice,
 }: RWPracticeConfigPopupProps) {
-  const [selectedDifficulties, setSelectedDifficulties] =
-    useState<string[]>(allDifficulties);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>(domains);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(allSkills);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
+    [],
+  );
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [attemptFilter, setAttemptFilter] = useState<string>("all");
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
   const [countIsStale, setCountIsStale] = useState<boolean>(false);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
-  const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load saved configuration from localStorage on mount
+  // Start with all difficulties and all domains selected by default
   useEffect(() => {
-    const savedConfig = localStorage.getItem("rwPracticeConfig");
-    if (savedConfig) {
-      try {
-        const config = JSON.parse(savedConfig);
-        setSelectedDifficulties(config.difficulties || allDifficulties);
-        setSelectedDomains(config.domains || domains);
-        setSelectedSkills(config.skills || allSkills);
-        setStatusFilter(config.statusFilter || "all");
-        setAttemptFilter(config.attemptFilter || "all");
-      } catch (error) {
-        console.error("Error loading saved config:", error);
-      }
-    }
-    setIsConfigLoaded(true);
+    setSelectedDifficulties(allDifficulties);
+    setSelectedDomains(domains);
+    setSelectedSkills(allSkills);
+    setStatusFilter("all");
+    setAttemptFilter("all");
   }, []);
 
-  // Save configuration to localStorage whenever it changes
-  useEffect(() => {
-    if (isConfigLoaded) {
-      const config = {
-        difficulties: selectedDifficulties,
-        domains: selectedDomains,
-        skills: selectedSkills,
-        statusFilter,
-        attemptFilter,
-      };
-      localStorage.setItem("rwPracticeConfig", JSON.stringify(config));
-    }
-  }, [
-    selectedDifficulties,
-    selectedDomains,
-    selectedSkills,
-    statusFilter,
-    attemptFilter,
-    isConfigLoaded,
-  ]);
+  // Removed localStorage persistence - always start fresh
 
   // Debounced filtered count fetcher
   useEffect(() => {
@@ -110,6 +82,7 @@ export function RWPracticeConfigPopup({
 
         const buildParams = (userId?: string) => {
           const params = new URLSearchParams();
+          params.set("test", "Reading and Writing");
           if (selectedDifficulties.length > 0) {
             params.set("difficulty", selectedDifficulties.join(","));
           }
@@ -139,6 +112,16 @@ export function RWPracticeConfigPopup({
           selectedDomains.length > 0 ||
           selectedSkills.length > 0 ||
           selectedDifficulties.length > 0;
+
+        // If no filters are selected at all, show total count
+        if (
+          !hasContentFilters &&
+          statusFilter === "all" &&
+          attemptFilter === "all"
+        ) {
+          setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
+          return;
+        }
 
         if (needsUserStats) {
           const { auth } = await import("@/lib/firebase");
@@ -211,7 +194,6 @@ export function RWPracticeConfigPopup({
     selectedSkills,
     statusFilter,
     attemptFilter,
-    isConfigLoaded,
     isOpen,
   ]);
 

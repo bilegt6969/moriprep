@@ -1,14 +1,16 @@
 "use client";
 
 import { auth, googleProvider } from "@/lib/firebase";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { OnboardingFlow } from "components/auth/onboarding-flow";
 import LiteNavbar from "components/LiteNavbar";
 import {
-    getRedirectResult,
-    sendPasswordResetEmail,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -37,8 +39,6 @@ function SignInContent({
   setResetError,
   showReset,
   setShowReset,
-  showOnboarding,
-  setShowOnboarding,
 }) {
   const router = useRouter();
 
@@ -51,7 +51,7 @@ function SignInContent({
         throw new Error("Firebase authentication is not available");
       }
       await signInWithEmailAndPassword(typedAuth, email, password);
-      setShowOnboarding(true);
+      // onAuthStateChanged handles routing
     } catch (err) {
       console.error("Email sign-in error:", err);
       setError(
@@ -72,48 +72,31 @@ function SignInContent({
         throw new Error("Firebase authentication is not available");
       }
       await signInWithPopup(typedAuth, googleProvider);
-      setShowOnboarding(true);
+      // onAuthStateChanged handles routing
     } catch (err) {
       console.error("Google sign-in error:", err);
       // If popup is blocked, try redirect instead
-      if (
-        err.code === "auth/popup-closed-by-user" ||
-        err.code === "auth/popup-blocked"
-      ) {
+      if (err.code === "auth/popup-blocked") {
         try {
           await signInWithRedirect(typedAuth, googleProvider);
+          return; // page is navigating away
         } catch (redirectErr) {
-          console.error("Google redirect sign-in error:", redirectErr);
           setError(
             redirectErr instanceof Error
               ? redirectErr.message
               : "Failed to sign in with Google.",
           );
         }
-      } else {
+      } else if (
+        err.code !== "auth/popup-closed-by-user" &&
+        err.code !== "auth/cancelled-popup-request"
+      ) {
         setError(
           err instanceof Error ? err.message : "Failed to sign in with Google.",
         );
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = async (e) => {
-    e.preventDefault();
-    setResetError("");
-    try {
-      if (!typedAuth) {
-        throw new Error("Firebase authentication is not available");
-      }
-      await sendPasswordResetEmail(typedAuth, resetEmail);
-      setResetSent(true);
-    } catch (err) {
-      console.error("Password reset error:", err);
-      setResetError(
-        err instanceof Error ? err.message : "Failed to send reset email.",
-      );
     }
   };
 
@@ -276,26 +259,40 @@ export default function SignInPage() {
   const [resetError, setResetError] = useState("");
   const [showReset, setShowReset] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
 
-  // Handle redirect result from Google OAuth
+  // Surface redirect errors only; routing is handled by the listener below
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        if (!typedAuth) return;
-        const result = await getRedirectResult(typedAuth);
-        if (result) {
-          setShowOnboarding(true);
-        }
-      } catch (err) {
-        console.error("Redirect result error:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to complete sign in.",
-        );
-      }
-    };
-    handleRedirectResult();
+    if (!typedAuth) return;
+    getRedirectResult(typedAuth).catch((err) => {
+      console.error("Redirect result error:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to complete sign in.",
+      );
+    });
   }, []);
+
+  // Restore session / react to any sign-in and route accordingly
+  useEffect(() => {
+    if (!typedAuth) {
+      setCheckingAuth(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(typedAuth, async (user) => {
+      if (!user) {
+        setCheckingAuth(false);
+        return;
+      }
+      if (await hasCompletedOnboarding(user)) {
+        router.replace("/overview");
+      } else {
+        setShowOnboarding(true);
+        setCheckingAuth(false);
+      }
+    });
+    return unsubscribe;
+  }, [router]);
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
@@ -315,8 +312,36 @@ export default function SignInPage() {
   };
 
   const handleOnboardingComplete = () => {
-    router.push("/home");
+    router.push("/overview");
   };
+
+  // Avoid flashing the signup form while the session is being restored
+  if (checkingAuth) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center px-4 py-16">
+        <svg
+          className="h-6 w-6 animate-spin text-neutral-400"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
@@ -342,8 +367,6 @@ export default function SignInPage() {
         setResetError={setResetError}
         showReset={showReset}
         setShowReset={setShowReset}
-        showOnboarding={showOnboarding}
-        setShowOnboarding={setShowOnboarding}
       />
 
       {/* Password Reset Modal */}

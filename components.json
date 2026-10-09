@@ -22,6 +22,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@beui": "https://beui.saura3h.xyz/r/{name}.json"
+    "@beui": "https://beui.saura3h.xyz/r/{name}.json",
+    "@uiarc": "https://uiarc.dev/r/{name}.json"
   }
 }

@@ -61,7 +61,7 @@ export default function JoinPage() {
       <Navbar
         siteName="Mori Prep"
         categories={[
-          { label: "Practice", href: "/practice" },
+          { label: "Practice", href: "/question-rush" },
           { label: "Resources", href: "/resources" },
           { label: "About", href: "/info/story" },
           { label: "Contact", href: "/contact" },

@@ -9,9 +9,13 @@
     "test": "pnpm prettier:check"
   },
   "dependencies": {
+    "@duo-icons/react": "^1.0.1",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.25",
     "@radix-ui/react-navigation-menu": "^1.2.14",
+    "@radix-ui/react-popover": "^1.2.0",
+    "@radix-ui/react-tabs": "^1.1.22",
     "@vercel/analytics": "^2.0.1",
     "border-beam": "^1.2.0",
     "canvas-confetti": "^1.9.4",

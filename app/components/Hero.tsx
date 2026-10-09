@@ -322,7 +322,7 @@ export function Hero() {
                 }}
               />
               <a
-                href="/practice"
+                href="/question-rush"
                 className="flex items-center justify-center gap-3 px-6 py-3 text-white rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100 relative z-10"
                 style={{
                   borderRadius: "32px",
@@ -370,7 +370,7 @@ export function Hero() {
         {!imgError && (
           <img
             ref={imgRef}
-            src="/home/hero-illustration.avif"
+            src="/overview/hero-illustration.avif"
             alt="Illustration"
             width="1200"
             height="800"
@@ -393,7 +393,7 @@ export function Hero() {
             placeholder instead of a hole in the page. */}
         {imgError && (
           <div
-            className="block mx-auto flex items-center justify-center
+            className="mx-auto flex items-center justify-center
             w-[150%] max-w-[150%] h-[35vh] bg-neutral-50
             sm:w-[90%] sm:max-w-none sm:h-auto sm:aspect-[375/280] md:max-w-375
           "

@@ -485,7 +485,7 @@ export default function AccountPage() {
             >
               {/* Header */}
               <h1 className="text-[32px] font-semibold tracking-tight text-[#111827] mb-8">
-                Settings
+                Account
               </h1>
 
               {/* Tabs */}

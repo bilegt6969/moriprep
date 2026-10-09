@@ -17,6 +17,12 @@ export interface Graphic {
   rows?: string[][];
 }
 
+export interface Table {
+  title: string;
+  columns: string[];
+  rows: string[][];
+}
+
 export interface DSATQuestion {
   question_id: string;
   assessment: string;
@@ -38,10 +44,17 @@ export interface DSATQuestion {
   source_file: string;
   source_page?: number;
   has_graphic: boolean;
-  graphics: Graphic[];
+  graphics: Graphic[] | string[];
+  table?: Table | null;
+  notes?: string[] | null;
   has_underline: boolean;
   underlined_text?: string;
   raw_text: string;
+  section?: string;
+  module_level?: string;
+  question_number?: number;
+  answer_source?: string;
+  has_watermark_artifacts?: boolean;
 }
 
 // SAT Math Question Bank types
@@ -102,6 +115,7 @@ export interface UserProgress {
 export interface UserStats {
   userId: string;
   totalQuestions: number;
+  totalAttempts: number;
   correctAnswers: number;
   averageTime: number;
   weakDomains: string[];

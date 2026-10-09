@@ -1,60 +1,178 @@
 "use client";
 
-import { auth, db } from "@/lib/firebase";
+import LineChart from "@/components/arc/line-chart/line-chart";
+import SlopeChart from "@/components/arc/slope-chart/slope-chart";
+import WaffleChart from "@/components/arc/waffle-chart/waffle-chart";
+import { auth } from "@/lib/firebase";
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    where,
-} from "firebase/firestore";
-import { motion, useReducedMotion } from "framer-motion";
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+  type Variants,
+} from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 // =========================================================
-// Icons (Matching the clean, minimal UI)
+// Types
 // =========================================================
-const BellIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="w-[18px] h-[18px]"
-  >
-    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-    <path d="M13.73 21a2 2 0 01-3.46 0" />
-  </svg>
-);
+interface DomainStat {
+  domain: string;
+  type?: string;
+  accuracy: number;
+  total: number;
+  share: number;
+  avgTime?: string;
+  correctAvgTime?: string;
+}
 
-const ChevronDownIcon = ({ open }: { open: boolean }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`w-[16px] h-[16px] transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-  >
-    <path d="M6 9l6 6 6-6" />
-  </svg>
-);
+interface SkillStat {
+  skill: string;
+  total: number;
+  accuracy: number;
+  avgTime: string;
+  correctAvgTime: string;
+}
 
+interface AnalyticsData {
+  userData?: { name: string };
+  totalQuestions: number;
+  accuracy: number;
+  totalPracticeTime: number;
+  streak: number;
+  weeklyQuestions: number;
+  dailyGoal: number;
+  dailyActivity: { date: string; count: number }[];
+  domainStats: DomainStat[];
+  detailedStats: {
+    domains: DomainStat[];
+    skillsByDomain: Record<string, SkillStat[]>;
+  };
+}
+
+type DomainFilter = "all" | "math" | "rw";
+
+// =========================================================
+// Custom Hooks
+// =========================================================
+function useAnalytics() {
+  const router = useRouter();
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async (uid: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch(`/api/analytics?userId=${uid}`);
+      if (!response.ok) throw new Error("Failed to fetch analytics");
+      const result: AnalyticsData = await response.json();
+      setData(result);
+    } catch (err) {
+      console.error("Error fetching analytics:", err);
+      setError("Failed to load analytics data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth?.onAuthStateChanged((user) => {
+      if (!user) {
+        router.push("/sign-in");
+      } else {
+        fetchData(user.uid);
+      }
+    });
+    return () => unsubscribe?.();
+  }, [router, fetchData]);
+
+  return {
+    data,
+    isLoading,
+    error,
+    retry: () => auth?.currentUser && fetchData(auth.currentUser.uid),
+  };
+}
+
+// =========================================================
+// Design tokens + motion system (shared with dashboard)
+// =========================================================
+const C = {
+  ink: "#1d1d1f",
+  muted: "#86868b",
+  blue: "#0080FF",
+  green: "#10B981",
+  orange: "#F97316",
+  red: "#EF4444",
+};
+
+const accuracyColor = (a: number) =>
+  a >= 80 ? C.green : a >= 60 ? C.orange : C.red;
+
+const ease = [0.22, 1, 0.36, 1] as const;
+const spring = {
+  type: "spring",
+  stiffness: 320,
+  damping: 30,
+  mass: 0.8,
+} as const;
+
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+};
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 20, filter: "blur(8px)" },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.9, ease },
+  },
+};
+
+const swap = {
+  initial: { opacity: 0, y: 6, filter: "blur(4px)" },
+  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  exit: { opacity: 0, y: -6, filter: "blur(4px)" },
+  transition: { duration: 0.28, ease },
+} as const;
+
+// =========================================================
+// Domain filtering
+// =========================================================
+const MATH_DOMAIN =
+  /math|algebra|geometry|trigonometry|statistic|data analysis|problem-solving/i;
+
+const isMathDomain = (domain: string, type?: string) =>
+  /math/i.test(type ?? "") || MATH_DOMAIN.test(domain);
+
+const matchesFilter = (filter: DomainFilter, domain: string, type?: string) =>
+  filter === "all" ||
+  (filter === "math"
+    ? isMathDomain(domain, type)
+    : !isMathDomain(domain, type));
+
+// =========================================================
+// Icons
+// =========================================================
 const EyeOffIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.8"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="w-[15px] h-[15px]"
+    className="h-4 w-4"
+    aria-hidden="true"
   >
     <path d="M3 3l18 18M10.58 10.58a2 2 0 002.83 2.83M9.88 5.09A9.77 9.77 0 0112 5c5 0 9 4.5 9 7-0 .77-.9 1.98-2.36 3.16M6.6 6.6C4.4 7.9 3 9.8 3 12c0 2.5 4 7 9 7 1.13 0 2.2-.22 3.18-.6" />
   </svg>
@@ -65,10 +183,11 @@ const EyeIcon = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.8"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="w-[15px] h-[15px]"
+    className="h-4 w-4"
+    aria-hidden="true"
   >
     <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
     <circle cx="12" cy="12" r="3" />
@@ -76,893 +195,825 @@ const EyeIcon = () => (
 );
 
 const FlameIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-[24px] h-[24px]">
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="h-[18px] w-[18px]"
+    aria-hidden="true"
+  >
     <path d="M12.75 2.25c.35 3.1-1.02 5.1-2.6 6.83-1.6 1.75-3.4 3.9-3.4 7.17a5.25 5.25 0 0010.5 0c0-1.9-.72-3-1.35-3.9-.2 1.55-1 2.5-1.9 2.5-1.15 0-1.7-.95-1.5-2.15.35-2 2.35-3.35 2.35-6.3 0-1.5-.6-2.85-2.1-4.15z" />
   </svg>
 );
 
 const TargetIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-[24px] h-[24px]">
-    <path
-      fillRule="evenodd"
-      d="M14.615 1.595a.75.75 0 01.359.852L12.982 9.75h7.268a.75.75 0 01.548 1.262l-10.5 11.25a.75.75 0 01-1.272-.71l1.992-7.302H3.75a.75.75 0 01-.548-1.262l10.5-11.25a.75.75 0 01.913-.143z"
-      clipRule="evenodd"
-    />
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-[18px] w-[18px]"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
   </svg>
 );
 
-const CalendarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-[24px] h-[24px]">
-    <path
-      fillRule="evenodd"
-      d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
-      clipRule="evenodd"
+// Plus that rotates into a minus (same device as the landing FAQ)
+const PlusIcon = ({ open }: { open: boolean }) => (
+  <span className="relative block h-[14px] w-[14px]" aria-hidden="true">
+    <span className="absolute left-0 top-[6px] h-[2px] w-[14px] rounded-sm bg-current" />
+    <span
+      className={`absolute left-[6px] top-0 h-[14px] w-[2px] rounded-sm bg-current transition-transform duration-300 ease-out ${
+        open ? "rotate-90" : "rotate-0"
+      }`}
     />
-  </svg>
+  </span>
 );
 
 // =========================================================
-// Reusable Components
+// Reusable components
 // =========================================================
-const StatRow = ({
-  icon,
-  text,
-  label,
+const Card = ({
+  children,
+  className = "",
+  dark = false,
 }: {
-  icon: React.ReactNode;
-  text: string;
-  label?: string;
+  children: React.ReactNode;
+  className?: string;
+  dark?: boolean;
 }) => (
-  <div className="flex items-start gap-3.5 group">
-    <div className="w-[40px] h-[40px] shrink-0 rounded-xl bg-[#F7F7F8] flex items-center justify-center text-[#1D1D1F] group-hover:bg-[#FFC300]/15 transition-colors">
-      {icon}
-    </div>
-    <div className="flex flex-col">
-      {label && (
-        <span className="text-[13px] font-medium text-[#8e8e93] mb-0.5">
-          {label}
-        </span>
-      )}
-      <span className="text-[17px] font-semibold text-[#1D1D1F]">{text}</span>
-    </div>
+  <motion.div
+    variants={item}
+    className={`relative overflow-hidden rounded-[28px] p-6 md:p-7 ${
+      dark ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#1d1d1f]"
+    } ${className}`}
+  >
+    {children}
+  </motion.div>
+);
+
+const Label = ({
+  children,
+  dark = false,
+}: {
+  children: React.ReactNode;
+  dark?: boolean;
+}) => (
+  <p
+    className={`text-[14px] font-medium tracking-[-0.01em] ${
+      dark ? "text-white/50" : "text-[#86868b]"
+    }`}
+  >
+    {children}
+  </p>
+);
+
+const SectionHeader = ({ title, hint }: { title: string; hint?: string }) => (
+  <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+    <h2 className="text-[22px] font-medium tracking-[-0.02em]">{title}</h2>
+    {hint && <p className="text-[14px] text-[#86868b]">{hint}</p>}
   </div>
 );
 
-export default function AnalyticsPage() {
-  const router = useRouter();
-  const reduce = useReducedMotion();
-  const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<any>(null);
-  const [userAnswers, setUserAnswers] = useState<any[]>([]);
-  const [availableDomains, setAvailableDomains] = useState<Set<string>>(
-    new Set(),
-  );
-  const [availableSkills, setAvailableSkills] = useState<Set<string>>(
-    new Set(),
-  );
+/** White working surface inside a card */
+const Surface = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={`rounded-2xl bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_20px_-8px_rgba(0,0,0,0.06)] ${className}`}
+  >
+    {children}
+  </div>
+);
 
-  // UI States
-  const [hideScore, setHideScore] = useState(false);
-  const [openSections, setOpenSections] = useState({
-    progress: true,
-    activity: true,
-    detailed: true,
-  });
+function CountUp({
+  value,
+  suffix = "",
+  className,
+}: {
+  value: number;
+  suffix?: string;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  const mv = useMotionValue(0);
+  const text = useTransform(
+    mv,
+    (v) => `${Math.round(v).toLocaleString()}${suffix}`,
+  );
 
   useEffect(() => {
-    if (!auth || !db) return;
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      console.log("Auth state changed:", user);
-      if (user) {
-        // Fetch User Profile
-        const userDoc = await getDoc(doc(db!, "users", user.uid));
-        if (userDoc.exists()) {
-          console.log("User data:", userDoc.data());
-          setUserData({ name: user.displayName, ...userDoc.data() });
-        }
-
-        // Fetch available domains and skills from question data
-        try {
-          console.log("Fetching Reading & Writing question data...");
-          const rwResponse = await fetch(
-            "/api/questions?test=Reading and Writing",
-          );
-
-          console.log("RW response status:", rwResponse.status);
-
-          const rwQuestions = await rwResponse.json();
-
-          console.log(
-            "RW questions type:",
-            typeof rwQuestions,
-            "is array:",
-            Array.isArray(rwQuestions),
-          );
-
-          const domains = new Set<string>();
-          const skills = new Set<string>();
-
-          // Process only Reading & Writing questions
-          if (Array.isArray(rwQuestions)) {
-            rwQuestions.forEach((q: any) => {
-              // Fix domain names to match official SAT naming convention
-              let domain = q.domain;
-              if (domain === "Standard English Convention") {
-                domain = "Standard English Conventions";
-              }
-              if (domain) domains.add(domain);
-              if (q.skill) skills.add(q.skill);
-            });
-          }
-
-          console.log("Available RW domains:", Array.from(domains));
-          console.log("Available RW skills:", Array.from(skills));
-
-          setAvailableDomains(domains);
-          setAvailableSkills(skills);
-        } catch (error) {
-          console.error("Error fetching question data:", error);
-        }
-
-        // Fetch Analytics from userProgress collection
-        const q = query(
-          collection(db!, "userProgress"),
-          where("userId", "==", user.uid),
-        );
-        console.log("Querying userProgress with userId:", user.uid);
-        onSnapshot(q, (snapshot) => {
-          const answers = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          console.log("Fetched userProgress:", answers);
-          setUserAnswers(answers);
-          setIsLoading(false);
-        });
-      } else {
-        console.log("No user found");
-        setIsLoading(false);
-        router.push("/sign-in");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  // Derived Analytics Data
-  const accuracy =
-    userAnswers.length > 0
-      ? Math.round(
-          (userAnswers.filter((progress) => {
-            if (!progress.attempts || progress.attempts.length === 0)
-              return false;
-            const lastAttempt = progress.attempts[progress.attempts.length - 1];
-            return lastAttempt.isCorrect;
-          }).length /
-            userAnswers.length) *
-            100,
-        )
-      : 0;
-
-  // Calculate domain stats from real data
-  const getDomainStats = () => {
-    if (!userAnswers.length) return [];
-
-    const domainStats: any = {};
-
-    // Initialize all available domains with zero stats
-    availableDomains.forEach((domain) => {
-      domainStats[domain] = { correct: 0, total: 0 };
-    });
-
-    // Fill in actual user data
-    userAnswers.forEach((progress) => {
-      let domain = progress.domain || "General";
-      const skill = progress.skill || "General";
-
-      // Fix domain names to match official SAT naming convention
-      // Handle various possible variations in domain names
-      if (domain === "Standard English Convention") {
-        domain = "Standard English Conventions";
-      } else if (domain === "Information and Idea") {
-        domain = "Information and Ideas";
-      } else if (domain === "Expression of Idea") {
-        domain = "Expression of Ideas";
-      } else if (domain === "Craft and Structure") {
-        domain = "Craft and Structure"; // already correct
-      }
-
-      // Fallback: if domain is not in available domains, try to match based on skill
-      if (!availableDomains.has(domain) && skill) {
-        if (
-          skill.includes("Information") ||
-          skill.includes("Central Ideas") ||
-          skill.includes("Inferences") ||
-          skill.includes("Command of Evidence")
-        ) {
-          domain = "Information and Ideas";
-        } else if (
-          skill.includes("Expression") ||
-          skill.includes("Rhetorical") ||
-          skill.includes("Transitions")
-        ) {
-          domain = "Expression of Ideas";
-        } else if (
-          skill.includes("Craft") ||
-          skill.includes("Structure") ||
-          skill.includes("Words in Context") ||
-          skill.includes("Cross-Text")
-        ) {
-          domain = "Craft and Structure";
-        } else if (
-          skill.includes("Standard English") ||
-          skill.includes("Boundaries") ||
-          skill.includes("Form")
-        ) {
-          domain = "Standard English Conventions";
-        }
-      }
-
-      if (!domainStats[domain]) {
-        domainStats[domain] = { correct: 0, total: 0 };
-      }
-      domainStats[domain].total++;
-      // Check if the last attempt was correct
-      if (progress.attempts && progress.attempts.length > 0) {
-        const lastAttempt = progress.attempts[progress.attempts.length - 1];
-        if (lastAttempt.isCorrect) {
-          domainStats[domain].correct++;
-        }
-      }
-    });
-
-    const total = userAnswers.length;
-    return Object.entries(domainStats)
-      .map(([domain, stats]: [string, any]) => ({
-        domain,
-        type: /math/i.test(domain) ? "Math" : "R&W",
-        accuracy:
-          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
-        share: total > 0 ? (stats.total / total) * 100 : 0,
-        total: stats.total,
-      }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-  };
-
-  const domainStats = getDomainStats();
-
-  // Calculate detailed domain and skill stats
-  const getDetailedStats = () => {
-    if (!userAnswers.length) return { domains: [], skills: [] };
-
-    const domainDetailedStats: any = {};
-    const skillDetailedStats: any = {};
-
-    // Initialize all available domains and skills with zero stats
-    availableDomains.forEach((domain) => {
-      domainDetailedStats[domain] = {
-        total: 0,
-        correct: 0,
-        totalTime: 0,
-        correctTime: 0,
-      };
-    });
-
-    availableSkills.forEach((skill) => {
-      skillDetailedStats[skill] = {
-        total: 0,
-        correct: 0,
-        totalTime: 0,
-        correctTime: 0,
-      };
-    });
-
-    // Fill in actual user data
-    userAnswers.forEach((progress) => {
-      let domain = progress.domain || "General";
-      const skill = progress.skill || "General";
-
-      // Fix domain names to match official SAT naming convention
-      // Handle various possible variations in domain names
-      if (domain === "Standard English Convention") {
-        domain = "Standard English Conventions";
-      } else if (domain === "Information and Idea") {
-        domain = "Information and Ideas";
-      } else if (domain === "Expression of Idea") {
-        domain = "Expression of Ideas";
-      } else if (domain === "Craft and Structure") {
-        domain = "Craft and Structure"; // already correct
-      }
-
-      // Fallback: if domain is not in available domains, try to match based on skill
-      if (!availableDomains.has(domain) && skill) {
-        if (
-          skill.includes("Information") ||
-          skill.includes("Central Ideas") ||
-          skill.includes("Inferences") ||
-          skill.includes("Command of Evidence")
-        ) {
-          domain = "Information and Ideas";
-        } else if (
-          skill.includes("Expression") ||
-          skill.includes("Rhetorical") ||
-          skill.includes("Transitions")
-        ) {
-          domain = "Expression of Ideas";
-        } else if (
-          skill.includes("Craft") ||
-          skill.includes("Structure") ||
-          skill.includes("Words in Context") ||
-          skill.includes("Cross-Text")
-        ) {
-          domain = "Craft and Structure";
-        } else if (
-          skill.includes("Standard English") ||
-          skill.includes("Boundaries") ||
-          skill.includes("Form")
-        ) {
-          domain = "Standard English Conventions";
-        }
-      }
-
-      // Domain stats
-      if (!domainDetailedStats[domain]) {
-        domainDetailedStats[domain] = {
-          total: 0,
-          correct: 0,
-          totalTime: 0,
-          correctTime: 0,
-        };
-      }
-      domainDetailedStats[domain].total++;
-
-      if (progress.attempts && progress.attempts.length > 0) {
-        const lastAttempt = progress.attempts[progress.attempts.length - 1];
-        if (lastAttempt.isCorrect) {
-          domainDetailedStats[domain].correct++;
-          domainDetailedStats[domain].correctTime += lastAttempt.timeSpent || 0;
-        }
-        domainDetailedStats[domain].totalTime += lastAttempt.timeSpent || 0;
-      }
-
-      // Skill stats
-      if (!skillDetailedStats[skill]) {
-        skillDetailedStats[skill] = {
-          total: 0,
-          correct: 0,
-          totalTime: 0,
-          correctTime: 0,
-        };
-      }
-      skillDetailedStats[skill].total++;
-
-      if (progress.attempts && progress.attempts.length > 0) {
-        const lastAttempt = progress.attempts[progress.attempts.length - 1];
-        if (lastAttempt.isCorrect) {
-          skillDetailedStats[skill].correct++;
-          skillDetailedStats[skill].correctTime += lastAttempt.timeSpent || 0;
-        }
-        skillDetailedStats[skill].totalTime += lastAttempt.timeSpent || 0;
-      }
-    });
-
-    const formatTime = (ms: number) => {
-      if (ms === 0) return "0s";
-      const seconds = Math.floor(ms / 1000);
-      if (seconds < 60) return `${seconds}s`;
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      return `${minutes}m ${remainingSeconds}s`;
-    };
-
-    const domains = Object.entries(domainDetailedStats)
-      .map(([domain, stats]: [string, any]) => ({
-        domain,
-        total: stats.total,
-        accuracy:
-          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
-        avgTime:
-          stats.total > 0 ? formatTime(stats.totalTime / stats.total) : "0s",
-        correctAvgTime:
-          stats.correct > 0
-            ? formatTime(stats.correctTime / stats.correct)
-            : "N/A",
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    const skills = Object.entries(skillDetailedStats)
-      .map(([skill, stats]: [string, any]) => ({
-        skill,
-        total: stats.total,
-        accuracy:
-          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
-        avgTime:
-          stats.total > 0 ? formatTime(stats.totalTime / stats.total) : "0s",
-        correctAvgTime:
-          stats.correct > 0
-            ? formatTime(stats.correctTime / stats.correct)
-            : "N/A",
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    return { domains, skills };
-  };
-
-  const detailedStats = getDetailedStats();
-
-  // Calculate practice streak
-  const calculatePracticeStreak = () => {
-    if (userAnswers.length === 0) return 0;
-
-    const dates = userAnswers
-      .map((p) =>
-        p.lastAttemptedAt ? new Date(p.lastAttemptedAt).toDateString() : null,
-      )
-      .filter((d) => d !== null)
-      .reverse();
-
-    const uniqueDates = [...new Set(dates)];
-    let streak = 0;
-    let currentDate = new Date();
-
-    for (const date of uniqueDates) {
-      const answerDate = new Date(date);
-      const diffDays = Math.floor(
-        (currentDate.getTime() - answerDate.getTime()) / (1000 * 60 * 60 * 24),
-      );
-
-      if (diffDays === streak) {
-        streak++;
-        currentDate = new Date(answerDate);
-      } else if (diffDays === streak + 1) {
-        streak++;
-        currentDate = new Date(answerDate);
-      } else {
-        break;
-      }
+    if (reduce) {
+      mv.set(value);
+      return;
     }
+    const controls = animate(mv, value, { duration: 1.3, ease });
+    return () => controls.stop();
+  }, [value, reduce, mv]);
 
-    return streak;
-  };
+  return <motion.span className={className}>{text}</motion.span>;
+}
 
-  // Calculate weekly questions
-  const getWeeklyQuestions = () => {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return userAnswers.filter((p) => {
-      const answerDate = p.lastAttemptedAt
-        ? new Date(p.lastAttemptedAt)
-        : new Date();
-      return answerDate >= oneWeekAgo;
-    }).length;
-  };
+function Segmented<T extends string>({
+  id,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-full bg-black/[0.05] p-1">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            aria-pressed={active}
+            className={`relative h-9 rounded-full px-4 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/40 ${
+              active ? "text-[#1d1d1f]" : "text-[#86868b] hover:text-[#1d1d1f]"
+            }`}
+          >
+            {active && (
+              <motion.span
+                layoutId={id}
+                transition={spring}
+                className="absolute inset-0 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)]"
+              />
+            )}
+            <span className="relative z-10">{o.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-  // Calculate total practice time (in minutes) from attempts
-  const getTotalPracticeTime = () => {
-    const totalTimeMs = userAnswers.reduce((total, progress) => {
-      if (!progress.attempts) return total;
-      const attemptsTime = progress.attempts.reduce(
-        (acc: number, attempt: any) => {
-          return acc + (attempt.timeSpent || 0);
-        },
-        0,
-      );
-      return total + attemptsTime;
-    }, 0);
-    return Math.floor(totalTimeMs / 60000);
-  };
+const IconButton = ({
+  label,
+  onClick,
+  children,
+  dark = false,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  dark?: boolean;
+}) => (
+  <motion.button
+    type="button"
+    aria-label={label}
+    onClick={onClick}
+    whileHover={{ scale: 1.08 }}
+    whileTap={{ scale: 0.9 }}
+    transition={spring}
+    className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA3FF] ${
+      dark
+        ? "bg-white/10 text-white/70 hover:bg-white/20"
+        : "bg-black/[0.05] text-[#6e6e73] hover:bg-black/[0.09]"
+    }`}
+  >
+    {children}
+  </motion.button>
+);
 
-  // Get daily goal from user data
-  const dailyGoal = userData?.dailyGoal || 20;
+const DarkPill = ({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) => (
+  <motion.div
+    whileHover={{ scale: 1.025 }}
+    whileTap={{ scale: 0.97 }}
+    transition={spring}
+    className="relative inline-block p-1.5"
+  >
+    <div className="pointer-events-none absolute inset-0 rounded-full border border-gray-400/40" />
+    <Link
+      href={href}
+      className="relative z-10 flex h-12 items-center justify-center gap-3 rounded-[32px] border border-white/10 bg-[#171717]/80 px-6 text-[16px] font-medium leading-none tracking-[-0.01em] text-white backdrop-blur-[10px] transition-colors duration-150 hover:bg-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/50"
+    >
+      {children}
+    </Link>
+  </motion.div>
+);
 
-  const toggleSection = (key: "progress" | "activity" | "detailed") =>
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+const Collapse = ({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: React.ReactNode;
+}) => (
+  <div
+    className={`grid transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+    }`}
+  >
+    <div className="overflow-hidden">{children}</div>
+  </div>
+);
+
+/** Column header + rows share one grid template so columns line up. */
+const GRID5 = "minmax(0,2fr) repeat(4,minmax(0,1fr))";
+
+const TableHead = ({ cols }: { cols: string[] }) => (
+  <div
+    className="grid gap-4 border-b-2 border-[#f2f0ed] px-5 pb-3 pt-4 text-[13px] font-medium text-[#86868b]"
+    style={{ gridTemplateColumns: GRID5 }}
+  >
+    {cols.map((c) => (
+      <span key={c}>{c}</span>
+    ))}
+  </div>
+);
+
+const AccuracyCell = ({ value }: { value: number }) => (
+  <span className="flex items-center gap-2 font-medium tabular-nums">
+    <span
+      className="h-1.5 w-1.5 rounded-full"
+      style={{ backgroundColor: accuracyColor(value) }}
+    />
+    {value}%
+  </span>
+);
+
+// =========================================================
+// Main page
+// =========================================================
+export default function AnalyticsPage() {
+  const reduce = useReducedMotion();
+  const { data: analyticsData, isLoading, error, retry } = useAnalytics();
+
+  const [hideScore, setHideScore] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<DomainFilter>("all");
+  const [activeFocusPoint, setActiveFocusPoint] = useState<number | null>(null);
+  const [openSkillDomains, setOpenSkillDomains] = useState<
+    Record<string, boolean>
+  >({});
+
+  const focusTimeData = useMemo(() => {
+    if (!analyticsData) return [];
+    return analyticsData.dailyActivity.map((d) => {
+      const date = new Date(d.date);
+      return {
+        key: d.date,
+        label: date.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        }),
+        axisLabel: date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        values: { questions: d.count },
+      };
+    });
+  }, [analyticsData]);
+
+  // Domain filter drives the domain-based sections
+  const filteredDomainStats = useMemo(
+    () =>
+      (analyticsData?.domainStats ?? []).filter((s) =>
+        matchesFilter(selectedDomain, s.domain, s.type),
+      ),
+    [analyticsData, selectedDomain],
+  );
+
+  const filteredDetailedDomains = useMemo(
+    () =>
+      (analyticsData?.detailedStats.domains ?? []).filter((s) =>
+        matchesFilter(
+          selectedDomain,
+          s.domain,
+          s.type ??
+            analyticsData?.domainStats.find((d) => d.domain === s.domain)?.type,
+        ),
+      ),
+    [analyticsData, selectedDomain],
+  );
+
+  const filteredSkills = useMemo(() => {
+    if (!analyticsData) return [];
+    return Object.entries(
+      analyticsData.detailedStats.skillsByDomain || {},
+    ).filter(
+      ([domain, skills]) =>
+        Array.isArray(skills) &&
+        skills.length > 0 &&
+        matchesFilter(
+          selectedDomain,
+          domain,
+          analyticsData.domainStats.find((d) => d.domain === domain)?.type,
+        ),
+    );
+  }, [analyticsData, selectedDomain]);
 
   if (isLoading) {
     return (
-      <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-12 flex justify-center">
-        <div className="w-8 h-8 border-2 border-black/10 border-t-black rounded-full animate-spin mt-20" />
-      </section>
+      <main className="min-h-screen bg-white px-4 pb-24 pt-28 font-sans md:px-6 lg:px-10">
+        <div className="mx-auto w-full max-w-5xl">
+          <div className="mb-10 space-y-4">
+            <div className="h-14 w-full max-w-md animate-pulse rounded-2xl bg-[#f5f5f7]" />
+            <div className="h-5 w-60 animate-pulse rounded-full bg-[#f5f5f7]" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+            <div className="h-44 animate-pulse rounded-[28px] bg-[#ececf0]" />
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-44 animate-pulse rounded-[28px] bg-[#f5f5f7]"
+              />
+            ))}
+          </div>
+          <div className="mt-3 h-80 animate-pulse rounded-[28px] bg-[#f5f5f7] md:mt-4" />
+        </div>
+      </main>
     );
   }
 
-  const userName = userData?.name?.split(" ")[0] || "Student";
-  const userInitial = userName.charAt(0).toUpperCase();
+  if (error || !analyticsData) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4 font-sans">
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease }}
+          className="flex flex-col items-center text-center"
+        >
+          <h1 className="mb-2 text-[28px] font-medium tracking-tighter text-[#1d1d1f]">
+            We couldn&apos;t load your analytics
+          </h1>
+          <p className="mb-6 max-w-sm text-[15px] text-[#86868b]">
+            {error || "Data unavailable"} Check your connection and try again.
+          </p>
+          <motion.button
+            type="button"
+            onClick={retry}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={spring}
+            className="h-11 rounded-full bg-[#1d1d1f] px-6 text-[14px] font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/50"
+          >
+            Try again
+          </motion.button>
+        </motion.div>
+      </main>
+    );
+  }
+
+  const userName = analyticsData.userData?.name?.split(" ")[0] || "Student";
+  const weeklyGoal = analyticsData.dailyGoal * 7;
+  const weeklyPct =
+    weeklyGoal > 0
+      ? Math.min(100, (analyticsData.weeklyQuestions / weeklyGoal) * 100)
+      : 0;
+  const activeDay =
+    activeFocusPoint !== null ? focusTimeData[activeFocusPoint] : undefined;
 
   return (
-    <section className="min-h-screen bg-white font-sans pt-8 pb-20 px-4 md:px-8 lg:px-12">
-      <div className="max-w-[1000px] mx-auto w-full">
-        {/* ---- Hero card ---- */}
-        <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.5 }}
-          className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#FFD84D] to-[#FFBE0B] p-6 md:p-10"
-        >
-          <div className="flex items-start justify-between mb-8 md:mb-10">
-            <div>
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
-                Welcome back, {userName}.
-              </h1>
-              <p className="text-[15px] md:text-[16px] font-medium text-[#1D1D1F]/70 mt-2">
-                You've answered {userAnswers.length} questions so far.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button className="w-10 h-10 rounded-full bg-white/80 hover:bg-white transition-colors flex items-center justify-center text-[#1D1D1F]">
-                <BellIcon />
-              </button>
-              <div className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-semibold text-[15px]">
-                {userInitial}
-              </div>
+    <main className="min-h-screen bg-white font-sans antialiased selection:bg-gray-200 selection:text-black">
+      <motion.div
+        variants={container}
+        initial={reduce ? false : "hidden"}
+        animate="show"
+        className="mx-auto w-full max-w-5xl px-4 pb-24 pt-28 md:px-6 md:pt-32 lg:px-10"
+      >
+        {/* ---------- Header ---------- */}
+        <motion.header variants={item} className="mb-10 md:mb-12">
+          <h1 className="max-w-3xl text-[42px] font-medium leading-[1.05] tracking-[-0.035em] text-[#1d1d1f] md:text-[64px]">
+            Welcome back, {userName}.
+          </h1>
+          <p
+            className="mt-4 max-w-xl font-eb-garamond text-lg text-[#86868b] md:text-xl"
+            style={{ letterSpacing: "-0.01em" }}
+          >
+            You&apos;ve answered {analyticsData.totalQuestions.toLocaleString()}{" "}
+            questions so far.
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+            <Segmented<DomainFilter>
+              id="domain-filter"
+              value={selectedDomain}
+              onChange={setSelectedDomain}
+              options={[
+                { value: "all", label: "All" },
+                { value: "math", label: "Math" },
+                { value: "rw", label: "Reading & Writing" },
+              ]}
+            />
+            <div className="-mr-1.5">
+              <DarkPill href="/question-rush">New session</DarkPill>
             </div>
           </div>
+        </motion.header>
 
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="flex gap-10 md:gap-14">
-              <div>
-                <p className="text-[13px] font-medium text-[#1D1D1F]/60 mb-1">
-                  Total Accuracy
-                </p>
-                <p className="text-[32px] md:text-[36px] font-bold text-[#1D1D1F] leading-none">
-                  {hideScore ? "••••" : `${accuracy}%`}
-                </p>
+        {/* ---------- Stat tiles ---------- */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <Card dark className="col-span-2 md:col-span-1">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#0080FF]/25 blur-3xl" />
+            <div className="relative z-10 flex h-full min-h-[148px] flex-col justify-between">
+              <div className="flex items-start justify-between">
+                <Label dark>Total accuracy</Label>
+                <IconButton
+                  dark
+                  label={hideScore ? "Show stats" : "Hide stats"}
+                  onClick={() => setHideScore((v) => !v)}
+                >
+                  {hideScore ? <EyeIcon /> : <EyeOffIcon />}
+                </IconButton>
               </div>
-              <div>
-                <p className="text-[13px] font-medium text-[#1D1D1F]/60 mb-1">
-                  Questions Answered
-                </p>
-                <p className="text-[32px] md:text-[36px] font-bold text-[#1D1D1F] leading-none">
-                  {hideScore ? "••••" : userAnswers.length}
-                </p>
+              <div className="text-[56px] font-medium leading-none tracking-[-0.045em]">
+                {hideScore ? (
+                  "••••"
+                ) : (
+                  <CountUp value={analyticsData.accuracy} suffix="%" />
+                )}
               </div>
             </div>
+          </Card>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setHideScore((v) => !v)}
-                className="flex items-center gap-1.5 text-[13px] font-medium text-[#1D1D1F]/70 hover:text-[#1D1D1F] transition-colors"
-              >
-                {hideScore ? <EyeIcon /> : <EyeOffIcon />}
-                {hideScore ? "Show stats" : "Hide stats"}
-              </button>
-              <Link
-                href="/practice"
-                className="flex items-center gap-1 text-[13px] font-semibold bg-white/90 hover:bg-white transition-colors text-[#1D1D1F] px-3.5 py-2 rounded-full"
-              >
-                <span className="text-[16px] leading-none">+</span> New Session
-              </Link>
+          <Card>
+            <div className="flex h-full min-h-[148px] flex-col justify-between">
+              <Label>Questions answered</Label>
+              <div className="text-[44px] font-medium leading-none tracking-[-0.04em]">
+                {hideScore ? (
+                  "••••"
+                ) : (
+                  <CountUp value={analyticsData.totalQuestions} />
+                )}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </Card>
 
-        {/* ---- Accordion bars ---- */}
-        <div className="mt-6 space-y-3">
-          {/* Orange Progress Accordion */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-[20px] bg-[#FBD9AE] overflow-hidden"
-          >
-            <button
-              onClick={() => toggleSection("progress")}
-              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
-            >
-              <span className="text-[16px] md:text-[18px] font-semibold text-[#9A4A0C]">
-                Performance & Streaks
-              </span>
-              <span className="w-9 h-9 rounded-xl border-2 border-[#9A4A0C]/50 bg-white/40 flex items-center justify-center text-[#9A4A0C]">
-                <ChevronDownIcon open={openSections.progress} />
-              </span>
-            </button>
-            {openSections.progress && (
-              <div className="px-5 md:px-6 pb-6">
-                <div className="grid grid-cols-4 gap-2 pb-3 text-[12px] font-medium text-[#9A4A0C]/60">
-                  <span>Domain</span>
-                  <span>Type</span>
-                  <span>Accuracy</span>
-                  <span className="text-right">Allocation</span>
+          <Card>
+            <div className="flex h-full min-h-[148px] flex-col justify-between">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: C.orange }}
+                >
+                  <FlameIcon />
+                </span>
+                <Label>Streak</Label>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <CountUp
+                  value={analyticsData.streak}
+                  className="text-[44px] font-medium leading-none tracking-[-0.04em]"
+                />
+                <span className="text-[15px] text-[#86868b]">
+                  {analyticsData.streak === 1 ? "day" : "days"}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="col-span-2 md:col-span-1">
+            <div className="flex h-full min-h-[148px] flex-col justify-between">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: C.blue }}
+                >
+                  <TargetIcon />
+                </span>
+                <Label>Weekly progress</Label>
+              </div>
+              <div>
+                <div className="mb-3 flex items-baseline gap-1.5">
+                  <CountUp
+                    value={analyticsData.weeklyQuestions}
+                    className="text-[44px] font-medium leading-none tracking-[-0.04em]"
+                  />
+                  <span className="text-[15px] text-[#86868b]">
+                    / {weeklyGoal}
+                  </span>
                 </div>
-                <div className="space-y-3.5">
-                  {domainStats.map((row) => (
-                    <div
-                      key={row.domain}
-                      className="grid grid-cols-4 gap-2 items-baseline"
-                    >
-                      <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C] truncate">
-                        {row.domain}
-                      </span>
-                      <span className="text-[14px] md:text-[15px] font-medium text-[#9A4A0C]/80">
-                        {row.type}
-                      </span>
-                      <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C]">
-                        {row.accuracy}
-                        <span className="text-[12px] font-normal">%</span>
-                      </span>
-                      <span className="text-[15px] md:text-[17px] font-semibold text-[#9A4A0C] text-right">
-                        {row.share.toFixed(1)}%
-                      </span>
-                    </div>
-                  ))}
+                <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.07]">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: C.blue }}
+                    initial={reduce ? false : { width: 0 }}
+                    animate={{ width: `${weeklyPct}%` }}
+                    transition={{ duration: 1.2, ease, delay: 0.4 }}
+                  />
                 </div>
               </div>
-            )}
-          </motion.div>
-
-          {/* Blue Focus Accordion */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-            className="rounded-[20px] bg-[#AEE2F4] overflow-hidden"
-          >
-            <button
-              onClick={() => toggleSection("activity")}
-              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
-            >
-              <span className="text-[16px] md:text-[18px] font-semibold text-[#0C6E9A]">
-                Your focus time
-              </span>
-              <span className="w-9 h-9 rounded-xl border-2 border-[#0C6E9A]/50 bg-white/40 flex items-center justify-center text-[#0C6E9A]">
-                <ChevronDownIcon open={openSections.activity} />
-              </span>
-            </button>
-            {openSections.activity && (
-              <div className="px-5 md:px-6 pb-6 flex flex-col md:flex-row md:items-end gap-6 md:gap-8">
-                <div className="shrink-0">
-                  <p className="text-[32px] md:text-[36px] font-bold text-[#0C6E9A] leading-none">
-                    {getTotalPracticeTime()}{" "}
-                    <span className="text-[16px]">mins</span>
-                  </p>
-                  <p className="text-[13px] font-medium text-[#0C6E9A]/60 mt-1">
-                    Total practice time
-                  </p>
-                </div>
-                {/* Real daily practice chart */}
-                <div className="flex-1 h-20 flex items-end gap-[3px] min-w-0">
-                  {(() => {
-                    const days: { date: string; count: number }[] = [];
-                    const counts: Record<string, number> = {};
-
-                    userAnswers.forEach((progress) => {
-                      if (!progress.lastAttemptedAt) return;
-                      const key = new Date(
-                        progress.lastAttemptedAt,
-                      ).toDateString();
-                      counts[key] = (counts[key] || 0) + 1;
-                    });
-
-                    for (let i = 29; i >= 0; i--) {
-                      const d = new Date();
-                      d.setDate(d.getDate() - i);
-                      const key = d.toDateString();
-                      days.push({ date: key, count: counts[key] || 0 });
-                    }
-
-                    const max = Math.max(...days.map((d) => d.count), 1);
-
-                    return days.map((d, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 rounded-t-sm bg-[#0C6E9A]"
-                        style={{
-                          height: `${Math.max((d.count / max) * 100, d.count > 0 ? 8 : 3)}%`,
-                          opacity: d.count > 0 ? 1 : 0.25,
-                        }}
-                      />
-                    ));
-                  })()}
-                </div>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Green Detailed Stats Accordion */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="rounded-[20px] bg-[#C8E6C9] overflow-hidden"
-          >
-            <button
-              onClick={() => toggleSection("detailed")}
-              className="w-full flex items-center justify-between px-5 md:px-6 py-4"
-            >
-              <span className="text-[16px] md:text-[18px] font-semibold text-[#2E7D32]">
-                Detailed Analytics
-              </span>
-              <span className="w-9 h-9 rounded-xl border-2 border-[#2E7D32]/50 bg-white/40 flex items-center justify-center text-[#2E7D32]">
-                <ChevronDownIcon open={openSections.detailed} />
-              </span>
-            </button>
-            {openSections.detailed && (
-              <div className="px-5 md:px-6 pb-6 space-y-6">
-                {/* Domain Stats */}
-                <div>
-                  <h3 className="text-[15px] font-semibold text-[#2E7D32] mb-3">
-                    By Domain
-                  </h3>
-                  {detailedStats.domains.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-5 gap-2 pb-2 text-[11px] font-medium text-[#2E7D32]/60">
-                        <span>Domain</span>
-                        <span>Total</span>
-                        <span>Accuracy</span>
-                        <span>Avg Time</span>
-                        <span>Correct Avg</span>
-                      </div>
-                      <div className="space-y-2">
-                        {detailedStats.domains.map((row) => (
-                          <div
-                            key={row.domain}
-                            className="grid grid-cols-5 gap-2 items-baseline text-[13px] md:text-[14px]"
-                          >
-                            <span className="font-semibold text-[#2E7D32] truncate">
-                              {row.domain}
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.total}
-                            </span>
-                            <span className="font-semibold text-[#2E7D32]">
-                              {row.accuracy}%
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.avgTime}
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.correctAvgTime}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-[13px] text-[#2E7D32]/60 italic">
-                      No domain data available yet
-                    </p>
-                  )}
-                </div>
-
-                {/* Skill Stats */}
-                <div>
-                  <h3 className="text-[15px] font-semibold text-[#2E7D32] mb-3">
-                    By Skill
-                  </h3>
-                  {detailedStats.skills.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-5 gap-2 pb-2 text-[11px] font-medium text-[#2E7D32]/60">
-                        <span>Skill</span>
-                        <span>Total</span>
-                        <span>Accuracy</span>
-                        <span>Avg Time</span>
-                        <span>Correct Avg</span>
-                      </div>
-                      <div className="space-y-2">
-                        {detailedStats.skills.map((row) => (
-                          <div
-                            key={row.skill}
-                            className="grid grid-cols-5 gap-2 items-baseline text-[13px] md:text-[14px]"
-                          >
-                            <span className="font-semibold text-[#2E7D32] truncate">
-                              {row.skill}
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.total}
-                            </span>
-                            <span className="font-semibold text-[#2E7D32]">
-                              {row.accuracy}%
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.avgTime}
-                            </span>
-                            <span className="text-[#2E7D32]/80">
-                              {row.correctAvgTime}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-[13px] text-[#2E7D32]/60 italic">
-                      No skill data available yet
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </motion.div>
+            </div>
+          </Card>
         </div>
 
-        {/* ---- Metrics row ---- */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8"
-        >
-          <StatRow
-            icon={<FlameIcon />}
-            label="Streak"
-            text={`${calculatePracticeStreak()} days`}
-          />
-          <StatRow
-            icon={<TargetIcon />}
-            label="Questions"
-            text={`${userAnswers.length} answered`}
-          />
-          <StatRow
-            icon={<CalendarIcon />}
-            label="This week"
-            text={`${getWeeklyQuestions()} questions`}
-          />
-          <StatRow
-            icon={<span className="text-xl">🏆</span>}
-            label="Daily goal"
-            text={`${dailyGoal} questions`}
-          />
-        </motion.div>
+        <div className="mt-3 space-y-3 md:mt-4 md:space-y-4">
+          {/* ---------- Performance distribution ---------- */}
+          <Card>
+            <SectionHeader
+              title="Performance distribution"
+              hint="Where your practice goes, and how it's going"
+            />
 
-        {/* ---- Recent activity ---- */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-10"
-        >
-          <div className="flex items-baseline gap-2 mb-2">
-            <h2 className="text-[19px] font-semibold text-[#1D1D1F]">
-              Recent activity
-            </h2>
-          </div>
-          {userAnswers.length > 0 ? (
-            <div>
-              {userAnswers.slice(0, 5).map((progress, i) => {
-                const isCorrect =
-                  progress.attempts && progress.attempts.length > 0
-                    ? progress.attempts[progress.attempts.length - 1].isCorrect
-                    : false;
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-3.5 border-b border-[#F0F0F0] last:border-0"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-semibold text-[13px] ${isCorrect ? "bg-[#E4F8EA] text-[#1D8A3E]" : "bg-[#FDE9E7] text-[#D5271A]"}`}
+            <Surface className="mb-3 p-4 md:p-5">
+              <WaffleChart
+                data={filteredDomainStats.map((stat) => ({
+                  key: stat.domain,
+                  label: stat.domain,
+                  value: stat.total,
+                }))}
+                label="Questions by domain"
+                unit="questions"
+                decimals={0}
+              />
+            </Surface>
+
+            <Surface>
+              {filteredDomainStats.length > 0 ? (
+                <ul className="divide-y-2 divide-[#f2f0ed]">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {filteredDomainStats.map((row, i) => (
+                      <motion.li
+                        key={row.domain}
+                        layout
+                        initial={reduce ? false : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.4, ease }}
+                        className="px-5 py-4"
                       >
-                        {(progress.category || "Q").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-medium text-[#1D1D1F] truncate">
-                          Question #
-                          {progress.questionId?.substring(0, 6) || "ID"}
-                        </p>
-                        <p className="text-[13px] text-[#8e8e93]">
-                          {progress.lastAttemptedAt
-                            ? new Date(
-                                progress.lastAttemptedAt,
-                              ).toLocaleDateString()
-                            : "Recently"}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-[14px] font-semibold shrink-0 ml-3 ${isCorrect ? "text-[#1D8A3E]" : "text-[#D5271A]"}`}
-                    >
-                      {isCorrect ? "Correct" : "Incorrect"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-10 bg-[#F7F7F8] rounded-2xl">
-              <p className="text-[#8e8e93] mb-1">No recent activity yet</p>
-            </div>
-          )}
-        </motion.div>
-      </div>
-    </section>
+                        <div className="mb-2.5 flex items-end justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="truncate text-[16px] font-medium tracking-[-0.01em]">
+                              {row.domain}
+                            </p>
+                            <p className="mt-0.5 text-[13px] text-[#86868b]">
+                              {row.type || "Mixed"},{" "}
+                              {row.total.toLocaleString()} questions,{" "}
+                              {row.share.toFixed(1)}% of practice
+                            </p>
+                          </div>
+                          <span
+                            className="text-[22px] font-medium tabular-nums tracking-tight"
+                            style={{ color: accuracyColor(row.accuracy) }}
+                          >
+                            {row.accuracy}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{
+                              backgroundColor: accuracyColor(row.accuracy),
+                            }}
+                            initial={reduce ? false : { width: 0 }}
+                            animate={{ width: `${Math.max(2, row.accuracy)}%` }}
+                            transition={{
+                              duration: 1.1,
+                              ease,
+                              delay: 0.1 + i * 0.06,
+                            }}
+                          />
+                        </div>
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              ) : (
+                <p className="px-5 py-10 text-center text-[15px] text-[#86868b]">
+                  No questions in this section yet.
+                </p>
+              )}
+            </Surface>
+          </Card>
+
+          {/* ---------- Performance change ---------- */}
+          <Card>
+            <SectionHeader
+              title="Performance change"
+              hint="Accuracy by domain, last week to this week"
+            />
+            <Surface className="p-4 md:p-5">
+              <SlopeChart
+                data={filteredDomainStats.map((stat) => ({
+                  key: stat.domain,
+                  label: stat.domain,
+                  start: Math.max(0, stat.accuracy - 5), // Simulated previous week
+                  end: stat.accuracy,
+                }))}
+                label="Accuracy change by domain"
+                startLabel="Last Week"
+                endLabel="This Week"
+                formatValue={(value: number) => `${value.toFixed(0)}%`}
+                formatChange={(change: number) =>
+                  `${change > 0 ? "+" : ""}${change.toFixed(0)}%`
+                }
+                ranks={true}
+              />
+            </Surface>
+          </Card>
+
+          {/* ---------- Focus & activity ---------- */}
+          <Card>
+            <SectionHeader
+              title="Focus & activity"
+              hint="Hover the chart to read a day"
+            />
+            <Surface className="p-5 md:p-6">
+              <div className="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-[56px] font-medium leading-none tracking-[-0.04em] tabular-nums">
+                  {activeDay
+                    ? (activeDay.values.questions ??
+                      analyticsData.totalPracticeTime)
+                    : analyticsData.totalPracticeTime}
+                </p>
+                <span className="text-[15px] text-[#86868b]">questions</span>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p
+                    key={activeDay ? activeDay.key : "total"}
+                    {...swap}
+                    className="text-[14px] text-[#86868b]"
+                  >
+                    {activeDay ? activeDay.label : "Total answered"}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+
+              <LineChart
+                label="Focus time"
+                data={focusTimeData}
+                series={[
+                  {
+                    key: "questions",
+                    label: "Questions answered",
+                    color: C.blue,
+                  },
+                ]}
+                height={200}
+                onActiveChange={setActiveFocusPoint}
+                curve="smooth"
+              />
+            </Surface>
+          </Card>
+
+          {/* ---------- Detailed analytics ---------- */}
+          <Card>
+            <SectionHeader
+              title="Detailed analytics"
+              hint="Accuracy and timing, domain by domain"
+            />
+
+            <h3 className="mb-3 text-[15px] font-medium tracking-[-0.01em]">
+              By domain
+            </h3>
+            <Surface className="mb-8 overflow-x-auto">
+              <div className="min-w-[560px]">
+                {filteredDetailedDomains.length > 0 ? (
+                  <>
+                    <TableHead
+                      cols={[
+                        "Domain",
+                        "Total",
+                        "Accuracy",
+                        "Avg time",
+                        "Correct avg",
+                      ]}
+                    />
+                    <ul className="divide-y-2 divide-[#f2f0ed]">
+                      {filteredDetailedDomains.map((row) => (
+                        <li
+                          key={row.domain}
+                          className="grid items-center gap-4 px-5 py-3.5 text-[14px] transition-colors hover:bg-[#fafafa]"
+                          style={{ gridTemplateColumns: GRID5 }}
+                        >
+                          <span
+                            className="truncate font-medium"
+                            title={row.domain}
+                          >
+                            {row.domain}
+                          </span>
+                          <span className="tabular-nums text-[#86868b]">
+                            {row.total}
+                          </span>
+                          <AccuracyCell value={row.accuracy} />
+                          <span className="tabular-nums text-[#86868b]">
+                            {row.avgTime || "—"}
+                          </span>
+                          <span className="tabular-nums text-[#86868b]">
+                            {row.correctAvgTime || "—"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="px-5 py-10 text-center text-[14px] text-[#86868b]">
+                    No domain data available yet.
+                  </p>
+                )}
+              </div>
+            </Surface>
+
+            <h3 className="mb-3 text-[15px] font-medium tracking-[-0.01em]">
+              Skills breakdown
+            </h3>
+            {filteredSkills.length > 0 ? (
+              <div className="space-y-2.5">
+                {filteredSkills.map(([domain, skills], idx) => {
+                  // first domain starts open, the rest start closed
+                  const open = openSkillDomains[domain] ?? idx === 0;
+                  return (
+                    <Surface key={domain}>
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        onClick={() =>
+                          setOpenSkillDomains((prev) => ({
+                            ...prev,
+                            [domain]: !open,
+                          }))
+                        }
+                        className="flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left transition-colors hover:text-[#747484] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/40"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-[16px] font-medium tracking-[-0.01em]">
+                            {domain}
+                          </span>
+                          <span className="mt-0.5 block text-[13px] text-[#86868b]">
+                            {skills.length}{" "}
+                            {skills.length === 1 ? "skill" : "skills"}
+                          </span>
+                        </span>
+                        <PlusIcon open={open} />
+                      </button>
+
+                      <Collapse open={open}>
+                        <div className="overflow-x-auto border-t-2 border-[#f2f0ed]">
+                          <div className="min-w-[560px]">
+                            <TableHead
+                              cols={[
+                                "Skill",
+                                "Total",
+                                "Accuracy",
+                                "Avg time",
+                                "Correct avg",
+                              ]}
+                            />
+                            <ul className="divide-y-2 divide-[#f2f0ed]">
+                              {skills.map((row) => (
+                                <li
+                                  key={row.skill}
+                                  className="grid items-center gap-4 px-5 py-3 text-[14px] transition-colors hover:bg-[#fafafa]"
+                                  style={{ gridTemplateColumns: GRID5 }}
+                                >
+                                  <span
+                                    className="truncate font-medium"
+                                    title={row.skill}
+                                  >
+                                    {row.skill}
+                                  </span>
+                                  <span className="tabular-nums text-[#86868b]">
+                                    {row.total}
+                                  </span>
+                                  <AccuracyCell value={row.accuracy} />
+                                  <span className="tabular-nums text-[#86868b]">
+                                    {row.avgTime}
+                                  </span>
+                                  <span className="tabular-nums text-[#86868b]">
+                                    {row.correctAvgTime}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </Collapse>
+                    </Surface>
+                  );
+                })}
+              </div>
+            ) : (
+              <Surface className="px-5 py-10 text-center text-[14px] text-[#86868b]">
+                No skill data available yet.
+              </Surface>
+            )}
+          </Card>
+        </div>
+      </motion.div>
+    </main>
   );
 }

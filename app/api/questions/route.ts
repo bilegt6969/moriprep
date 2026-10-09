@@ -5,10 +5,35 @@ import path from "path";
 // Cache the questions data in memory to avoid repeated file reads
 let cachedRWQuestionsData: any = null;
 let cachedMathQuestionsData: any = null;
+let cachedOctoberSATData: any = null;
 let rwQuestionsPath: string = "";
 let mathQuestionsPath: string = "";
+let octoberSATPath: string = "";
 
-function loadQuestionsData(testType: string = "Reading and Writing") {
+function loadQuestionsData(
+  testType: string = "Reading and Writing",
+  source: string = "default",
+) {
+  if (source === "october_sat") {
+    if (cachedOctoberSATData === null) {
+      console.log(
+        "Loading October SAT questions from october_sat_rw_questions.json...",
+      );
+      octoberSATPath = path.join(
+        process.cwd(),
+        "october_sat_rw_questions.json",
+      );
+      cachedOctoberSATData = JSON.parse(
+        fs.readFileSync(octoberSATPath, "utf8"),
+      );
+      console.log(
+        "October SAT questions loaded and cached. Total questions:",
+        cachedOctoberSATData.length,
+      );
+    }
+    return cachedOctoberSATData;
+  }
+
   if (testType === "Math") {
     if (cachedMathQuestionsData === null) {
       console.log("Loading math questions from math_questions.json...");
@@ -42,7 +67,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const test = searchParams.get("test") || "Reading and Writing";
-    const questionsData = loadQuestionsData(test);
+    const source = searchParams.get("source") || "default";
+    const questionsData = loadQuestionsData(test, source);
 
     const domain = searchParams.get("domain");
     const difficulty = searchParams.get("difficulty");
@@ -56,9 +82,11 @@ export async function GET(request: NextRequest) {
     const skills_only = searchParams.get("skills_only");
     const attempt_filter = searchParams.get("attempt_filter");
     const status_filter = searchParams.get("status_filter");
+    const module_level = searchParams.get("module_level"); // For October SAT adaptive routing
 
     console.log("Query params:", {
       test,
+      source,
       domain,
       difficulty,
       skill,
@@ -71,6 +99,7 @@ export async function GET(request: NextRequest) {
       skills_only,
       attempt_filter,
       status_filter,
+      module_level,
     });
 
     // If question_id is provided, return only that question
@@ -92,6 +121,7 @@ export async function GET(request: NextRequest) {
       const uniqueDomains = Array.from(
         new Set(questionsData.map((q: any) => q.domain).filter(Boolean)),
       );
+      console.log("Unique domains in database:", uniqueDomains);
       console.log("Unique domains in database:", uniqueDomains);
       console.log(
         "Domain counts:",
@@ -215,6 +245,15 @@ export async function GET(request: NextRequest) {
       filtered = filtered.filter((q: any) => skills.includes(q.skill));
       console.log(
         `Skill filter: ${skills.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
+      );
+    }
+
+    // Filter by module_level for October SAT adaptive routing
+    if (module_level) {
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter((q: any) => q.module_level === module_level);
+      console.log(
+        `Module level filter: ${module_level} - Before: ${beforeFilter}, After: ${filtered.length}`,
       );
     }
 

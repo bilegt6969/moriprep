@@ -186,7 +186,7 @@ function AnimatedTimelineCard() {
     {
       label: "Reading & Writing",
       date: "",
-      time: "1669 questions",
+      time: "1845 questions",
       dotTick: 1,
       lineTick: 2,
     },

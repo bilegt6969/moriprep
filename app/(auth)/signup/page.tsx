@@ -1,14 +1,19 @@
 "use client";
 
 import { auth, googleProvider } from "@/lib/firebase";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { OnboardingFlow } from "components/auth/onboarding-flow";
 import LiteNavbar from "components/LiteNavbar";
 import type { Auth, GoogleAuthProvider } from "firebase/auth";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithPopup,
+} from "firebase/auth";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function SignUpContent() {
   const [email, setEmail] = useState("");
@@ -16,7 +21,29 @@ function SignUpContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+
+  // Restore session on load and route accordingly
+  useEffect(() => {
+    if (!auth) {
+      setCheckingAuth(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth as Auth, async (user) => {
+      if (!user) {
+        setCheckingAuth(false);
+        return;
+      }
+      if (await hasCompletedOnboarding(user)) {
+        router.replace("/overview");
+      } else {
+        setShowOnboarding(true);
+        setCheckingAuth(false);
+      }
+    });
+    return unsubscribe;
+  }, [router]);
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +52,7 @@ function SignUpContent() {
     try {
       if (!auth) throw new Error("Auth not initialized");
       await createUserWithEmailAndPassword(auth as Auth, email, password);
-      setShowOnboarding(true);
+      // onAuthStateChanged handles routing
     } catch (err) {
       console.error("Email sign-up error:", err);
       setError(
@@ -41,8 +68,16 @@ function SignUpContent() {
     setError("");
     try {
       if (!auth || !googleProvider) throw new Error("Auth not initialized");
-      await signInWithPopup(auth as Auth, googleProvider as GoogleAuthProvider);
-      setShowOnboarding(true);
+      const cred = await signInWithPopup(
+        auth as Auth,
+        googleProvider as GoogleAuthProvider,
+      );
+      // Returning Google users who already finished onboarding skip it
+      if (await hasCompletedOnboarding(cred.user)) {
+        router.replace("/overview");
+      } else {
+        setShowOnboarding(true);
+      }
     } catch (err) {
       console.error("Google sign-up error:", err);
       setError(
@@ -54,8 +89,36 @@ function SignUpContent() {
   };
 
   const handleOnboardingComplete = () => {
-    router.push("/home");
+    router.push("/overview");
   };
+
+  // Avoid flashing the signup form while the session is being restored
+  if (checkingAuth) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center px-4 py-16">
+        <svg
+          className="h-6 w-6 animate-spin text-neutral-400"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;

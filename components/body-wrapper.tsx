@@ -14,7 +14,7 @@ export function BodyWrapper({ children }: { children: ReactNode }) {
   // Don't apply page transition on practice pages (single-page app experience)
   // or landing page (to keep navbar sticky)
   const shouldTransition =
-    !pathname?.startsWith("/practice") && pathname !== "/";
+    !pathname?.startsWith("/question-rush") && pathname !== "/";
 
   return (
     <>

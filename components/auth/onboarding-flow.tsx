@@ -12,17 +12,20 @@ import { DomainPerformance } from "./steps/domain-performance";
 import { GoalScore } from "./steps/goal-score";
 import { GraduationYear } from "./steps/graduation-year";
 import { HowDidYouHear } from "./steps/how-did-you-hear";
+import { ProvinceCitySelector } from "./steps/province-city-selector";
 import { RoleSelection } from "./steps/role-selection";
 import { SatTestDates } from "./steps/sat-test-dates";
 import { SchoolSatStudents } from "./steps/school-sat-students";
-import { SchoolSearch } from "./steps/school-search";
 import { StudentsTutored } from "./steps/students-tutored";
 
 export type UserRole = "student" | "parent" | "tutor" | "teacher";
 
 export interface OnboardingData {
   role?: UserRole;
+  parentName?: string;
   school?: string;
+  grade?: string;
+  classLetter?: string;
   graduationYear?: string;
   childGraduationYear?: string;
   studentsTutored?: string;
@@ -139,11 +142,16 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
     console.log("Saving onboarding data for user:", currentUser.uid);
     console.log("User email:", currentUser.email);
 
+    // Filter out undefined values before saving
+    const filteredData = Object.fromEntries(
+      Object.entries(data).filter(([_, value]) => value !== undefined),
+    );
+
     try {
       await setDoc(
         doc(db, "users", currentUser.uid),
         {
-          ...data,
+          ...filteredData,
           email: currentUser.email,
           onboardingCompleted: true,
           onboardingCompletedAt: new Date().toISOString(),
@@ -199,7 +207,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
 
     switch (data.role) {
       case "student":
-        return baseSteps + 6; // school, graduation, dates, best score, domain performance, goal, how heard
+        return baseSteps + 6; // province+school, graduation, dates, best score, domain performance, goal, how heard
       case "parent":
         return baseSteps + 3; // child graduation, dates, best score, goal, how heard
       case "tutor":
@@ -218,7 +226,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
 
     switch (data.role) {
       case "student":
-        if (currentStep === baseSteps) return 2; // school
+        if (currentStep === baseSteps) return 2; // province+school
         if (currentStep === baseSteps + 1) return 3; // graduation
         if (currentStep === baseSteps + 2) return 4; // dates
         if (currentStep === baseSteps + 3) return 5; // best score
@@ -261,9 +269,14 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
       return !!data.role;
     }
 
-    // For students: school (step 1)
+    // For students: province+school (step 1)
     if (currentStep === 1 && data.role === "student") {
-      return !!data.school && data.school.trim().length > 0;
+      return (
+        !!data.parentName &&
+        data.parentName.trim().length > 0 &&
+        !!data.school &&
+        data.school.trim().length > 0
+      );
     }
 
     // For students: graduation year (step 2)
@@ -279,7 +292,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
 
     // For goal score (different step numbers based on role)
     const goalScoreStep =
-      data.role === "student" ? 6 : data.role === "parent" ? 4 : 4;
+      data.role === "student" ? 6 : data.role === "parent" ? 4 : 5;
     if (currentStep === goalScoreStep) {
       return (
         !!data.goalScore && data.goalScore >= 400 && data.goalScore <= 1600
@@ -324,7 +337,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
       case 1:
         if (data.role === "student") {
           return (
-            <SchoolSearch
+            <ProvinceCitySelector
               data={data}
               updateData={updateData}
               onNext={handleNext}
@@ -430,7 +443,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
               onBack={handleBack}
             />
           );
-        } else {
+        } else if (data.role === "parent") {
           return (
             <HowDidYouHear
               data={data}
@@ -439,7 +452,17 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
               onBack={handleBack}
             />
           );
+        } else if (data.role === "tutor" || data.role === "teacher") {
+          return (
+            <GoalScore
+              data={data}
+              updateData={updateData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
         }
+        break;
       case 6:
         if (data.role === "student") {
           return (
@@ -447,6 +470,15 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps = {}) {
               data={data}
               updateData={updateData}
               onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        } else if (data.role === "tutor" || data.role === "teacher") {
+          return (
+            <HowDidYouHear
+              data={data}
+              updateData={updateData}
+              onNext={handleComplete}
               onBack={handleBack}
             />
           );

@@ -24,7 +24,7 @@ import {
     mathDomains,
 } from "@/lib/dsat/math-domain-skills";
 const allDifficulties = ["Easy", "Medium", "Hard"];
-const DEFAULT_TOTAL_QUESTIONS = 1925;
+const DEFAULT_TOTAL_QUESTIONS = 1925; // Updated based on actual math questions count
 
 const PILL_SELECTED = "bg-zinc-900 text-white shadow-md";
 const PILL_UNSELECTED =
@@ -47,58 +47,30 @@ export function MathPracticeConfigPopup({
   onClose,
   onStartPractice,
 }: MathPracticeConfigPopupProps) {
-  const [selectedDifficulties, setSelectedDifficulties] =
-    useState<string[]>(allDifficulties);
-  const [selectedDomains, setSelectedDomains] = useState<string[]>(mathDomains);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(mathAllSkills);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
+    [],
+  );
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [attemptFilter, setAttemptFilter] = useState<string>("all");
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [isLoadingCount, setIsLoadingCount] = useState<boolean>(true);
   const [countIsStale, setCountIsStale] = useState<boolean>(false);
   const [isStartingPractice, setIsStartingPractice] = useState<boolean>(false);
-  const [isConfigLoaded, setIsConfigLoaded] = useState<boolean>(false);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load saved configuration from localStorage on mount
+  // Start with all difficulties and all domains selected by default
   useEffect(() => {
-    const savedConfig = localStorage.getItem("mathPracticeConfig");
-    if (savedConfig) {
-      try {
-        const config = JSON.parse(savedConfig);
-        setSelectedDifficulties(config.difficulties || allDifficulties);
-        setSelectedDomains(config.domains || mathDomains);
-        setSelectedSkills(config.skills || mathAllSkills);
-        setStatusFilter(config.statusFilter || "all");
-        setAttemptFilter(config.attemptFilter || "all");
-      } catch (error) {
-        console.error("Error loading saved config:", error);
-      }
-    }
-    setIsConfigLoaded(true);
+    setSelectedDifficulties(allDifficulties);
+    setSelectedDomains(mathDomains);
+    setSelectedSkills(mathAllSkills);
+    setStatusFilter("all");
+    setAttemptFilter("all");
   }, []);
 
-  // Save configuration to localStorage whenever it changes
-  useEffect(() => {
-    if (isConfigLoaded) {
-      const config = {
-        difficulties: selectedDifficulties,
-        domains: selectedDomains,
-        skills: selectedSkills,
-        statusFilter,
-        attemptFilter,
-      };
-      localStorage.setItem("mathPracticeConfig", JSON.stringify(config));
-    }
-  }, [
-    selectedDifficulties,
-    selectedDomains,
-    selectedSkills,
-    statusFilter,
-    attemptFilter,
-    isConfigLoaded,
-  ]);
+  // Removed localStorage persistence - always start fresh
 
   // Debounced filtered count fetcher
   useEffect(() => {
@@ -144,6 +116,16 @@ export function MathPracticeConfigPopup({
           selectedDomains.length > 0 ||
           selectedSkills.length > 0 ||
           selectedDifficulties.length > 0;
+
+        // If no filters are selected at all, show total count
+        if (
+          !hasContentFilters &&
+          statusFilter === "all" &&
+          attemptFilter === "all"
+        ) {
+          setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
+          return;
+        }
 
         if (needsUserStats) {
           const { auth } = await import("@/lib/firebase");
@@ -216,7 +198,6 @@ export function MathPracticeConfigPopup({
     selectedSkills,
     statusFilter,
     attemptFilter,
-    isConfigLoaded,
     isOpen,
   ]);
 

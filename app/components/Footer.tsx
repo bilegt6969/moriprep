@@ -137,7 +137,7 @@ export function Footer() {
             <ul className="flex flex-col gap-3 md:gap-3.5 text-[#a3a3a3] text-[15px]">
               <li>
                 <Link
-                  href="/practice"
+                  href="/question-rush"
                   className="hover:text-[#111] transition-colors"
                 >
                   Practice
