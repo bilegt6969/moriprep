@@ -8,22 +8,68 @@ const log = (...args: unknown[]) => {
   if (isDev) console.log(...args);
 };
 
-// Cache for local question data
+// Cache for local question data and indices
 let cachedLocalMathQuestions: any = null;
 let cachedLocalRWQuestions: any = null;
+let cachedMathIndex: any = null;
+let cachedRWIndex: any = null;
+
+interface QuestionIndex {
+  byDomain: Record<string, Set<number>>;
+  bySkill: Record<string, Set<number>>;
+  byDifficulty: Record<string, Set<number>>;
+}
+
+function buildQuestionIndex(questions: any[]): QuestionIndex {
+  const index: QuestionIndex = {
+    byDomain: {},
+    bySkill: {},
+    byDifficulty: {},
+  };
+
+  questions.forEach((q, idx) => {
+    if (q.domain) {
+      if (!index.byDomain[q.domain]) index.byDomain[q.domain] = new Set();
+      index.byDomain[q.domain].add(idx);
+    }
+    if (q.skill) {
+      if (!index.bySkill[q.skill]) index.bySkill[q.skill] = new Set();
+      index.bySkill[q.skill].add(idx);
+    }
+    if (q.difficulty) {
+      if (!index.byDifficulty[q.difficulty])
+        index.byDifficulty[q.difficulty] = new Set();
+      index.byDifficulty[q.difficulty].add(idx);
+    }
+  });
+
+  return index;
+}
 
 function loadLocalQuestions(testType: string) {
   if (testType === "Math") {
-    // Always reload to pick up changes during development
+    // Use cache if available
+    if (cachedLocalMathQuestions) {
+      log("Using cached math questions:", cachedLocalMathQuestions.length);
+      return cachedLocalMathQuestions;
+    }
     const mathPath = path.join(process.cwd(), "math_questions.json");
     const data = JSON.parse(fs.readFileSync(mathPath, "utf8"));
-    log("Loaded local math questions:", data.length);
+    cachedLocalMathQuestions = data;
+    cachedMathIndex = buildQuestionIndex(data);
+    log("Loaded and indexed local math questions:", data.length);
     return data;
   } else {
-    // Always reload to pick up changes during development
+    // Use cache if available
+    if (cachedLocalRWQuestions) {
+      log("Using cached RW questions:", cachedLocalRWQuestions.length);
+      return cachedLocalRWQuestions;
+    }
     const rwPath = path.join(process.cwd(), "questions.json");
     const data = JSON.parse(fs.readFileSync(rwPath, "utf8"));
-    log("Loaded local RW questions:", data.length);
+    cachedLocalRWQuestions = data;
+    cachedRWIndex = buildQuestionIndex(data);
+    log("Loaded and indexed local RW questions:", data.length);
     return data;
   }
 }
@@ -253,32 +299,87 @@ export async function GET(request: NextRequest) {
     // ---- Global stats ----
     // Use local JSON file instead of Firebase for accurate counts
     const questionsData = loadLocalQuestions(test);
+    const index = test === "Math" ? cachedMathIndex : cachedRWIndex;
 
     if (!hasFilters) {
       const total = questionsData.length;
-      return NextResponse.json({ count: total });
+      return NextResponse.json({ total, count: total });
     }
 
-    let filtered = questionsData;
+    // Use index-based filtering for better performance
+    let candidateIndices: Set<number> | null = null;
 
     if (combinedDomains.length > 0) {
-      filtered = filtered.filter((q: any) =>
-        combinedDomains.includes(q.domain),
-      );
+      const domainSets = combinedDomains
+        .map((d) => index.byDomain[d])
+        .filter((s): s is Set<number> => s !== undefined);
+      if (domainSets.length > 0) {
+        // Use union for domains (questions can belong to any selected domain)
+        candidateIndices = new Set<number>();
+        for (const domainSet of domainSets) {
+          for (const idx of domainSet) {
+            candidateIndices.add(idx);
+          }
+        }
+      }
     }
 
     if (combinedSkills.length > 0) {
-      filtered = filtered.filter((q: any) => combinedSkills.includes(q.skill));
+      const skillSets = combinedSkills
+        .map((s) => index.bySkill[s])
+        .filter((s): s is Set<number> => s !== undefined);
+      if (skillSets.length > 0) {
+        // Use union for skills (questions can belong to any selected skill)
+        let skillIndices = new Set<number>();
+        for (const skillSet of skillSets) {
+          for (const idx of skillSet) {
+            skillIndices.add(idx);
+          }
+        }
+        if (candidateIndices === null) {
+          candidateIndices = skillIndices;
+        } else {
+          const intersection = new Set<number>();
+          for (const idx of candidateIndices) {
+            if (skillIndices.has(idx)) intersection.add(idx);
+          }
+          candidateIndices = intersection;
+        }
+      }
     }
 
     if (difficulties.length > 0) {
-      filtered = filtered.filter((q: any) =>
-        difficulties.includes(q.difficulty),
-      );
+      const difficultySets = difficulties
+        .map((d) => index.byDifficulty[d])
+        .filter((s): s is Set<number> => s !== undefined);
+      if (difficultySets.length > 0) {
+        // Use union for difficulties (questions can belong to any selected difficulty)
+        let difficultyIndices = new Set<number>();
+        for (const difficultySet of difficultySets) {
+          for (const idx of difficultySet) {
+            difficultyIndices.add(idx);
+          }
+        }
+        if (candidateIndices === null) {
+          candidateIndices = difficultyIndices;
+        } else {
+          const intersection = new Set<number>();
+          for (const idx of candidateIndices) {
+            if (difficultyIndices.has(idx)) intersection.add(idx);
+          }
+          candidateIndices = intersection;
+        }
+      }
     }
 
-    log("Filtered global count:", filtered.length);
-    return NextResponse.json({ count: filtered.length });
+    const count = candidateIndices
+      ? candidateIndices.size
+      : questionsData.length;
+    log("Filtered global count:", count);
+    return NextResponse.json({
+      total: count,
+      count: count,
+    });
   } catch (error) {
     console.error("Error fetching question stats:", error);
     return NextResponse.json(

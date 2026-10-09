@@ -694,7 +694,7 @@ function QuestionDetailPageContent({
                 <div className="my-4">
                   {question.graphics.map((graphic, idx) => (
                     <div key={idx} className="mb-6">
-                      {graphic.image_path && (
+                      {typeof graphic === "object" && graphic.image_path && (
                         <img
                           src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
                           alt="Question graphic"

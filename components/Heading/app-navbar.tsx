@@ -17,11 +17,9 @@ import {
   AnimatedSidebarMenuSubButton,
   AnimatedSidebarMenuSubItem,
   AnimatedSidebarProvider,
-  AnimatedSidebarRail,
   AnimatedSidebarTrigger,
   useAnimatedSidebar,
 } from "@/components/motion/animated-sidebar";
-import { EASE_OUT } from "@/lib/ease";
 import {
   collection,
   db,
@@ -43,26 +41,39 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-const LOGO_MORPH_DURATION = 0.36; // mirrors SIDEBAR_MORPH_DURATION in animated-sidebar.tsx
+// Apple-style UI Colors & Utilities
+const COLORS = {
+  bgGray: "#F5F5F7",
+  textMain: "#1D1D1F",
+  textMuted: "#86868B",
+  activeBg: "rgba(0, 0, 0, 0.05)",
+  hoverBg: "rgba(0, 0, 0, 0.03)",
+};
 
-// NOTE: removed hardcoded width/height attrs — sizing now comes purely from
-// the `size-4` className passed at call sites, so these line up exactly
-// with the 16px Lucide icons instead of rendering at 18px.
+const RAIL_PAD =
+  "transition-[padding] duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)]"; // keep in sync with SIDEBAR_MORPH_DURATION
+
+const fadeMask = (stops: string): React.CSSProperties => ({
+  maskImage: `linear-gradient(to bottom, ${stops})`,
+  WebkitMaskImage: `linear-gradient(to bottom, ${stops})`,
+});
+
+// Uniform Custom Icons (Forced to 16px size and 1.5 stroke to match exactly)
 const HomeIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 18 18"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg"
     color="currentColor"
     className={className}
   >
     <path
-      d="M5.81299 12.188H12.188M2.81299 7.70599C2.81299 7.07899 2.81299 6.76599 2.89099 6.47599C2.96099 6.21899 3.07599 5.97599 3.23099 5.75999C3.40499 5.51499 3.64799 5.31699 4.13299 4.91999L6.71999 2.80299C7.53199 2.13799 7.93899 1.80599 8.38999 1.67899C8.7889 1.56664 9.21108 1.56664 9.60999 1.67899C10.061 1.80599 10.467 2.13899 11.28 2.80299L13.867 4.91999C14.352 5.31699 14.595 5.51499 14.769 5.75999C14.924 5.97699 15.039 6.21899 15.109 6.47599C15.188 6.76599 15.188 7.07899 15.188 7.70599V11.588C15.188 12.848 15.188 13.478 14.942 13.959C14.7263 14.3822 14.3822 14.7263 13.959 14.942C13.478 15.188 12.848 15.188 11.588 15.188H6.41299C5.15299 15.188 4.52299 15.188 4.04099 14.942C3.61777 14.7263 3.27368 14.3822 3.05799 13.959C2.81299 13.478 2.81299 12.848 2.81299 11.588V7.70599Z"
+      d="M5.812 12.188H12.188M2.813 7.706C2.813 7.079 2.813 6.766 2.891 6.476C2.961 6.219 3.076 5.976 3.231 5.76C3.405 5.515 3.648 5.317 4.133 4.92L6.72 2.803C7.532 2.138 7.939 1.806 8.39 1.679C8.789 1.567 9.211 1.567 9.61 1.679C10.061 1.806 10.467 2.139 11.282 2.803L13.867 4.92C14.352 5.317 14.595 5.515 14.769 5.76C14.924 5.977 15.039 6.219 15.109 6.476C15.188 6.766 15.188 7.079 15.188 7.706V11.588C15.188 12.848 15.188 13.478 14.942 13.959C14.726 14.382 14.382 14.726 13.959 14.942C13.478 15.188 12.848 15.188 11.588 15.188H6.413C5.153 15.188 4.523 15.188 4.041 14.942C3.618 14.726 3.274 14.382 3.058 13.959C2.813 13.478 2.813 12.848 2.813 11.588V7.706Z"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
@@ -74,27 +85,26 @@ const TestIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 18 18"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg"
     color="currentColor"
     className={className}
   >
     <path
-      d="M5.0625 7.875C6.6158 7.875 7.875 6.6158 7.875 5.0625C7.875 3.5092 6.6158 2.25 5.0625 2.25C3.5092 2.25 2.25 3.5092 2.25 5.0625C2.25 6.6158 3.5092 7.875 5.0625 7.875Z"
+      d="M5.062 7.875C6.616 7.875 7.875 6.616 7.875 5.062C7.875 3.509 6.616 2.25 5.062 2.25C3.509 2.25 2.25 3.509 2.25 5.062C2.25 6.616 3.509 7.875 5.062 7.875Z"
       stroke="currentColor"
       strokeWidth="1.5"
     />
     <path
-      d="M5.0625 15.75C6.6158 15.75 7.875 14.4908 7.875 12.9375C7.875 11.3842 6.6158 10.125 5.0625 10.125C3.5092 10.125 2.25 11.3842 2.25 12.9375C2.25 14.4908 3.5092 15.75 5.0625 15.75Z"
+      d="M5.062 15.75C6.616 15.75 7.875 14.491 7.875 12.937C7.875 11.384 6.616 10.125 5.062 10.125C3.509 10.125 2.25 11.384 2.25 12.937C2.25 14.491 3.509 15.75 5.062 15.75Z"
       stroke="currentColor"
       strokeWidth="1.5"
     />
     <path
-      d="M12.9375 7.875C14.4908 7.875 15.75 6.6158 15.75 5.0625C15.75 3.5092 14.4908 2.25 12.9375 2.25C11.3842 2.25 10.125 3.5092 10.125 5.0625C10.125 6.6158 11.3842 7.875 12.9375 7.875Z"
+      d="M12.937 7.875C14.491 7.875 15.75 6.616 15.75 5.062C15.75 3.509 14.491 2.25 12.937 2.25C11.384 2.25 10.125 3.509 10.125 5.062C10.125 6.616 11.384 7.875 12.937 7.875Z"
       stroke="currentColor"
       strokeWidth="1.5"
     />
     <path
-      d="M12.9375 15.75C14.4908 15.75 15.75 14.4908 15.75 12.9375C15.75 11.3842 14.4908 10.125 12.9375 10.125C11.3842 10.125 10.125 11.3842 10.125 12.9375C10.125 14.4908 11.3842 15.75 12.9375 15.75Z"
+      d="M12.937 15.75C14.491 15.75 15.75 14.491 15.75 12.937C15.75 11.384 14.491 10.125 12.937 10.125C11.384 10.125 10.125 11.384 10.125 12.937C10.125 14.491 11.384 15.75 12.937 15.75Z"
       stroke="currentColor"
       strokeWidth="1.5"
     />
@@ -105,7 +115,6 @@ const DashboardIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 18 18"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg"
     color="currentColor"
     className={className}
   >
@@ -114,7 +123,7 @@ const DashboardIcon = ({ className }: { className?: string }) => (
       y="2"
       width="6"
       height="6"
-      rx="1"
+      rx="1.5"
       stroke="currentColor"
       strokeWidth="1.5"
     />
@@ -123,7 +132,7 @@ const DashboardIcon = ({ className }: { className?: string }) => (
       y="2"
       width="6"
       height="6"
-      rx="1"
+      rx="1.5"
       stroke="currentColor"
       strokeWidth="1.5"
     />
@@ -132,7 +141,7 @@ const DashboardIcon = ({ className }: { className?: string }) => (
       y="10"
       width="6"
       height="6"
-      rx="1"
+      rx="1.5"
       stroke="currentColor"
       strokeWidth="1.5"
     />
@@ -141,7 +150,7 @@ const DashboardIcon = ({ className }: { className?: string }) => (
       y="10"
       width="6"
       height="6"
-      rx="1"
+      rx="1.5"
       stroke="currentColor"
       strokeWidth="1.5"
     />
@@ -152,17 +161,16 @@ const CommunityIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 18 18"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg"
     color="currentColor"
     className={className}
   >
     <path
-      d="M9 9C11.2091 9 13 7.20914 13 5C13 2.79086 11.2091 1 9 1C6.79086 1 5 2.79086 5 5C5 7.20914 6.79086 9 9 9Z"
+      d="M9 9C11.209 9 13 7.209 13 5C13 2.791 11.209 1 9 1C6.791 1 5 2.791 5 5C5 7.209 6.791 9 9 9Z"
       stroke="currentColor"
       strokeWidth="1.5"
     />
     <path
-      d="M1 17C1 14.2386 3.23858 12 9 12C14.7614 12 17 14.2386 17 17"
+      d="M17 17C17 14.239 13.418 12 9 12C4.582 12 1 14.239 1 17"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
@@ -174,12 +182,11 @@ const ResourcesIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 18 18"
     fill="none"
-    xmlns="http://www.w3.org/2000/svg"
     color="currentColor"
     className={className}
   >
     <path
-      d="M2.99975 6V4.49999C2.99975 3.67157 3.67133 3 4.49975 3H10.4997C11.3282 3 11.9997 3.67157 11.9997 4.49999M2.99975 6H6.13136C6.52919 6 6.91072 6.15803 7.19202 6.43934L8.56332 7.81064C8.84465 8.09197 9.22622 8.25 9.62402 8.25H11.9997M2.99975 6C2.58715 6 2.25269 6.33447 2.25269 6.74707V13.5C2.25269 14.3285 2.92426 15 3.75269 15H14.2527C15.0812 15 15.7527 14.3285 15.7527 13.5V9.00288C15.7527 8.58712 15.4155 8.25 14.9997 8.25M11.9997 4.49999V8.25M11.9997 4.49999H13.4998C14.3282 4.49999 14.9997 5.17157 14.9997 6V8.25M11.9997 8.25H14.9997"
+      d="M2.999 6V4.499C2.999 3.671 3.671 3 4.499 3H10.499C11.328 3 11.999 3.671 11.999 4.499M2.999 6H6.131C6.529 6 6.91 6.158 7.192 6.439L8.563 7.81C8.844 8.091 9.226 8.25 9.624 8.25H11.999M2.999 6C2.587 6 2.252 6.334 2.252 6.747V13.5C2.252 14.328 2.924 15 3.752 15H14.252C15.081 15 15.752 14.328 15.752 13.5V9.002C15.752 8.587 15.415 8.25 14.999 8.25M11.999 4.499V8.25M11.999 4.499H13.499C14.328 4.499 14.999 5.171 14.999 6V8.25M11.999 8.25H14.999"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinejoin="round"
@@ -187,86 +194,54 @@ const ResourcesIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const SidebarToggleIcon = ({
-  className,
-  isOpen,
-}: {
-  className?: string;
-  isOpen?: boolean;
-}) => (
-  <motion.svg
-    width="20"
-    height="20"
-    viewBox="0 0 20 20"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    color="currentColor"
-    className={className}
-    animate={{ rotate: isOpen ? 180 : 0, scale: isOpen ? 1.1 : 1 }}
-    transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-  >
-    <rect
-      x="10.5"
-      y="6.5"
-      width="7"
-      height="5"
-      rx="1"
-      transform="rotate(90 10.5 6.5)"
-      fill="currentColor"
-    />
-    <rect
-      x="3"
-      y="4"
-      width="14"
-      height="12"
-      rx="2.8"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    />
-  </motion.svg>
-);
+type NavItem =
+  | {
+      label: string;
+      href: string;
+      icon:
+        | React.ComponentType<{ className?: string }>
+        | React.ForwardRefExoticComponent<any>;
+      comingSoon?: boolean;
+    }
+  | {
+      label: string;
+      icon:
+        | React.ComponentType<{ className?: string }>
+        | React.ForwardRefExoticComponent<any>;
+      hasSubmenu: true;
+      subItems: { label: string; href: string }[];
+      comingSoon?: boolean;
+    };
 
-// Nav items are grouped (Main / Learn / Progress / Community) to mirror the
-// Messaging / Audience / Developers clustering from the reference design.
-// Adjust the grouping below if a different IA is preferred — the render
-// logic just maps over `navGroups`, so reshuffling items between groups or
-// renaming groups is a one-line change.
-const navGroups: {
+type NavGroup = {
   label: string | null;
-  items: Array<{
-    label: string;
-    href?: string;
-    icon?: React.ComponentType<{ className?: string }>;
-    hasSubmenu?: boolean;
-    subItems?: Array<{ label: string; href: string }>;
-  }>;
-}[] = [
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
   {
     label: null,
     items: [
-      { label: "Overview", href: "/home", icon: HomeIcon },
-      { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-      { label: "Test", href: "/practice", icon: TestIcon },
+      { label: "Overview", href: "/overview", icon: HomeIcon },
+      { label: "Question Rush", href: "/question-rush", icon: TestIcon },
+      { label: "Practice Test", href: "/practice-test", icon: BookOpen },
     ],
   },
   {
-    label: "Learn",
+    label: "learn",
     items: [
       {
         label: "Lessons",
         icon: BookOpen,
-        hasSubmenu: true,
-        subItems: [
-          { label: "Math", href: "/resources/math" },
-          { label: "Reading & Writing", href: "/resources/rw" },
-        ],
+        href: "/lessons",
+        comingSoon: true,
       },
       { label: "Resources", href: "/resources", icon: ResourcesIcon },
       { label: "Blog", href: "/blog", icon: BookOpen },
     ],
   },
   {
-    label: "Progress",
+    label: "progress",
     items: [
       { label: "History", href: "/history", icon: History },
       { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
@@ -274,66 +249,65 @@ const navGroups: {
     ],
   },
   {
-    label: "Community",
+    label: "community",
     items: [
-      { label: "Community", href: "/community", icon: CommunityIcon },
+      {
+        label: "Community",
+        href: "/community",
+        icon: CommunityIcon,
+        comingSoon: true,
+      },
       { label: "Help", href: "/support", icon: HelpCircle },
     ],
   },
 ];
 
-// Flattened for the pathname → active-label lookup, so we don't have to
-// duplicate the nested loop everywhere we need "what's the current page".
-const navigationItems = navGroups.flatMap((group) => group.items);
-
-const settingsItems = [
-  { label: "Settings", href: "/settings", icon: Settings },
+const navigationItems: NavItem[] = navGroups.flatMap((group) => group.items);
+const settingsItems: NavItem[] = [
+  { label: "Account", href: "/account", icon: Settings },
 ];
 
-// Shared class strings so active/hover states are byte-for-byte identical
-// across the main nav and the settings nav — this is what was producing the
-// "chopped" look, since the two lists previously used slightly different
-// class ordering. `!rounded-[10px]` forces the corner radius even if the
-// underlying AnimatedSidebarMenuButton ships its own conflicting radius.
-// IMPORTANT: do NOT put a bg-* class on the active state here.
-// AnimatedSidebarMenuButton already paints the active pill itself (a
-// layoutId-animated <span>, see animated-sidebar.tsx). Adding a background
-// here stacks a second, differently-sized rounded rect underneath it,
-// which is what produced the "chopped"/double-edge pill. Active state is
-// text color + weight only; the pill itself is the component's job.
-// No radius override here either — the component already sets rounded-xl
-// on the button itself, and the active pill matches that automatically.
-// Redefining it here risked a 1-2px radius mismatch between the button box
-// and the pill sitting inside it.
-const NAV_ITEM_BASE = "transition-colors duration-150";
-const NAV_ITEM_ACTIVE = "text-zinc-900 font-semibold";
+// True Apple Styling Rules: Absolutely no borders, flat rounded shapes, uniform sizing
+const NAV_ITEM_BASE =
+  "flex items-center gap-3 h-[30px] px-3 rounded-[10px] text-[13.5px] transition-colors duration-200 w-full outline-none";
+const NAV_ITEM_ACTIVE = "bg-black/[0.05] text-[#1D1D1F] font-semibold";
 const NAV_ITEM_INACTIVE =
-  "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-black/[0.035] rounded-xl";
+  "text-[#545459] font-medium hover:text-[#1D1D1F] hover:bg-black/[0.03]";
 
-// Section label style lifted from the reference: plain gray-500, normal
-// (not uppercase/tracked) — quieter than the old all-caps/letterspaced
-// "SETTINGS" label so groups read as gentle separators, not shouty headers.
-const NAV_GROUP_LABEL = "text-[12px] font-medium text-zinc-400 px-3 mb-1.5";
+const NAV_GROUP_LABEL =
+  "text-[12px] font-medium text-[#545459] uppercase px-3 mt-4 mb-1 tracking-wide whitespace-nowrap";
 
 function isPathActive(pathname: string, href?: string) {
   if (!href) return false;
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  if (href === "/") return pathname === "/";
+  // Check for exact match first
+  if (pathname === href) return true;
+  // Then check if pathname starts with href AND the next character is a slash or there is no next character
+  // This prevents /practice-test from matching /question-rush
+  if (pathname.startsWith(href)) {
+    const nextChar = pathname[href.length];
+    return nextChar === "/" || nextChar === undefined;
+  }
+  return false;
 }
 
-export function AppNavbar({ children }: { children: React.ReactNode }) {
+export function AppNavbar({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(() => {
-    const parent = navigationItems.find((item) =>
-      item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
+    const parent = navigationItems.find(
+      (item) =>
+        "subItems" in item &&
+        item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
     );
     return parent?.label ?? null;
   });
-
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const parent = navigationItems.find((item) =>
-      item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
+    const parent = navigationItems.find(
+      (item) =>
+        "subItems" in item &&
+        item.subItems?.some((sub) => isPathActive(pathname, sub.href)),
     );
     if (parent) setOpenSubmenu(parent.label);
   }, [pathname]);
@@ -344,16 +318,12 @@ export function AppNavbar({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const handleSignOut = () => {
-    if (firebaseAuth) signOut(firebaseAuth);
-  };
-
   return (
-    <AnimatedSidebarProvider defaultOpen={true}>
+    <AnimatedSidebarProvider defaultOpen={true} className="bg-[#F5F5F7]">
       <AppNavbarContent
         children={children}
         user={user}
-        handleSignOut={handleSignOut}
+        handleSignOut={() => firebaseAuth && signOut(firebaseAuth)}
         pathname={pathname}
         openSubmenu={openSubmenu}
         setOpenSubmenu={setOpenSubmenu}
@@ -377,79 +347,65 @@ function AppNavbarContent({
   openSubmenu: string | null;
   setOpenSubmenu: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  const reduce = useReducedMotion();
-  const { state, open: sidebarOpen, isMobile } = useAnimatedSidebar();
+  const { open: sidebarOpen, isMobile } = useAnimatedSidebar();
   const collapsed = !isMobile && !sidebarOpen;
   const [streak, setStreak] = useState(0);
 
-  // Fetch streak data from Firebase
+  // Fetch Streak (Unchanged logic)
   useEffect(() => {
     if (!firebaseAuth || !db || !user) return;
-
     const q = query(
       collection(db, "userProgress"),
       where("userId", "==", user.uid),
     );
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const answers = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-
-      // Calculate practice streak (same logic as analytics page)
-      if (answers.length === 0) {
-        setStreak(0);
-        return;
-      }
-
+      if (answers.length === 0) return setStreak(0);
       const dates = answers
         .map((p: any) =>
           p.lastAttemptedAt ? new Date(p.lastAttemptedAt).toDateString() : null,
         )
         .filter((d) => d !== null)
         .reverse();
-
       const uniqueDates = [...new Set(dates)];
       let calculatedStreak = 0;
       let currentDate = new Date();
-
       for (const date of uniqueDates) {
         const answerDate = new Date(date);
         const diffDays = Math.floor(
           (currentDate.getTime() - answerDate.getTime()) /
             (1000 * 60 * 60 * 24),
         );
-
-        if (diffDays === calculatedStreak) {
+        if (
+          diffDays === calculatedStreak ||
+          diffDays === calculatedStreak + 1
+        ) {
           calculatedStreak++;
           currentDate = new Date(answerDate);
-        } else if (diffDays === calculatedStreak + 1) {
-          calculatedStreak++;
-          currentDate = new Date(answerDate);
-        } else {
-          break;
-        }
+        } else break;
       }
-
       setStreak(calculatedStreak);
     });
-
     return () => unsubscribe();
   }, [user]);
 
   const activeLabel = useMemo(() => {
     for (const item of navigationItems) {
-      if (item.hasSubmenu) {
+      if ("hasSubmenu" in item && item.hasSubmenu && item.subItems) {
         const activeSub = item.subItems.find((sub) =>
           isPathActive(pathname, sub.href),
         );
         if (activeSub) return activeSub.label;
       }
-      if (isPathActive(pathname, item.href)) return item.label;
+      if ("href" in item) {
+        if (isPathActive(pathname, item.href)) return item.label;
+      }
     }
-    const activeSetting = settingsItems.find((item) =>
-      isPathActive(pathname, item.href),
+    const activeSetting = settingsItems.find(
+      (item) => "href" in item && isPathActive(pathname, item.href),
     );
     return activeSetting?.label ?? "Overview";
   }, [pathname]);
@@ -457,150 +413,166 @@ function AppNavbarContent({
   return (
     <>
       <AnimatedSidebar
-        ariaLabel="Mori Prep navigation"
+        ariaLabel="MoriPrep navigation"
         collapsible="icon"
         variant="inset"
-        className="bg-[#f5f5f7]/80 backdrop-blur-3xl"
+        // NO BORDERS. Pure flat color.
+        className="bg-[#F5F5F7] border-0"
       >
-        {/*
-          Header now mirrors the reference: a small icon mark in a rounded
-          square, the wordmark beside it, and a chevrons-up-down affordance
-          on the far right that doubles as the sidebar's expand/collapse
-          trigger. The icon column's left edge still sits 28px from the
-          sidebar's left edge (AnimatedSidebarContent's px-3 [12px] +
-          AnimatedSidebarGroup's px-1 [4px] + the menu button's own px-3
-          [12px] = 28px) — px-3 here (12px) + pl-4 on the row (16px)
-          reproduces that same stack so the logo mark and "Overview" share
-          a left edge.
-        */}
-        <AnimatedSidebarHeader className="px-3 pt-6 pb-3">
-          <AnimatedSidebarTrigger className="flex h-11 w-full items-center gap-2.5 rounded-[12px] pl-4 pr-2 transition-colors hover:bg-black/[0.03]">
-            <div className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-[9px] bg-gradient-to-b from-zinc-100 to-zinc-200 ring-1 ring-black/[0.04]">
+        <AnimatedSidebarHeader
+          className={`px-4 pt-6 pb-2 ${RAIL_PAD} group-data-[state=collapsed]/sidebar-wrapper:px-2`}
+        >
+          {/* 1. Wrapped in a Link for UX, with Apple-style hover/press interactions */}
+          <Link
+            href="/overview"
+            className="flex w-full items-center gap-3 p-1.5 rounded-xl transition-all duration-200 hover:bg-black/[0.04] active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-black/10 group/logo"
+          >
+            {/* Collapsed state logo */}
+            <motion.div
+              initial={false}
+              animate={{
+                opacity: collapsed ? 1 : 0,
+                scale: collapsed ? 1 : 0.8,
+              }}
+              transition={{
+                duration: 0.2,
+                ease: "easeOut",
+              }}
+              className="absolute"
+            >
               <Image
                 src="/logo/logo.png"
-                alt="Mori Prep"
+                alt="MoriPrep Logo"
                 width={32}
                 height={32}
-                className="size-full object-contain p-1"
+                className="size-8 object-contain"
                 priority
               />
-            </div>
+            </motion.div>
 
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.div
-                  key="wordmark"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{
-                    duration: LOGO_MORPH_DURATION,
-                    ease: EASE_OUT,
-                  }}
-                  className="flex min-w-0 flex-1 items-center justify-between gap-2 overflow-hidden"
-                >
-                  <Image
-                    src="/morin.svg"
-                    alt="Mori Prep"
-                    width={110}
-                    height={26}
-                    className="h-5 w-auto shrink-0 object-contain"
-                    priority
-                  />
-                  <ChevronsUpDown
-                    aria-hidden="true"
-                    className="size-3.5 shrink-0 text-zinc-400"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </AnimatedSidebarTrigger>
+            {/* 2. Improved Framer Motion animation to handle layout shifts */}
+            <motion.div
+              initial={false}
+              animate={{
+                opacity: collapsed ? 0 : 1,
+                width: collapsed ? 0 : "auto",
+                x: collapsed ? -8 : 0,
+              }}
+              transition={
+                collapsed
+                  ? { duration: 0.15, ease: "easeOut" }
+                  : { duration: 0.3, delay: 0.1, ease: "easeOut" }
+              }
+              aria-hidden={collapsed}
+              className="flex min-w-0 items-center overflow-hidden origin-left"
+            >
+              <Image
+                src="/morin.svg"
+                alt="MoriPrep Wordmark"
+                width={120}
+                height={24}
+                className="h-6 w-auto shrink-0 object-contain ml-4"
+                priority
+              />
+            </motion.div>
+          </Link>
 
-          <AnimatedSidebarClose className="absolute right-2 top-6 grid size-7 shrink-0 place-items-center rounded-full text-zinc-400 hover:text-zinc-900 hover:bg-black/[0.05] transition-colors md:hidden">
-            <X aria-hidden="true" className="size-4" />
+          <AnimatedSidebarClose className="absolute right-4 top-8 grid size-7 place-items-center rounded-full text-[#86868B] transition-colors hover:text-[#1D1D1F] hover:bg-black/5 md:hidden">
+            <X className="size-4" />
           </AnimatedSidebarClose>
         </AnimatedSidebarHeader>
 
-        <AnimatedSidebarContent className="px-3 pt-2">
+        <AnimatedSidebarContent
+          className={`px-4 py-2 ${RAIL_PAD} group-data-[state=collapsed]/sidebar-wrapper:px-1`}
+        >
           {navGroups.map((group, groupIndex) => (
-            <AnimatedSidebarGroup
-              key={group.label ?? `group-${groupIndex}`}
-              className={groupIndex === 0 ? "pb-1" : "pb-1 pt-4"}
-            >
-              {group.label && !collapsed && (
+            <AnimatedSidebarGroup key={group.label ?? `group-${groupIndex}`}>
+              {group.label && (
                 <AnimatedSidebarGroupLabel className={NAV_GROUP_LABEL}>
                   {group.label}
                 </AnimatedSidebarGroupLabel>
               )}
               <AnimatedSidebarGroupContent>
-                <AnimatedSidebarMenu className="gap-1">
+                <AnimatedSidebarMenu className="gap-[2px]">
                   {group.items.map((item) => {
-                    const isActive = item.hasSubmenu
-                      ? item.subItems?.some((sub) =>
-                          isPathActive(pathname, sub.href),
-                        )
-                      : isPathActive(pathname, item.href);
+                    const isActive =
+                      "hasSubmenu" in item && item.hasSubmenu
+                        ? item.subItems?.some((sub) =>
+                            isPathActive(pathname, sub.href),
+                          )
+                        : "href" in item
+                          ? isPathActive(pathname, item.href)
+                          : false;
+                    const isComingSoon =
+                      "comingSoon" in item && item.comingSoon;
 
                     return (
                       <AnimatedSidebarMenuItem key={item.label}>
-                        {item.hasSubmenu ? (
+                        {"hasSubmenu" in item && item.hasSubmenu ? (
                           <>
                             <AnimatedSidebarMenuButton
                               isActive={isActive}
                               ariaExpanded={openSubmenu === item.label}
                               icon={
                                 item.icon && (
-                                  <item.icon className="size-4 shrink-0" />
+                                  <item.icon className="size-[18px] shrink-0" />
                                 )
                               }
-                              className={`${NAV_ITEM_BASE} ${
-                                isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
-                              }`}
-                              onSelect={() => {
+                              className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}`}
+                              onSelect={() =>
                                 setOpenSubmenu((prev) =>
                                   prev === item.label ? null : item.label,
-                                );
-                              }}
+                                )
+                              }
                             >
                               {item.label}
                             </AnimatedSidebarMenuButton>
                             <AnimatedSidebarMenuSub
                               open={openSubmenu === item.label}
                             >
-                              {item.subItems?.map((subItem) => (
-                                <AnimatedSidebarMenuSubItem key={subItem.label}>
-                                  <AnimatedSidebarMenuSubButton
-                                    isActive={isPathActive(
-                                      pathname,
-                                      subItem.href,
-                                    )}
-                                    href={subItem.href}
-                                    className={`!rounded-[8px] text-[13px] px-3 transition-colors ${
-                                      isPathActive(pathname, subItem.href)
-                                        ? "text-zinc-900 font-semibold bg-black/[0.04]"
-                                        : "text-zinc-500 hover:text-zinc-900"
-                                    }`}
+                              {"subItems" in item &&
+                                item.subItems?.map((subItem) => (
+                                  <AnimatedSidebarMenuSubItem
+                                    key={subItem.label}
                                   >
-                                    {subItem.label}
-                                  </AnimatedSidebarMenuSubButton>
-                                </AnimatedSidebarMenuSubItem>
-                              ))}
+                                    <AnimatedSidebarMenuSubButton
+                                      isActive={isPathActive(
+                                        pathname,
+                                        subItem.href,
+                                      )}
+                                      href={subItem.href}
+                                      className={`!rounded-[8px] text-[13px] px-3 h-7 transition-colors ${
+                                        isPathActive(pathname, subItem.href)
+                                          ? "text-[#1D1D1F] font-semibold bg-black/[0.04]"
+                                          : "text-[#545459] font-medium hover:text-[#1D1D1F]"
+                                      }`}
+                                    >
+                                      {subItem.label}
+                                    </AnimatedSidebarMenuSubButton>
+                                  </AnimatedSidebarMenuSubItem>
+                                ))}
                             </AnimatedSidebarMenuSub>
                           </>
                         ) : (
                           <AnimatedSidebarMenuButton
                             isActive={isActive}
+                            disabled={isComingSoon}
                             icon={
                               item.icon && (
-                                <item.icon className="size-4 shrink-0" />
+                                <item.icon className="size-[18px] shrink-0" />
                               )
                             }
-                            href={item.href}
-                            className={`${NAV_ITEM_BASE} ${
-                              isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
-                            }`}
+                            href={"href" in item ? item.href : undefined}
+                            className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE} ${isComingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
-                            {item.label}
+                            <div className="flex items-center justify-between w-full">
+                              {item.label}
+                              {isComingSoon && (
+                                <span className="text-[10px] font-medium text-[#86868B]">
+                                  Coming soon
+                                </span>
+                              )}
+                            </div>
                           </AnimatedSidebarMenuButton>
                         )}
                       </AnimatedSidebarMenuItem>
@@ -611,25 +583,22 @@ function AppNavbarContent({
             </AnimatedSidebarGroup>
           ))}
 
-          <AnimatedSidebarGroup className="mt-auto pt-4">
-            {!collapsed && (
-              <AnimatedSidebarGroupLabel className={NAV_GROUP_LABEL}>
-                Settings
-              </AnimatedSidebarGroupLabel>
-            )}
+          <AnimatedSidebarGroup className="mt-2">
+            <AnimatedSidebarGroupLabel className={NAV_GROUP_LABEL}>
+              settings
+            </AnimatedSidebarGroupLabel>
             <AnimatedSidebarGroupContent>
-              <AnimatedSidebarMenu className="gap-1">
+              <AnimatedSidebarMenu className="gap-[2px]">
                 {settingsItems.map((item) => {
-                  const isActive = isPathActive(pathname, item.href);
+                  const isActive =
+                    "href" in item ? isPathActive(pathname, item.href) : false;
                   return (
                     <AnimatedSidebarMenuItem key={item.label}>
                       <AnimatedSidebarMenuButton
                         isActive={isActive}
-                        icon={<item.icon className="size-4 shrink-0" />}
-                        href={item.href}
-                        className={`${NAV_ITEM_BASE} ${
-                          isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE
-                        }`}
+                        icon={<item.icon className="size-[18px] shrink-0" />}
+                        href={"href" in item ? item.href : undefined}
+                        className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}`}
                       >
                         {item.label}
                       </AnimatedSidebarMenuButton>
@@ -641,30 +610,87 @@ function AppNavbarContent({
           </AnimatedSidebarGroup>
         </AnimatedSidebarContent>
 
-        <AnimatedSidebarFooter className="p-3 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+        <AnimatedSidebarFooter
+          className={`px-4 pb-4 mt-4 ${RAIL_PAD} group-data-[state=collapsed]/sidebar-wrapper:px-2`}
+        >
           <ProfileMenu user={user} onSignOut={handleSignOut} />
         </AnimatedSidebarFooter>
-
-        <AnimatedSidebarRail />
       </AnimatedSidebar>
 
-      {/* Main Content Area */}
-      <AnimatedSidebarInset className="bg-white overflow-hidden md:h-[calc(100vh-1rem)] md:my-2 md:mr-2 md:-ml-4 md:rounded-2xl md:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.15)]">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 sm:gap-4 px-4 sm:px-6 border-b border-zinc-200 bg-white/70 backdrop-blur-2xl">
-          <AnimatedSidebarTrigger className="text-zinc-400 transition-colors hover:text-zinc-900 md:hidden">
-            <SidebarToggleIcon
-              aria-hidden="true"
-              className="size-5"
-              isOpen={sidebarOpen}
-            />
+      {/* Main Content Area: Pure White, Rounded, No harsh borders */}
+      <AnimatedSidebarInset className="relative bg-white overflow-hidden md:h-[calc(100vh-16px)] md:my-2 md:mr-2 md:-ml-1 md:rounded-[32px] md:shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_8px_32px_-16px_rgba(0,0,0,0.08)]">
+        {/* Scroll area now runs UNDER the header */}
+        <div className="h-full overflow-y-auto overflow-x-hidden px-8 pb-12 pt-16">
+          {children}
+        </div>
+
+        {/* Progressive frosted blur: strong at the top, fades to clear at the bottom */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20"
+        >
+          <div
+            className="absolute inset-0 backdrop-blur-[14px]"
+            style={fadeMask("black 0%, black 35%, transparent 70%")}
+          />
+          <div
+            className="absolute inset-0 backdrop-blur-[5px]"
+            style={fadeMask("black 25%, black 55%, transparent 88%")}
+          />
+          <div
+            className="absolute inset-0 backdrop-blur-[1.5px]"
+            style={fadeMask("black 45%, transparent 100%")}
+          />
+        </div>
+
+        {/* Header content sits on top of the blur */}
+        <header className="absolute inset-x-0 top-0 z-20 flex h-16 shrink-0 items-center gap-4 px-8">
+          <AnimatedSidebarTrigger className="text-[#86868B] transition-colors hover:text-[#1D1D1F] md:hidden">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              color="currentColor"
+            >
+              <rect
+                x="3"
+                y="5"
+                width="14"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+              <rect
+                x="3"
+                y="9"
+                width="14"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+              <rect
+                x="3"
+                y="13"
+                width="14"
+                height="2"
+                rx="1"
+                fill="currentColor"
+              />
+            </svg>
           </AnimatedSidebarTrigger>
-          <div className="h-3 w-[1px] bg-zinc-200 md:hidden" />
-          <p className="text-[14px] font-semibold text-zinc-800 tracking-tight truncate">
-            {activeLabel}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-[15px] font-semibold text-[#1D1D1F] tracking-tight truncate">
+              {activeLabel}
+            </p>
+            <AnimatedSidebarTrigger className="text-[#86868B] transition-colors hover:text-[#1D1D1F] hidden md:flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-black/[0.04] outline-none">
+              <ChevronsUpDown className="size-4" />
+            </AnimatedSidebarTrigger>
+          </div>
           <div className="flex-1" />
-          {/* Streak Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF7A00] text-white">
+
+          {/* Simple bright pill for the streak */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF9500] text-white">
             <svg
               viewBox="0 0 24 24"
               fill="currentColor"
@@ -673,26 +699,21 @@ function AppNavbarContent({
             >
               <path
                 fillRule="evenodd"
-                d="M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.177A7.547 7.547 0 0 1 6.648 6.874a.75.75 0 0 0-1.152.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 0 1 1.925-3.545 3.75 3.75 0 0 1 3.255 3.717Z"
+                d="M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.177A7.547 7.547 0 0 1 6.648 6.874a.75.75 0 0 0-1.152.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1.1a5.99 5.99 0 0 1 1.925-3.545 3.75 3.75 0 0 1 3.255 3.717Z"
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-[15px] font-bold">{streak}</span>
+            <span className="text-[13px] font-bold tracking-tight">
+              {streak}
+            </span>
           </div>
         </header>
-
-        {/*
-          Responsive content padding: tight on mobile, roomier on larger
-          screens, instead of a fixed p-8 that eats most of a phone screen.
-        */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
-          {children}
-        </div>
       </AnimatedSidebarInset>
     </>
   );
 }
 
+// Dead simple, borderless profile block exactly matching the screenshot
 function ProfileMenu({
   user,
   onSignOut,
@@ -702,132 +723,93 @@ function ProfileMenu({
 }) {
   const { open, isMobile } = useAnimatedSidebar();
   const collapsed = !isMobile && !open;
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!logoutConfirmOpen) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setLogoutConfirmOpen(false);
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setLogoutConfirmOpen(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [logoutConfirmOpen]);
-
-  useEffect(() => {
-    if (collapsed) setLogoutConfirmOpen(false);
-  }, [collapsed]);
 
   if (!user) {
     return (
       <a
         href="/sign-in"
-        className="flex items-center gap-3 rounded-[12px] px-2 py-2 transition-colors hover:bg-black/[0.04]"
+        className="flex items-center gap-3 px-2 py-1 transition-colors hover:bg-black/[0.03] rounded-[10px]"
       >
-        <div className="grid size-8.5 shrink-0 place-items-center rounded-full bg-zinc-200/50 text-zinc-500 text-xs font-semibold">
+        <div className="grid size-9 shrink-0 place-items-center rounded-full bg-black/[0.04] text-[#545459] text-sm font-semibold">
           ?
         </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-semibold text-zinc-900 tracking-tight">
-              Not signed in
-            </span>
-            <span className="block truncate text-[11px] font-medium text-zinc-500">
-              Sign in to sync progress
-            </span>
-          </div>
-        )}
+        <motion.div
+          initial={false}
+          animate={{ opacity: collapsed ? 0 : 1, x: collapsed ? -6 : 0 }}
+          transition={
+            collapsed
+              ? { duration: 0.12, ease: "easeOut" }
+              : { duration: 0.25, delay: 0.15, ease: "easeOut" }
+          }
+          aria-hidden={collapsed}
+          className="min-w-0 flex-1"
+        >
+          <span className="block truncate text-[13px] font-semibold text-[#1D1D1F]">
+            Not signed in
+          </span>
+          <span className="block truncate text-[12px] font-medium text-[#545459]">
+            Sign in to sync
+          </span>
+        </motion.div>
       </a>
     );
   }
 
   const initial = (user.email?.[0] ?? "U").toUpperCase();
-  const photoURL = user.photoURL;
 
   return (
-    <div ref={containerRef} className="relative">
-      <AnimatePresence>
-        {logoutConfirmOpen && !collapsed && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: EASE_OUT }}
-            className="absolute bottom-[calc(100%+8px)] left-0 w-56 max-w-[calc(100vw-2rem)] overflow-hidden rounded-[14px] border border-black/[0.04] bg-white/85 backdrop-blur-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
-          >
-            <p className="text-[13px] font-medium text-zinc-900 mb-3">
-              Are you sure you want to sign out?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLogoutConfirmOpen(false)}
-                className="flex-1 px-3 py-2 text-[13px] font-medium text-zinc-700 rounded-[10px] transition-colors hover:bg-black/[0.04]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setLogoutConfirmOpen(false);
-                  onSignOut();
-                }}
-                className="flex-1 px-3 py-2 text-[13px] font-medium text-red-600 rounded-[10px] transition-colors hover:bg-red-50"
-              >
-                Sign out
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <Link
+      href="/account"
+      className="flex w-full items-center gap-3 px-1 transition-colors hover:bg-black/[0.03] rounded-[10px]"
+    >
+      {user.photoURL ? (
+        <img
+          src={user.photoURL}
+          alt="Profile"
+          className="size-9 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[#1D1D1F] text-white text-[13px] font-semibold">
+          {initial}
+        </div>
+      )}
 
-      <div className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2">
-        {photoURL ? (
-          <img
-            src={photoURL}
-            alt="Profile"
-            className="size-8.5 shrink-0 rounded-full object-cover border border-black/[0.04]"
-          />
-        ) : (
-          <div className="grid size-8.5 shrink-0 place-items-center rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 text-white text-[11px] font-semibold">
-            {initial}
-          </div>
-        )}
-        {!collapsed && (
-          <>
-            <div className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-semibold text-zinc-900 tracking-tight">
-                {user.displayName || "User"}
-              </span>
-              <span className="block truncate text-[11px] font-medium text-zinc-500">
-                {user.email || "user@moriprep.xyz"}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setLogoutConfirmOpen((value) => !value)}
-              className="p-1 rounded-full hover:bg-black/[0.04] transition-colors"
-            >
-              <LogOut
-                aria-hidden="true"
-                className="size-[14px] shrink-0 text-red-600 hover:text-red-700"
-              />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+      <motion.div
+        initial={false}
+        animate={{ opacity: collapsed ? 0 : 1, x: collapsed ? -6 : 0 }}
+        transition={
+          collapsed
+            ? { duration: 0.12, ease: "easeOut" }
+            : { duration: 0.25, delay: 0.15, ease: "easeOut" }
+        }
+        aria-hidden={collapsed}
+        className="min-w-0 flex-1 -space-y-0.5"
+      >
+        <span className="block truncate text-[13.5px] font-semibold text-[#1D1D1F]">
+          {user.displayName || "User"}
+        </span>
+        <span className="block truncate text-[12px] font-medium text-[#545459]">
+          {user.email || "user@moriprep.xyz"}
+        </span>
+      </motion.div>
+      <motion.button
+        initial={false}
+        animate={{ opacity: collapsed ? 0 : 1 }}
+        transition={
+          collapsed
+            ? { duration: 0.12, ease: "easeOut" }
+            : { duration: 0.25, delay: 0.15, ease: "easeOut" }
+        }
+        aria-hidden={collapsed}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          onSignOut();
+        }}
+        className="p-1.5 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 outline-none"
+      >
+        <LogOut className="size-4" strokeWidth={2} />
+      </motion.button>
+    </Link>
   );
 }
