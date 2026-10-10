@@ -6,32 +6,78 @@ import path from "path";
 let cachedRWQuestionsData: any = null;
 let cachedMathQuestionsData: any = null;
 let cachedOctoberSATData: any = null;
+let cachedOctoberSATMathData: any = null;
 let rwQuestionsPath: string = "";
 let mathQuestionsPath: string = "";
 let octoberSATPath: string = "";
+let octoberSATMathPath: string = "";
 
 function loadQuestionsData(
   testType: string = "Reading and Writing",
   source: string = "default",
 ) {
   if (source === "october_sat") {
-    if (cachedOctoberSATData === null) {
+    // Determine which JSON file to load based on test type
+    const isMath = testType === "Math";
+    const dataFile = isMath
+      ? "deepseek_json_20261010_361c4d.json"
+      : "october_sat_rw_questions.json";
+    const cacheVar = isMath ? cachedOctoberSATMathData : cachedOctoberSATData;
+    const pathVar = isMath ? octoberSATMathPath : octoberSATPath;
+
+    if (cacheVar === null) {
       console.log(
-        "Loading October SAT questions from october_sat_rw_questions.json...",
+        `Loading October SAT ${testType} questions from ${dataFile}...`,
       );
-      octoberSATPath = path.join(
-        process.cwd(),
-        "october_sat_rw_questions.json",
-      );
-      cachedOctoberSATData = JSON.parse(
-        fs.readFileSync(octoberSATPath, "utf8"),
-      );
-      console.log(
-        "October SAT questions loaded and cached. Total questions:",
-        cachedOctoberSATData.length,
-      );
+      const filePath = path.join(process.cwd(), dataFile);
+      console.log("File path:", filePath);
+      console.log("File exists:", fs.existsSync(filePath));
+      try {
+        const fileContent = fs.readFileSync(filePath, "utf8");
+        console.log("File read successfully, size:", fileContent.length);
+        const rawData = JSON.parse(fileContent);
+
+        // Flatten the nested module structure into a single array of questions
+        if (rawData.modules && Array.isArray(rawData.modules)) {
+          const allQuestions: any[] = [];
+          rawData.modules.forEach((mod: any) => {
+            if (mod.questions && Array.isArray(mod.questions)) {
+              // Add module metadata to each question
+              const questionsWithMetadata = mod.questions.map((q: any) => ({
+                ...q,
+                module_level: mod.module_level,
+                module: mod.module,
+              }));
+              allQuestions.push(...questionsWithMetadata);
+            }
+          });
+          if (isMath) {
+            cachedOctoberSATMathData = allQuestions;
+          } else {
+            cachedOctoberSATData = allQuestions;
+          }
+          console.log(
+            `October SAT ${testType} questions loaded and cached. Total questions:`,
+            allQuestions.length,
+          );
+        } else {
+          // Fallback: if no modules structure, use the data as-is
+          if (isMath) {
+            cachedOctoberSATMathData = rawData;
+          } else {
+            cachedOctoberSATData = rawData;
+          }
+          console.log(
+            `October SAT ${testType} data loaded (non-modular format). Total questions:`,
+            Array.isArray(rawData) ? rawData.length : 0,
+          );
+        }
+      } catch (error) {
+        console.error("Error loading October SAT data:", error);
+        throw error;
+      }
     }
-    return cachedOctoberSATData;
+    return isMath ? cachedOctoberSATMathData : cachedOctoberSATData;
   }
 
   if (testType === "Math") {
@@ -249,9 +295,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by module_level for October SAT adaptive routing
+    // Note: The JSON data uses "module" field (e.g., "Module 1"), not "module_level"
+    // We map the API parameter to the correct field name
     if (module_level) {
       const beforeFilter = filtered.length;
-      filtered = filtered.filter((q: any) => q.module_level === module_level);
+      console.log("module_level values in data:", [
+        ...new Set(filtered.map((q: any) => q.module_level)),
+      ]);
+      console.log("module values in data:", [
+        ...new Set(filtered.map((q: any) => q.module)),
+      ]);
+      // Try module_level first, fall back to module field
+      filtered = filtered.filter(
+        (q: any) =>
+          q.module_level === module_level || q.module === module_level,
+      );
       console.log(
         `Module level filter: ${module_level} - Before: ${beforeFilter}, After: ${filtered.length}`,
       );

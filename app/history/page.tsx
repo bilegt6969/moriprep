@@ -217,7 +217,7 @@ export default function HistoryPage() {
 
   if (!isAuthenticated && !isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white px-6 font-sans">
+      <div className="min-h-screen flex items-center justify-center bg-white px-2 md:px-6 font-sans">
         <div className="text-center max-w-md mx-auto">
           <div className="w-16 h-16 bg-[#F5F5F7] rounded-full flex items-center justify-center mx-auto mb-6">
             <LockIcon className="w-6 h-6 text-neutral-400" />
@@ -270,7 +270,7 @@ export default function HistoryPage() {
       : 0;
 
   return (
-    <section className="min-h-screen bg-white font-sans pt-20 pb-24 px-4 md:px-8 lg:px-12">
+    <section className="min-h-screen bg-white font-sans pt-20 pb-24 px-2 md:px-8 lg:px-12">
       <div className="max-w-5xl mx-auto w-full">
         {/* Header Section */}
         <motion.div

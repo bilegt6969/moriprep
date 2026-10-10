@@ -5,13 +5,13 @@ import SlopeChart from "@/components/arc/slope-chart/slope-chart";
 import WaffleChart from "@/components/arc/waffle-chart/waffle-chart";
 import { auth } from "@/lib/firebase";
 import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-  type Variants,
+    AnimatePresence,
+    animate,
+    motion,
+    useMotionValue,
+    useReducedMotion,
+    useTransform,
+    type Variants,
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -527,7 +527,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-white px-4 pb-24 pt-28 font-sans md:px-6 lg:px-10">
+      <main className="min-h-screen bg-white px-2 pb-24 pt-4 font-sans md:px-6 md:pt-8 lg:px-10">
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 space-y-4">
             <div className="h-14 w-full max-w-md animate-pulse rounded-2xl bg-[#f5f5f7]" />
@@ -550,7 +550,7 @@ export default function AnalyticsPage() {
 
   if (error || !analyticsData) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4 font-sans">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-2 pb-24 pt-4 md:px-4 md:pt-8 font-sans">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -593,7 +593,7 @@ export default function AnalyticsPage() {
         variants={container}
         initial={reduce ? false : "hidden"}
         animate="show"
-        className="mx-auto w-full max-w-5xl px-4 pb-24 pt-28 md:px-6 md:pt-32 lg:px-10"
+        className="mx-auto w-full max-w-5xl px-2 pb-24 pt-4 md:px-6 md:pt-8 lg:px-10"
       >
         {/* ---------- Header ---------- */}
         <motion.header variants={item} className="mb-10 md:mb-12">

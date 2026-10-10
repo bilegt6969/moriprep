@@ -279,7 +279,7 @@ export function DSATPracticeCards() {
 
   return (
     <>
-      <section className="mx-auto w-full max-w-6xl px-4 py-4 font-sans antialiased sm:px-6 lg:px-10 h-full overflow-hidden">
+      <section className="mx-auto w-full max-w-6xl px-2 py-4 font-sans antialiased sm:px-6 lg:px-10 h-full overflow-auto md:overflow-hidden">
         <motion.div
           variants={container}
           initial={reduce || !mounted ? false : "hidden"}

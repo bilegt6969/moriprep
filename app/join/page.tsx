@@ -71,7 +71,7 @@ export default function JoinPage() {
 
       <main className="relative pt-32 md:pt-48 pb-24 overflow-hidden">
         {/* 1. HERO SECTION */}
-        <section className="container mx-auto px-6 md:px-12 max-w-5xl text-center mb-32">
+        <section className="container mx-auto px-2 md:px-12 max-w-5xl text-center mb-32">
           <motion.div
             initial={isMounted ? "hidden" : "visible"}
             animate="visible"
@@ -121,7 +121,7 @@ export default function JoinPage() {
         </section>
 
         {/* 2. INTRO STATEMENT */}
-        <section className="container mx-auto px-6 md:px-12 max-w-4xl text-center mb-24">
+        <section className="container mx-auto px-2 md:px-12 max-w-4xl text-center mb-24">
           <motion.h2
             initial={isMounted ? "hidden" : "visible"}
             whileInView="visible"
@@ -136,7 +136,7 @@ export default function JoinPage() {
         </section>
 
         {/* 3. CORE PRINCIPLES / TEXT COLUMNS */}
-        <section className="container mx-auto px-6 md:px-12 max-w-3xl mb-32">
+        <section className="container mx-auto px-2 md:px-12 max-w-3xl mb-32">
           <motion.div
             initial={isMounted ? "hidden" : "visible"}
             whileInView="visible"
@@ -172,7 +172,7 @@ export default function JoinPage() {
         </section>
 
         {/* 4. LARGE FEATURE IMAGE */}
-        <section className="w-full max-w-[1400px] mx-auto px-4 md:px-8 mb-32">
+        <section className="w-full max-w-[1400px] mx-auto px-2 md:px-8 mb-32">
           <motion.div
             initial={
               isMounted ? { opacity: 0, scale: 0.98 } : { opacity: 1, scale: 1 }
@@ -191,7 +191,7 @@ export default function JoinPage() {
         </section>
 
         {/* 5. BENEFITS 3-COLUMN GRID */}
-        <section className="container mx-auto px-6 md:px-12 max-w-6xl mb-32">
+        <section className="container mx-auto px-2 md:px-12 max-w-6xl mb-32">
           <div className="text-center mb-16">
             <h2
               className="text-3xl font-medium tracking-tight mb-4"
@@ -285,7 +285,7 @@ export default function JoinPage() {
 
         {/* 6. OPEN ROLES LISTING */}
         <section
-          className="container mx-auto px-6 md:px-12 max-w-4xl mb-32"
+          className="container mx-auto px-2 md:px-12 max-w-4xl mb-32"
           id="roles"
         >
           <div className="flex flex-col md:flex-row justify-between items-baseline mb-12">
@@ -365,7 +365,7 @@ export default function JoinPage() {
         </section>
 
         {/* 7. ALTERNATING FEATURE BLOCKS */}
-        <section className="container mx-auto px-6 md:px-12 max-w-6xl mb-32 space-y-32">
+        <section className="container mx-auto px-2 md:px-12 max-w-6xl mb-32 space-y-32">
           {/* Block 1 */}
           <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
             <div className="w-full md:w-1/2">
@@ -436,7 +436,7 @@ export default function JoinPage() {
         </section>
 
         {/* 8. LARGE QUOTE */}
-        <section className="container mx-auto px-6 md:px-12 max-w-4xl text-center mb-32">
+        <section className="container mx-auto px-2 md:px-12 max-w-4xl text-center mb-32">
           <blockquote
             className="text-3xl md:text-5xl font-eb-garamond font-light leading-tight tracking-tighter mb-8 text-[1.05em]"
             style={headingStyle}

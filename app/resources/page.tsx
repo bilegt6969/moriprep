@@ -592,7 +592,7 @@ export default function LessonsPage() {
   return (
     <main className="min-h-screen bg-white">
       {/* Header Section */}
-      <section className="w-full pt-24 pb-16 px-6 border-b border-neutral-100">
+      <section className="w-full pt-24 pb-16 px-2 md:px-6 border-b border-neutral-100">
         <div className="max-w-6xl mx-auto">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -615,7 +615,7 @@ export default function LessonsPage() {
       </section>
 
       {/* Resources Grid Section */}
-      <section className="py-16 px-6 bg-white">
+      <section className="py-16 px-2 md:px-6 bg-white">
         <motion.div
           variants={containerVariants}
           initial="hidden"

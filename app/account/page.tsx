@@ -432,7 +432,7 @@ export default function AccountPage() {
     <div className="min-h-screen w-full bg-[#fafafa] sm:bg-white text-[#111827] font-sans selection:bg-gray-200 selection:text-black flex flex-col items-center">
       {/* Top Navigation (Preserved exactly as requested) */}
       <div className="w-full bg-white/80 backdrop-blur-xl flex justify-center sticky top-0 z-50 border-b border-black/5">
-        <div className="w-full max-w-3xl px-6 py-3 flex justify-between items-center">
+        <div className="w-full max-w-3xl px-2 py-3 flex justify-between items-center">
           <button
             onClick={() => window.history.back()}
             className="flex items-center gap-1.5 text-[17px] font-medium text-[#8e8e93] hover:text-[#2c2c2e] active:scale-95 transition-all"
@@ -464,7 +464,7 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-[800px] px-6 sm:px-10 pt-10 pb-24 flex-1">
+      <div className="w-full max-w-[800px] px-2 sm:px-10 pt-10 pb-24 flex-1">
         <AnimatePresence mode="wait">
           {loadingProfile ? (
             <motion.div

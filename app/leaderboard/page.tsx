@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export default function LeaderboardPage() {
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden py-20">
-      <div className="w-full max-w-[1200px] px-5 md:px-10">
+      <div className="w-full max-w-[1200px] px-2 md:px-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

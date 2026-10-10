@@ -206,7 +206,7 @@ function SkeletonHeader() {
 
 function SkeletonLoader() {
   return (
-    <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-hidden">
+    <div className="flex flex-col h-screen max-w-[1920px] mx-auto bg-white dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-auto md:overflow-hidden">
       <SkeletonHeader />
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <div className="w-full md:w-1/2 overflow-hidden bg-white dark:bg-gray-900 md:border-r md:border-gray-200 dark:border-gray-700">
@@ -233,6 +233,85 @@ function SkeletonLoader() {
   );
 }
 
+const SectionCard = ({
+  section,
+  onSelect,
+}: {
+  section: "Reading and Writing" | "Math";
+  onSelect: () => void;
+}) => {
+  const reduce = useReducedMotion();
+  const isMath = section === "Math";
+  const accent = isMath ? "#0080FF" : "#10B981";
+
+  const mx = useMotionValue(-300);
+  const my = useMotionValue(-300);
+  const spotlight = useMotionTemplate`radial-gradient(380px circle at ${mx}px ${my}px, ${accent}22, transparent 70%)`;
+
+  return (
+    <motion.article
+      variants={selectionItem}
+      whileHover={!reduce ? { y: -4 } : undefined}
+      transition={selectionSpring}
+      onMouseMove={(e) => {
+        if (reduce) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        mx.set(e.clientX - r.left);
+        my.set(e.clientY - r.top);
+      }}
+      className="group relative flex flex-col overflow-hidden rounded-[28px] bg-[#f5f5f7] p-6 text-[#1d1d1f] transition-shadow duration-500 md:p-7 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.18)]"
+    >
+      <motion.div
+        aria-hidden="true"
+        style={{ background: spotlight }}
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+      />
+
+      <div className="relative z-10 flex flex-1 flex-col">
+        <span
+          className="mb-6 flex h-11 w-11 items-center justify-center rounded-full text-white"
+          style={{ backgroundColor: accent }}
+        >
+          <FileText className="h-5 w-5" />
+        </span>
+
+        <h3 className="mb-2 text-[24px] font-medium tracking-[-0.025em]">
+          {section}
+        </h3>
+        <p
+          className="mb-6 text-[15px] leading-[1.55] text-[#494440]"
+          style={{ letterSpacing: "-0.01em" }}
+        >
+          {isMath
+            ? "22 questions per module with graphics and data analysis"
+            : "27 questions per module with passages and text analysis"}
+        </p>
+
+        <div className="mt-auto">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={selectionSpring}
+            className="relative -mx-1.5 block p-1.5"
+          >
+            <div className="pointer-events-none absolute inset-0 rounded-full border border-gray-400/40" />
+            <button
+              type="button"
+              onClick={onSelect}
+              className="group/btn relative z-10 flex h-12 w-full items-center justify-between rounded-[32px] border border-white/10 bg-[#171717]/80 pl-6 pr-2.5 text-[16px] font-medium leading-none tracking-[-0.01em] text-white backdrop-blur-[10px] transition-colors duration-150 hover:bg-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/50"
+            >
+              Start {section}
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-transform duration-300 group-hover/btn:translate-x-0.5">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    </motion.article>
+  );
+};
+
 function PracticeTestCard({
   test,
   onStart,
@@ -244,7 +323,6 @@ function PracticeTestCard({
   const available = !test.comingSoon;
   const Icon = test.iconName === "FileText" ? FileText : Play;
 
-  // soft light that follows the cursor (available cards only)
   const mx = useMotionValue(-300);
   const my = useMotionValue(-300);
   const spotlight = useMotionTemplate`radial-gradient(380px circle at ${mx}px ${my}px, ${test.accent}22, transparent 70%)`;
@@ -276,7 +354,6 @@ function PracticeTestCard({
       )}
 
       <div className="relative z-10 flex flex-1 flex-col">
-        {/* Icon + title */}
         <span
           className="mb-6 flex h-11 w-11 items-center justify-center rounded-full text-white"
           style={{ backgroundColor: available ? test.accent : "#c7c7cc" }}
@@ -298,7 +375,6 @@ function PracticeTestCard({
           {test.description}
         </p>
 
-        {/* Sections */}
         <ul className="mb-6 flex flex-wrap gap-2">
           {test.sections.map((section) => (
             <li
@@ -316,7 +392,6 @@ function PracticeTestCard({
           ))}
         </ul>
 
-        {/* Duration + questions */}
         <div className="mb-7 grid grid-cols-2 rounded-2xl bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_20px_-8px_rgba(0,0,0,0.06)]">
           <div className="px-5 py-4">
             <p className="mb-1 flex items-center gap-1.5 text-[13px] font-medium text-[#86868b]">
@@ -338,7 +413,6 @@ function PracticeTestCard({
           </div>
         </div>
 
-        {/* Action */}
         <div className="mt-auto">
           {available ? (
             <motion.div
@@ -374,7 +448,6 @@ function PracticeTestCard({
   );
 }
 
-// Practice Test Selection Component
 function PracticeTestSelection() {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -385,12 +458,12 @@ function PracticeTestSelection() {
   }, []);
 
   return (
-    <main className="h-full bg-white px-4 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-hidden">
+    <main className="min-h-screen bg-white px-2 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-auto md:overflow-hidden">
       <motion.div
         variants={selectionContainer}
         initial={reduce || !mounted ? false : "hidden"}
         animate={mounted ? "show" : false}
-        className="mx-auto w-full max-w-6xl h-full flex flex-col"
+        className="mx-auto w-full max-w-6xl flex flex-col"
       >
         <motion.header
           variants={selectionItem}
@@ -407,7 +480,7 @@ function PracticeTestSelection() {
           </p>
         </motion.header>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 flex-1">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {PRACTICE_TESTS.map((test) => (
             <PracticeTestCard
               key={test.id}
@@ -415,6 +488,64 @@ function PracticeTestSelection() {
               onStart={() => router.push(`/practice-test?test=${test.id}`)}
             />
           ))}
+        </div>
+      </motion.div>
+    </main>
+  );
+}
+
+// Section Selection Component
+function SectionSelection({
+  onSelectSection,
+}: {
+  onSelectSection: (section: "Reading and Writing" | "Math") => void;
+}) {
+  const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-white px-2 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-auto md:overflow-hidden">
+      <motion.div
+        variants={selectionContainer}
+        initial={reduce || !mounted ? false : "hidden"}
+        animate={mounted ? "show" : false}
+        className="mx-auto w-full max-w-6xl flex flex-col"
+      >
+        <motion.header
+          variants={selectionItem}
+          className="mb-6 md:mb-8 shrink-0"
+        >
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-1.5 text-base text-gray-500 hover:text-black transition-colors mb-4"
+          >
+            <ChevronLeft size={18} strokeWidth={2} />
+            Back
+          </button>
+          <h1 className="max-w-3xl text-[38px] font-medium leading-[1.05] tracking-[-0.035em] text-[#1d1d1f] md:text-[48px]">
+            Select Section
+          </h1>
+          <p
+            className="mt-3 max-w-xl text-base text-[#86868b] md:text-lg"
+            style={{ letterSpacing: "-0.01em" }}
+          >
+            Choose which section of the SAT you want to practice.
+          </p>
+        </motion.header>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 max-w-4xl">
+          <SectionCard
+            section="Reading and Writing"
+            onSelect={() => onSelectSection("Reading and Writing")}
+          />
+          <SectionCard
+            section="Math"
+            onSelect={() => onSelectSection("Math")}
+          />
         </div>
       </motion.div>
     </main>
@@ -433,9 +564,12 @@ export default function PracticeTestPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, string>
   >({});
+  const [selectedSection, setSelectedSection] = useState<
+    "Reading and Writing" | "Math" | null
+  >(null);
   const [timeRemaining, setTimeRemaining] = useState(
     SAT_TIMING.rw.module1 * 60,
-  ); // seconds
+  );
   const [module, setModule] = useState<1 | 2>(1);
   const [module2Difficulty, setModule2Difficulty] = useState<
     "Easy" | "Hard" | "Medium" | null
@@ -446,7 +580,6 @@ export default function PracticeTestPage() {
   const [score, setScore] = useState({ correct: 0, total: 0, percentage: 0 });
   const [isLoading, setIsLoading] = useState(false);
 
-  // UI State from practice/rw/page
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [highlightedAnswer, setHighlightedAnswer] = useState<string>("");
   const [wrongAnswers, setWrongAnswers] = useState<Set<string>>(new Set());
@@ -496,6 +629,9 @@ export default function PracticeTestPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [questionAttempts, setQuestionAttempts] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [showQuestionReview, setShowQuestionReview] = useState(false);
+  const [reviewQuestionIndex, setReviewQuestionIndex] = useState(0);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const passageRef = useRef<HTMLDivElement>(null);
@@ -510,14 +646,16 @@ export default function PracticeTestPage() {
         router.push("/sign-in");
       } else {
         setUser(user);
-        // Only load questions if a test is selected
-        if (testId) {
-          loadModule1Questions();
-        }
       }
     });
     return () => unsubscribe();
-  }, [router, testId]);
+  }, [router]);
+
+  useEffect(() => {
+    if (selectedSection && testId) {
+      loadModule1Questions();
+    }
+  }, [selectedSection, testId]);
 
   useEffect(() => {
     if (timeRemaining > 0 && !showResults && !isTimeUp && !isTimerPaused) {
@@ -538,7 +676,6 @@ export default function PracticeTestPage() {
     };
   }, [timeRemaining, showResults, isTimeUp, isTimerPaused, module]);
 
-  // Track viewport size for responsive split-pane vs stacked layout
   useEffect(() => {
     const checkViewport = () => setIsMobile(window.innerWidth < 768);
     checkViewport();
@@ -546,7 +683,6 @@ export default function PracticeTestPage() {
     return () => window.removeEventListener("resize", checkViewport);
   }, []);
 
-  // Brief skeleton flicker whenever the active question changes
   useEffect(() => {
     if (!currentQuestion) return;
     setIsQuestionLoading(true);
@@ -554,7 +690,6 @@ export default function PracticeTestPage() {
     return () => clearTimeout(timer);
   }, [currentQuestion?.question_id]);
 
-  // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -566,16 +701,12 @@ export default function PracticeTestPage() {
     };
   }, []);
 
-  // Initialize dark mode from localStorage and sync changes
   useEffect(() => {
-    // Apply dark mode class on mount
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-
-    // Save to localStorage whenever it changes
     localStorage.setItem("darkMode", isDarkMode.toString());
   }, [isDarkMode]);
 
@@ -583,15 +714,29 @@ export default function PracticeTestPage() {
     try {
       setIsLoading(true);
       setShowSelection(false);
+      setLoadError(null);
+      const testParam = selectedSection || "Reading and Writing";
+      const limit = testParam === "Math" ? 22 : 27;
       const response = await fetch(
-        "/api/questions?test=Reading and Writing&source=october_sat&module_level=baseline&limit=27",
+        `/api/questions?test=${testParam}&source=october_sat&module_level=standard&limit=${limit}`,
       );
       const data = await response.json();
-      setQuestions(data);
+      if (!Array.isArray(data) || data.length === 0) {
+        setLoadError("No questions found for this test.");
+      } else {
+        setQuestions(data);
+        // Set timing based on section
+        setTimeRemaining(
+          testParam === "Math"
+            ? SAT_TIMING.math.module1 * 60
+            : SAT_TIMING.rw.module1 * 60,
+        );
+      }
       setIsTimerPaused(false);
       setIsLoading(false);
     } catch (error) {
       console.error("Error loading questions:", error);
+      setLoadError("Failed to load questions. Please try again.");
       setIsLoading(false);
     }
   };
@@ -601,25 +746,61 @@ export default function PracticeTestPage() {
   ) => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       const moduleLevel =
         difficulty === "Easy"
           ? "easy"
           : difficulty === "Hard"
             ? "hard"
-            : "baseline";
+            : "standard";
+      const testParam = selectedSection || "Reading and Writing";
+      const limit = testParam === "Math" ? 22 : 27;
       const response = await fetch(
-        `/api/questions?test=Reading and Writing&source=october_sat&module_level=${moduleLevel}&limit=27`,
+        `/api/questions?test=${testParam}&source=october_sat&module_level=${moduleLevel}&limit=${limit}`,
       );
       const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        const fallbackResponse = await fetch(
+          `/api/questions?test=${testParam}&source=october_sat&module_level=standard&limit=${limit}`,
+        );
+        const fallbackData = await fallbackResponse.json();
+        if (Array.isArray(fallbackData) && fallbackData.length > 0) {
+          setQuestions(fallbackData);
+          setCurrentQuestionIndex(0);
+          setSelectedAnswers({});
+          setSelectedAnswer("");
+          setTimeRemaining(
+            testParam === "Math"
+              ? SAT_TIMING.math.module2 * 60
+              : SAT_TIMING.rw.module2 * 60,
+          );
+          setIsTimerPaused(false);
+          setIsLoading(false);
+          return;
+        }
+        setScore((prev) => ({
+          correct: prev.correct,
+          total: prev.total,
+          percentage: prev.percentage,
+        }));
+        setShowResults(true);
+        setIsLoading(false);
+        return;
+      }
       setQuestions(data);
       setCurrentQuestionIndex(0);
       setSelectedAnswers({});
       setSelectedAnswer("");
-      setTimeRemaining(SAT_TIMING.rw.module2 * 60);
+      setTimeRemaining(
+        testParam === "Math"
+          ? SAT_TIMING.math.module2 * 60
+          : SAT_TIMING.rw.module2 * 60,
+      );
       setIsTimerPaused(false);
       setIsLoading(false);
     } catch (error) {
       console.error("Error loading Module 2 questions:", error);
+      setLoadError("Failed to load Module 2 questions. Please try again.");
       setIsLoading(false);
     }
   };
@@ -636,12 +817,6 @@ export default function PracticeTestPage() {
     if (selectedAnswer === key) return;
     setHighlightedAnswer(key);
     handleAnswerSelect(key);
-  };
-
-  const handleAnswerSubmit = () => {
-    if (!highlightedAnswer) return;
-    handleAnswerSelect(highlightedAnswer);
-    setHighlightedAnswer("");
   };
 
   const toggleMarkForReview = () => {
@@ -677,7 +852,6 @@ export default function PracticeTestPage() {
       setHighlightedAnswer("");
       setEliminatedChoices(new Set());
     } else {
-      // Allow submission even if not all questions are answered
       handleModuleComplete();
     }
   };
@@ -714,8 +888,6 @@ export default function PracticeTestPage() {
         difficulty: q.difficulty,
       }));
 
-      console.log("Submitting module 1 with responses:", responses);
-
       try {
         const routingResponse = await fetch("/api/adaptive-routing", {
           method: "POST",
@@ -724,13 +896,10 @@ export default function PracticeTestPage() {
         });
 
         if (!routingResponse.ok) {
-          const errorText = await routingResponse.text();
-          console.error("Routing API error:", errorText);
           throw new Error(`Routing API failed: ${routingResponse.status}`);
         }
 
         const routingData = await routingResponse.json();
-        console.log("Routing response:", routingData);
         const difficulty = routingData.routing.module2Difficulty;
         setModule2Difficulty(difficulty);
         setScore(moduleScore);
@@ -820,23 +989,18 @@ export default function PracticeTestPage() {
     }
   };
 
-  const handleWordDoubleClick = () => {
-    // Placeholder for word double-click functionality
-  };
+  const handleWordDoubleClick = () => {};
 
   const applyHighlight = (color: string) => {
-    // Placeholder for highlight application
     setMenuDisplayColor(color);
     setHighlightMenu({ visible: false, x: 0, y: 0 });
   };
 
   const applyUnderlineStyle = (style: string) => {
-    // Placeholder for underline style application
     setShowUnderlineSubmenu(false);
   };
 
   const clearHighlights = () => {
-    // Placeholder for clearing highlights
     setHighlightedText(new Set());
   };
 
@@ -848,11 +1012,9 @@ export default function PracticeTestPage() {
     });
   };
 
-  // Memoize passage to prevent re-render
   const memoizedPassage = useMemo(() => {
     if (!currentQuestion?.passage) return null;
 
-    // If question has notes array, render as bulleted list
     if (currentQuestion.notes && currentQuestion.notes.length > 0) {
       return (
         <>
@@ -880,20 +1042,14 @@ export default function PracticeTestPage() {
     }
 
     let htmlContent = currentQuestion.passage;
-
-    // Remove graph/table descriptions from passage (text between [ and ])
-    // since the actual graphic is displayed separately
     htmlContent = htmlContent.replace(/\[Graph:.*?\]/g, "");
     htmlContent = htmlContent.replace(/\[Table:.*?\]/g, "");
 
-    // Remove markdown table data from passage if structured table exists
     if (currentQuestion.table && currentQuestion.table.title) {
       const tableTitle = currentQuestion.table.title;
-      // Split by the table title and get the part after it
       const parts = htmlContent.split(tableTitle);
       if (parts.length > 1) {
         const afterTable = parts[1];
-        // Filter out lines that contain pipes (table rows) and empty lines
         const lines = afterTable.split("\n");
         const paragraphLines = lines.filter((line) => {
           const trimmed = line.trim();
@@ -947,50 +1103,436 @@ export default function PracticeTestPage() {
     currentQuestion?.notes,
   ]);
 
-  // Show practice test selection screen
   if (showSelection) {
     return <PracticeTestSelection />;
+  }
+
+  if (testId && !selectedSection) {
+    return <SectionSelection onSelectSection={setSelectedSection} />;
   }
 
   if (isLoading) {
     return <SkeletonLoader />;
   }
 
-  if (showResults) {
+  if (loadError || !currentQuestion) {
     return (
-      <div className="min-h-screen bg-white px-6 py-12">
-        <div className="max-w-3xl mx-auto">
+      <div className="flex min-h-screen items-center justify-center bg-white text-gray-700">
+        <div className="text-center">
+          <p className="text-xl font-medium mb-4">{loadError ?? "Loading…"}</p>
+          {loadError && (
+            <button
+              onClick={() => {
+                setLoadError(null);
+                setShowSelection(true);
+              }}
+              className="px-6 py-2 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
+            >
+              Go back to test selection
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (showResults) {
+    const correctAnswers = Object.entries(selectedAnswers).filter(
+      ([index, answer]) => {
+        const question = questions[parseInt(index)];
+        return question && answer === question.correct_answer;
+      },
+    );
+
+    const incorrectAnswers = Object.entries(selectedAnswers).filter(
+      ([index, answer]) => {
+        const question = questions[parseInt(index)];
+        return question && answer !== question.correct_answer;
+      },
+    );
+
+    const unansweredCount =
+      questions.length - Object.keys(selectedAnswers).length;
+
+    const domainBreakdown = questions.reduce((acc: any, q, idx) => {
+      const domain = q.domain || "Unknown";
+      if (!acc[domain]) {
+        acc[domain] = { total: 0, correct: 0 };
+      }
+      acc[domain].total++;
+      if (selectedAnswers[idx] === q.correct_answer) {
+        acc[domain].correct++;
+      }
+      return acc;
+    }, {});
+
+    return (
+      <div className="min-h-screen bg-[#fbfbfd] dark:bg-gray-950 px-4 py-12 md:px-8 md:py-16 font-sans antialiased text-[#1d1d1f] dark:text-gray-100 transition-colors">
+        <div className="max-w-4xl mx-auto space-y-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center space-y-2"
+          >
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/5 dark:bg-white/10 text-xs font-semibold tracking-wide uppercase text-gray-600 dark:text-gray-300 mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Practice Test Complete
+            </div>
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+              October 2026 SAT
+            </h1>
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+              Reading & Writing • Adaptive Assessment
+            </p>
+          </motion.div>
+
+          {/* Main Score Hero Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="relative overflow-hidden rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
           >
-            <h1 className="text-4xl font-bold mb-4">Practice Test Complete</h1>
-            <p className="text-xl text-gray-600 mb-8">
-              October 2026 SAT - Reading and Writing
-            </p>
-            <div className="bg-gray-50 rounded-2xl p-8 mb-8">
-              <div className="text-6xl font-bold mb-2">
-                {score.correct}/{score.total}
+            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/0 blur-3xl pointer-events-none" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+              <div className="md:col-span-1 text-center md:text-left space-y-2">
+                <span className="text-sm font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  Overall Score
+                </span>
+                <div className="text-6xl md:text-7xl font-bold tracking-tighter text-[#1d1d1f] dark:text-white">
+                  {score.percentage.toFixed(0)}
+                  <span className="text-3xl md:text-4xl font-normal text-gray-400">
+                    %
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 pt-1">
+                  Module 1 →{" "}
+                  <span className="font-semibold text-gray-900 dark:text-gray-200">
+                    {module2Difficulty === "Easy"
+                      ? "Easy"
+                      : module2Difficulty === "Hard"
+                        ? "Hard"
+                        : "Medium"}
+                  </span>{" "}
+                  Module 2
+                </p>
               </div>
-              <div className="text-2xl text-gray-600 mb-4">
-                {score.percentage.toFixed(1)}% Correct
-              </div>
-              <div className="text-sm text-gray-500">
-                Module 1:{" "}
-                {module2Difficulty === "Easy"
-                  ? "→ Easy"
-                  : module2Difficulty === "Hard"
-                    ? "→ Hard"
-                    : "→ Medium"}{" "}
-                Module 2
+
+              <div className="md:col-span-2 grid grid-cols-3 gap-4 border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-800 pt-6 md:pt-0 md:pl-8">
+                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                    {score.correct}
+                  </div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Correct
+                  </div>
+                </div>
+                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-rose-500 dark:text-rose-400 mb-1">
+                    {score.total - score.correct}
+                  </div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Incorrect
+                  </div>
+                </div>
+                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-bold text-gray-500 dark:text-gray-400 mb-1">
+                    {unansweredCount}
+                  </div>
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Unanswered
+                  </div>
+                </div>
               </div>
             </div>
+          </motion.div>
+
+          {/* Domain Breakdown */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+                Performance by Domain
+              </h2>
+              <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Accuracy & Breakdown
+              </span>
+            </div>
+
+            <div className="space-y-5">
+              {Object.entries(domainBreakdown).map(
+                ([domain, stats]: [string, any]) => {
+                  const percentage = (stats.correct / stats.total) * 100;
+                  return (
+                    <div key={domain} className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
+                          {domain}
+                        </span>
+                        <span className="font-semibold text-gray-600 dark:text-gray-400 tabular-nums">
+                          {stats.correct}/{stats.total} ({percentage.toFixed(0)}
+                          %)
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{
+                            duration: 0.8,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor:
+                              percentage >= 70
+                                ? "#10B981"
+                                : percentage >= 40
+                                  ? "#F59E0B"
+                                  : "#EF4444",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </motion.div>
+
+          {/* Question Review Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] space-y-6"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+                  Question Review
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Click any question number to review detailed answers and
+                  explanations.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowQuestionReview(!showQuestionReview)}
+                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium text-gray-900 dark:text-white transition-colors"
+              >
+                {showQuestionReview ? "Hide Details" : "Expand Review"}
+              </button>
+            </div>
+
+            {!showQuestionReview ? (
+              <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-12 gap-2.5 pt-2">
+                {questions.map((q, idx) => {
+                  const isCorrect = selectedAnswers[idx] === q.correct_answer;
+                  const isAnswered = selectedAnswers[idx] !== undefined;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setReviewQuestionIndex(idx);
+                        setShowQuestionReview(true);
+                      }}
+                      className={`h-11 rounded-2xl text-sm font-semibold transition-all flex flex-col items-center justify-center gap-0.5 ${
+                        !isAnswered
+                          ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200"
+                          : isCorrect
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-sm"
+                            : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 shadow-sm"
+                      }`}
+                    >
+                      <span>{idx + 1}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${!isAnswered ? "bg-gray-300 dark:bg-gray-600" : isCorrect ? "bg-emerald-500" : "bg-rose-500"}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+                {/* Question Navigator in Review */}
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-3">
+                  <button
+                    onClick={() =>
+                      setReviewQuestionIndex(
+                        Math.max(0, reviewQuestionIndex - 1),
+                      )
+                    }
+                    disabled={reviewQuestionIndex === 0}
+                    className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white shadow-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Question {reviewQuestionIndex + 1} of {questions.length}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setReviewQuestionIndex(
+                        Math.min(questions.length - 1, reviewQuestionIndex + 1),
+                      )
+                    }
+                    disabled={reviewQuestionIndex === questions.length - 1}
+                    className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white shadow-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Question Detail Card */}
+                {(() => {
+                  const q = questions[reviewQuestionIndex];
+                  const userAnswer = selectedAnswers[reviewQuestionIndex];
+                  const isCorrect = userAnswer === q.correct_answer;
+                  const isAnswered = userAnswer !== undefined;
+
+                  return (
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 md:p-8 space-y-6">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          {q.domain}
+                        </span>
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          {q.difficulty}
+                        </span>
+                        {isAnswered ? (
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                              isCorrect
+                                ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                                : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
+                            }`}
+                          >
+                            {isCorrect ? "Correct" : "Incorrect"}
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-500">
+                            Unanswered
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        {q.prompt && (
+                          <div className="text-lg font-medium text-gray-900 dark:text-white font-serif leading-relaxed">
+                            {q.prompt}
+                          </div>
+                        )}
+                        {q.passage && (
+                          <div className="text-base font-serif text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl leading-relaxed">
+                            {q.passage}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {Object.entries(q.choices).map(([key, value]) => {
+                          const isUserChoice = userAnswer === key;
+                          const isCorrectChoice = key === q.correct_answer;
+                          let borderClass =
+                            "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900";
+                          let textClass = "text-gray-800 dark:text-gray-200";
+
+                          if (isCorrectChoice) {
+                            borderClass =
+                              "border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/20";
+                            textClass =
+                              "text-emerald-900 dark:text-emerald-200 font-medium";
+                          } else if (isUserChoice && !isCorrect) {
+                            borderClass =
+                              "border-rose-300 dark:border-rose-800/80 bg-rose-50/50 dark:bg-rose-950/20";
+                            textClass =
+                              "text-rose-900 dark:text-rose-200 font-medium";
+                          }
+
+                          return (
+                            <div
+                              key={key}
+                              className={`p-4 rounded-xl border-2 ${borderClass} ${textClass} flex items-start gap-4 transition-all`}
+                            >
+                              <span className="font-bold text-sm mt-0.5">
+                                {key}.
+                              </span>
+                              <span className="flex-1 text-base font-serif leading-relaxed">
+                                {value}
+                              </span>
+                              {isCorrectChoice && (
+                                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-1 rounded-full shrink-0">
+                                  Correct Answer
+                                </span>
+                              )}
+                              {isUserChoice && !isCorrect && (
+                                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/50 px-2.5 py-1 rounded-full shrink-0">
+                                  Your Answer
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {q.rationale && (
+                        <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-6 space-y-2">
+                          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 uppercase tracking-wide">
+                            Explanation
+                          </h4>
+                          <p className="text-sm text-blue-950/80 dark:text-blue-200/90 leading-relaxed font-serif">
+                            {q.rationale}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col sm:flex-row gap-4 justify-center pt-4 pb-8"
+          >
             <button
-              onClick={() => router.push("/question-rush/rw")}
-              className="px-8 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
+              onClick={() => router.push("/practice-test")}
+              className="flex items-center justify-center h-14 px-8 rounded-full bg-[#171717] dark:bg-white text-white dark:text-gray-900 font-medium text-base hover:bg-black dark:hover:bg-gray-100 transition-all shadow-lg active:scale-95"
             >
               Return to Practice
+            </button>
+            <button
+              onClick={() => {
+                localStorage.setItem(
+                  "satTestResults",
+                  JSON.stringify({
+                    date: new Date().toISOString(),
+                    score,
+                    module2Difficulty,
+                    totalQuestions: questions.length,
+                    correctAnswers: correctAnswers.length,
+                    incorrectAnswers: incorrectAnswers.length,
+                    unanswered: unansweredCount,
+                    domainBreakdown,
+                  }),
+                );
+                alert("Results saved to browser storage!");
+              }}
+              className="flex items-center justify-center h-14 px-8 rounded-full bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 text-gray-900 dark:text-white font-medium text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm active:scale-95"
+            >
+              Save Results
             </button>
           </motion.div>
         </div>
@@ -1001,8 +1543,7 @@ export default function PracticeTestPage() {
   return (
     <>
       {currentQuestion && (
-        <div className="flex flex-col min-h-screen md:h-screen max-w-[1920px] mx-auto bg-white font-sans text-gray-900 overflow-auto md:overflow-hidden selection:bg-cyan-200 relative">
-          {/* Highlighter Tool Popover */}
+        <div className="flex flex-col min-h-screen md:h-screen max-w-[1920px] mx-auto bg-white dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-auto md:overflow-hidden selection:bg-cyan-200 relative">
           {highlightMenu.visible && (
             <div
               className="dsat-highlight-toolbar fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
@@ -1108,9 +1649,7 @@ export default function PracticeTestPage() {
             </div>
           )}
 
-          {/* Top Header Bar */}
           <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 sm:py-2.5 shrink-0 bg-white dark:bg-gray-900 z-40 relative border-b-2 border-gray-200 dark:border-gray-700">
-            {/* Left: Go back & Directions */}
             <div className="flex items-center gap-3 sm:gap-6 w-auto sm:w-1/3 relative">
               <button
                 onClick={handleGoBack}
@@ -1151,7 +1690,6 @@ export default function PracticeTestPage() {
               </div>
             </div>
 
-            {/* Center: Timer */}
             <div className="order-3 sm:order-none flex flex-col items-center justify-center w-full sm:w-1/3 pt-2 sm:pt-0">
               <div className="text-[20px] font-bold tracking-wide text-black dark:text-gray-100 mb-1.5 h-7 flex items-center">
                 {isTimerHidden ? (
@@ -1191,7 +1729,6 @@ export default function PracticeTestPage() {
               </div>
             </div>
 
-            {/* Right: Tools & Badges */}
             <div className="flex items-center justify-end gap-2 sm:gap-3 w-auto sm:w-1/3 relative">
               <button
                 onClick={() => setIsHighlightActive(!isHighlightActive)}
@@ -1287,85 +1824,84 @@ export default function PracticeTestPage() {
             </div>
           </header>
 
-          {/* Main Split Content */}
-          <main className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
-            {/* Left Pane: Reading Material */}
-            <div
-              style={!isMobile ? { width: `${leftPaneWidth}%` } : undefined}
-              className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto bg-white dark:bg-gray-900 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
-              onClick={handleWordDoubleClick}
-            >
-              {isQuestionLoading ? (
-                <PassageSkeletonBlock />
-              ) : (
-                <div
-                  ref={passageRef}
-                  className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
-                >
-                  {currentQuestion.has_graphic &&
-                    currentQuestion.graphics &&
-                    currentQuestion.graphics.length > 0 && (
-                      <div className="my-4">
-                        {currentQuestion.graphics.map((graphic, idx) => {
-                          const zoom = imageZoomLevels[idx] ?? 100;
-                          const imagePath =
-                            typeof graphic === "string"
-                              ? graphic
-                              : graphic.image_path;
-                          return (
-                            <div
-                              key={idx}
-                              className="mb-6 flex items-start gap-3"
-                            >
-                              {imagePath && (
-                                <div className="flex-1 min-w-0 overflow-auto">
-                                  <img
-                                    src={imagePath}
-                                    alt="Question graphic"
-                                    style={{ width: `${zoom}%` }}
-                                    className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
-                                    onError={(e) => {
-                                      (
-                                        e.target as HTMLImageElement
-                                      ).style.display = "none";
-                                    }}
-                                  />
+          <main className="flex flex-col md:flex-row flex-1 overflow-auto md:overflow-hidden relative">
+            {selectedSection !== "Math" && (
+              <div
+                style={!isMobile ? { width: `${leftPaneWidth}%` } : undefined}
+                className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto md:overflow-y-auto bg-white dark:bg-gray-900 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                onClick={handleWordDoubleClick}
+              >
+                {isQuestionLoading ? (
+                  <PassageSkeletonBlock />
+                ) : (
+                  <div
+                    ref={passageRef}
+                    className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
+                  >
+                    {currentQuestion.has_graphic &&
+                      currentQuestion.graphics &&
+                      currentQuestion.graphics.length > 0 && (
+                        <div className="my-4">
+                          {currentQuestion.graphics.map((graphic, idx) => {
+                            const zoom = imageZoomLevels[idx] ?? 100;
+                            const imagePath =
+                              typeof graphic === "string"
+                                ? graphic
+                                : graphic.image_path;
+                            return (
+                              <div
+                                key={idx}
+                                className="mb-6 flex items-start gap-3"
+                              >
+                                {imagePath && (
+                                  <div className="flex-1 min-w-0 overflow-auto">
+                                    <img
+                                      src={imagePath}
+                                      alt="Question graphic"
+                                      style={{ width: `${zoom}%` }}
+                                      className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
+                                      onError={(e) => {
+                                        (
+                                          e.target as HTMLImageElement
+                                        ).style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex flex-col gap-2 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => adjustImageZoom(idx, 20)}
+                                    disabled={zoom >= 200}
+                                    aria-label="Zoom in"
+                                    className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                  >
+                                    <ZoomIn size={16} strokeWidth={2} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => adjustImageZoom(idx, -20)}
+                                    disabled={zoom <= 50}
+                                    aria-label="Zoom out"
+                                    className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                  >
+                                    <ZoomOut size={16} strokeWidth={2} />
+                                  </button>
                                 </div>
-                              )}
-                              <div className="flex flex-col gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => adjustImageZoom(idx, 20)}
-                                  disabled={zoom >= 200}
-                                  aria-label="Zoom in"
-                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                >
-                                  <ZoomIn size={16} strokeWidth={2} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => adjustImageZoom(idx, -20)}
-                                  disabled={zoom <= 50}
-                                  aria-label="Zoom out"
-                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                >
-                                  <ZoomOut size={16} strokeWidth={2} />
-                                </button>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  {memoizedPassage}
-                </div>
-              )}
-            </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    {memoizedPassage}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Divider */}
-            {isMobile ? (
+            {selectedSection !== "Math" && isMobile ? (
               <div className="h-px w-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-            ) : (
+            ) : selectedSection !== "Math" ? (
               <div
                 role="separator"
                 aria-orientation="vertical"
@@ -1379,16 +1915,21 @@ export default function PracticeTestPage() {
                   className={`relative w-2 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 dark:bg-gray-600 group-hover:bg-gray-400 dark:group-hover:bg-gray-500"}`}
                 />
               </div>
-            )}
+            ) : null}
 
-            {/* Right Pane: Question and Answers */}
             <div
               style={
-                !isMobile ? { width: `${100 - leftPaneWidth}%` } : undefined
+                !isMobile
+                  ? {
+                      width:
+                        selectedSection === "Math"
+                          ? "100%"
+                          : `${100 - leftPaneWidth}%`,
+                    }
+                  : undefined
               }
-              className="w-full md:w-auto bg-white dark:bg-gray-900 flex flex-col relative"
+              className="w-full md:w-auto bg-white dark:bg-gray-900 flex flex-col relative overflow-auto md:overflow-hidden"
             >
-              {/* Question Header Bar */}
               <div className="px-6 md:px-8 py-3 bg-white dark:bg-gray-900 sticky top-0 z-10">
                 <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-full px-2 py-1.5">
                   <div className="flex items-center gap-1 sm:gap-2 min-w-0">
@@ -1447,7 +1988,6 @@ export default function PracticeTestPage() {
                 </div>
               </div>
 
-              {/* Question Area */}
               <div
                 ref={questionRef}
                 className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 overflow-y-auto flex-1 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
@@ -1464,15 +2004,12 @@ export default function PracticeTestPage() {
                       </div>
                     )}
 
-                    {/* Answers List */}
                     <div className="space-y-3">
                       {Object.entries(currentQuestion.choices).map(
                         ([key, value]) => {
                           const isSelected = selectedAnswer === key;
                           const isHighlighted = highlightedAnswer === key;
                           const isEliminated = eliminatedChoices.has(key);
-                          const isCorrectAnswer =
-                            key === currentQuestion.correct_answer;
 
                           let borderClass =
                             "border-gray-400 dark:border-gray-600";
@@ -1542,9 +2079,7 @@ export default function PracticeTestPage() {
             </div>
           </main>
 
-          {/* Bottom Footer Navigation matching Question Rush */}
           <footer className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-2.5 sm:py-3 border-t-2 border-gray-200 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-900 relative z-50">
-            {/* Left: Question Navigator */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQuestionBank(!showQuestionBank)}
@@ -1570,7 +2105,6 @@ export default function PracticeTestPage() {
               )}
             </div>
 
-            {/* Right: Suite of Tools */}
             <div className="flex items-center gap-2 sm:gap-3 relative overflow-x-auto max-w-full no-scrollbar">
               <button
                 onClick={() => setShowInfo(!showInfo)}
@@ -1597,7 +2131,6 @@ export default function PracticeTestPage() {
               </button>
             </div>
 
-            {/* Info Menu Popup */}
             {showInfo && (
               <div className="info-menu absolute bottom-20 right-4 sm:right-[350px] w-[calc(100vw-2rem)] max-w-72 bg-white dark:bg-gray-800 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-gray-700 p-4 z-50">
                 <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
@@ -1632,7 +2165,6 @@ export default function PracticeTestPage() {
               </div>
             )}
 
-            {/* Question Bank Dropdown */}
             {showQuestionBank && (
               <div className="absolute bottom-20 left-4 sm:left-6 w-[calc(100vw-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-gray-700 p-4 z-50 max-h-96 overflow-y-auto">
                 <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">

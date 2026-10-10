@@ -3,22 +3,22 @@
 import { auth, db } from "@/lib/firebase";
 import type { Auth } from "firebase/auth";
 import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  query,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    getDoc,
+    onSnapshot,
+    query,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-  type Variants,
+    AnimatePresence,
+    animate,
+    motion,
+    useMotionValue,
+    useReducedMotion,
+    useTransform,
+    type Variants,
 } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1008,7 +1008,7 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-white px-4 pb-24 pt-28 font-sans antialiased md:px-6 lg:px-10">
+      <main className="min-h-screen bg-white px-2 pb-24 pt-28 font-sans antialiased md:px-6 lg:px-10">
         <div className="mx-auto w-full max-w-6xl">
           <div className="mb-10 space-y-4">
             <div className="h-4 w-40 animate-pulse rounded-full bg-[#f5f5f7]" />
@@ -1078,7 +1078,8 @@ export default function HomePage() {
         variants={container}
         initial={reduce ? false : "hidden"}
         animate="show"
-        className="mx-auto w-full max-w-6xl px-4 pb-24 pt-4 md:px-6 md:pt-8 lg:px-10"
+        className="mx-auto w-full max-w-6xl px-2 pb-24 pt-4 md:px-6 md:pt-8 lg:px-10"
+        style={{ paddingLeft: "2px", paddingRight: "2px" }}
       >
         {/* ---------- Header ---------- */}
         <motion.header variants={item} className="mb-10 md:mb-14">

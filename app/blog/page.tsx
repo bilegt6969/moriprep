@@ -56,7 +56,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
-      <div className="max-w-[67rem] mx-auto px-6 pt-12">
+      <div className="max-w-[67rem] mx-auto px-2 md:px-6 pt-12">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between py-20 gap-6">
           <div className="flex flex-col gap-5">
