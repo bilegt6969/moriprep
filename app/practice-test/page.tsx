@@ -1,10 +1,22 @@
 "use client";
 
+import DesmosCalculator from "@/components/dsat/DesmosCalculator";
+import PreviousAttempts from "@/components/dsat/PreviousAttempts";
+import TestResults from "@/components/dsat/TestResults";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { auth } from "@/lib/firebase";
+import {
+  isAnswerCorrect,
+  loadAttempts,
+  newAttemptId,
+  saveAttempt,
+  type ModuleRecord,
+  type TestAttempt,
+} from "@/lib/test-attempts";
 import { DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import {
+  AnimatePresence,
   motion,
   useMotionTemplate,
   useMotionValue,
@@ -31,6 +43,7 @@ import {
   Play,
   Trash2,
   Underline as UnderlineIcon,
+  X,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -48,9 +61,6 @@ const SAT_TIMING = {
     module2: 35,
   },
 };
-
-// October SAT Module 1 has 27 questions for RW
-const MODULE_1_QUESTIONS = 27;
 
 // Available practice tests
 const PRACTICE_TESTS = [
@@ -119,6 +129,7 @@ const sectionDot = (section: string) =>
   /math/i.test(section) ? "#0080FF" : "#10B981";
 
 type PracticeTestItem = (typeof PRACTICE_TESTS)[number];
+type SectionName = "Reading and Writing" | "Math";
 
 // Skeleton Loading Components
 function PassageSkeletonBlock() {
@@ -233,85 +244,6 @@ function SkeletonLoader() {
   );
 }
 
-const SectionCard = ({
-  section,
-  onSelect,
-}: {
-  section: "Reading and Writing" | "Math";
-  onSelect: () => void;
-}) => {
-  const reduce = useReducedMotion();
-  const isMath = section === "Math";
-  const accent = isMath ? "#0080FF" : "#10B981";
-
-  const mx = useMotionValue(-300);
-  const my = useMotionValue(-300);
-  const spotlight = useMotionTemplate`radial-gradient(380px circle at ${mx}px ${my}px, ${accent}22, transparent 70%)`;
-
-  return (
-    <motion.article
-      variants={selectionItem}
-      whileHover={!reduce ? { y: -4 } : undefined}
-      transition={selectionSpring}
-      onMouseMove={(e) => {
-        if (reduce) return;
-        const r = e.currentTarget.getBoundingClientRect();
-        mx.set(e.clientX - r.left);
-        my.set(e.clientY - r.top);
-      }}
-      className="group relative flex flex-col overflow-hidden rounded-[28px] bg-[#f5f5f7] p-6 text-[#1d1d1f] transition-shadow duration-500 md:p-7 hover:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.18)]"
-    >
-      <motion.div
-        aria-hidden="true"
-        style={{ background: spotlight }}
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-      />
-
-      <div className="relative z-10 flex flex-1 flex-col">
-        <span
-          className="mb-6 flex h-11 w-11 items-center justify-center rounded-full text-white"
-          style={{ backgroundColor: accent }}
-        >
-          <FileText className="h-5 w-5" />
-        </span>
-
-        <h3 className="mb-2 text-[24px] font-medium tracking-[-0.025em]">
-          {section}
-        </h3>
-        <p
-          className="mb-6 text-[15px] leading-[1.55] text-[#494440]"
-          style={{ letterSpacing: "-0.01em" }}
-        >
-          {isMath
-            ? "22 questions per module with graphics and data analysis"
-            : "27 questions per module with passages and text analysis"}
-        </p>
-
-        <div className="mt-auto">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            transition={selectionSpring}
-            className="relative -mx-1.5 block p-1.5"
-          >
-            <div className="pointer-events-none absolute inset-0 rounded-full border border-gray-400/40" />
-            <button
-              type="button"
-              onClick={onSelect}
-              className="group/btn relative z-10 flex h-12 w-full items-center justify-between rounded-[32px] border border-white/10 bg-[#171717]/80 pl-6 pr-2.5 text-[16px] font-medium leading-none tracking-[-0.01em] text-white backdrop-blur-[10px] transition-colors duration-150 hover:bg-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0080FF]/50"
-            >
-              Start {section}
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition-transform duration-300 group-hover/btn:translate-x-0.5">
-                <ArrowRight className="h-4 w-4" />
-              </span>
-            </button>
-          </motion.div>
-        </div>
-      </div>
-    </motion.article>
-  );
-};
-
 function PracticeTestCard({
   test,
   onStart,
@@ -326,9 +258,6 @@ function PracticeTestCard({
   const mx = useMotionValue(-300);
   const my = useMotionValue(-300);
   const spotlight = useMotionTemplate`radial-gradient(380px circle at ${mx}px ${my}px, ${test.accent}22, transparent 70%)`;
-
-  const questionsLabel =
-    typeof test.questions === "number" ? test.questions : test.questions;
 
   return (
     <motion.article
@@ -408,7 +337,7 @@ function PracticeTestCard({
               Questions
             </p>
             <p className="text-[20px] font-medium tracking-[-0.02em] tabular-nums">
-              {questionsLabel}
+              {test.questions}
             </p>
           </div>
         </div>
@@ -458,12 +387,12 @@ function PracticeTestSelection() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white px-2 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-auto md:overflow-hidden">
+    <main className="min-h-screen bg-white px-2 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-auto">
       <motion.div
         variants={selectionContainer}
         initial={reduce || !mounted ? false : "hidden"}
         animate={mounted ? "show" : false}
-        className="mx-auto w-full max-w-6xl flex flex-col"
+        className="mx-auto w-full max-w-6xl flex flex-col pb-16"
       >
         <motion.header
           variants={selectionItem}
@@ -489,64 +418,10 @@ function PracticeTestSelection() {
             />
           ))}
         </div>
-      </motion.div>
-    </main>
-  );
-}
 
-// Section Selection Component
-function SectionSelection({
-  onSelectSection,
-}: {
-  onSelectSection: (section: "Reading and Writing" | "Math") => void;
-}) {
-  const reduce = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return (
-    <main className="min-h-screen bg-white px-2 py-4 font-sans antialiased selection:bg-gray-200 selection:text-black md:px-6 lg:px-10 overflow-auto md:overflow-hidden">
-      <motion.div
-        variants={selectionContainer}
-        initial={reduce || !mounted ? false : "hidden"}
-        animate={mounted ? "show" : false}
-        className="mx-auto w-full max-w-6xl flex flex-col"
-      >
-        <motion.header
-          variants={selectionItem}
-          className="mb-6 md:mb-8 shrink-0"
-        >
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 text-base text-gray-500 hover:text-black transition-colors mb-4"
-          >
-            <ChevronLeft size={18} strokeWidth={2} />
-            Back
-          </button>
-          <h1 className="max-w-3xl text-[38px] font-medium leading-[1.05] tracking-[-0.035em] text-[#1d1d1f] md:text-[48px]">
-            Select Section
-          </h1>
-          <p
-            className="mt-3 max-w-xl text-base text-[#86868b] md:text-lg"
-            style={{ letterSpacing: "-0.01em" }}
-          >
-            Choose which section of the SAT you want to practice.
-          </p>
-        </motion.header>
-
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 max-w-4xl">
-          <SectionCard
-            section="Reading and Writing"
-            onSelect={() => onSelectSection("Reading and Writing")}
-          />
-          <SectionCard
-            section="Math"
-            onSelect={() => onSelectSection("Math")}
-          />
-        </div>
+        <motion.div variants={selectionItem}>
+          <PreviousAttempts />
+        </motion.div>
       </motion.div>
     </main>
   );
@@ -556,17 +431,19 @@ export default function PracticeTestPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const testId = searchParams.get("test");
+  const attemptId = searchParams.get("attempt");
 
   const [user, setUser] = useState<any>(null);
-  const [showSelection, setShowSelection] = useState(!testId);
+  // Derived from the URL so client-side navigation (e.g. View analysis) always updates the page.
+  const showSelection = !testId && !attemptId;
   const [questions, setQuestions] = useState<DSATQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, string>
   >({});
-  const [selectedSection, setSelectedSection] = useState<
-    "Reading and Writing" | "Math" | null
-  >(null);
+  const [selectedSection, setSelectedSection] = useState<SectionName>(
+    "Reading and Writing",
+  );
   const [timeRemaining, setTimeRemaining] = useState(
     SAT_TIMING.rw.module1 * 60,
   );
@@ -577,17 +454,22 @@ export default function PracticeTestPage() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [score, setScore] = useState({ correct: 0, total: 0, percentage: 0 });
+  const [finishedAttempt, setFinishedAttempt] = useState<TestAttempt | null>(
+    null,
+  );
+  const [viewedAttempt, setViewedAttempt] = useState<
+    TestAttempt | "missing" | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [highlightedAnswer, setHighlightedAnswer] = useState<string>("");
-  const [wrongAnswers, setWrongAnswers] = useState<Set<string>>(new Set());
   const [isCrossOutMode, setIsCrossOutMode] = useState(false);
   const [isTimerHidden, setIsTimerHidden] = useState(false);
   const [eliminatedChoices, setEliminatedChoices] = useState<Set<string>>(
     new Set(),
   );
+  const [showCalculator, setShowCalculator] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Set<string>>(
     new Set(),
   );
@@ -610,9 +492,6 @@ export default function PracticeTestPage() {
   const [highlightedText, setHighlightedText] = useState<Set<string>>(
     new Set(),
   );
-  const [highlightColor, setHighlightColor] = useState<
-    "yellow" | "blue" | "pink" | "none"
-  >("none");
   const [showUnderlineSubmenu, setShowUnderlineSubmenu] = useState(false);
   const [menuDisplayColor, setMenuDisplayColor] = useState<string>("");
   const [currentSelection, setCurrentSelection] = useState<Selection | null>(
@@ -628,16 +507,114 @@ export default function PracticeTestPage() {
   const [showQuestionBank, setShowQuestionBank] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [questionAttempts, setQuestionAttempts] = useState<any[]>([]);
+  const [questionAttempts] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showQuestionReview, setShowQuestionReview] = useState(false);
-  const [reviewQuestionIndex, setReviewQuestionIndex] = useState(0);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const passageRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
 
+  // Every finished module is recorded here so the results page can review all
+  // questions (not just the last module).
+  const recordsRef = useRef<ModuleRecord[]>([]);
+  // Always points at the newest handleModuleComplete (fixes stale timer closure).
+  const completeRef = useRef<() => void>(() => {});
+  // Always holds the newest state, read by handleModuleComplete.
+  const latest = useRef<any>({});
+  latest.current = {
+    answers: selectedAnswers,
+    questions,
+    marked: markedQuestions,
+    module,
+    section: selectedSection,
+    difficulty: module2Difficulty,
+  };
+
   const currentQuestion = questions[currentQuestionIndex];
+  const isMath = selectedSection === "Math";
+
+  // Shared helpers for Math content
+  const graphicsBlock =
+    currentQuestion?.has_graphic &&
+    currentQuestion.graphics?.length > 0 &&
+    !currentQuestion.choice_graphics ? (
+      <div className="my-4">
+        {currentQuestion.graphics.map((graphic: any, idx: number) => {
+          const zoom = imageZoomLevels[idx] ?? 100;
+          const imagePath =
+            typeof graphic === "string" ? graphic : graphic.image_path;
+          return (
+            <div key={idx} className="mb-6 flex items-start gap-3">
+              {imagePath && (
+                <div className="flex-1 min-w-0 overflow-auto">
+                  <img
+                    src={imagePath}
+                    alt="Question graphic"
+                    style={{ width: `${zoom}%` }}
+                    className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
+                    onError={(e) =>
+                      ((e.target as HTMLImageElement).style.display = "none")
+                    }
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => adjustImageZoom(idx, 20)}
+                  disabled={zoom >= 200}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full disabled:opacity-40 text-gray-600"
+                >
+                  <ZoomIn size={16} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustImageZoom(idx, -20)}
+                  disabled={zoom <= 50}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full disabled:opacity-40 text-gray-600"
+                >
+                  <ZoomOut size={16} strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    ) : null;
+
+  const tableBlock =
+    currentQuestion?.table?.columns && !currentQuestion.has_graphic ? (
+      <div className="my-4 overflow-x-auto">
+        <table className="border border-gray-300 text-base">
+          <thead>
+            <tr>
+              {currentQuestion.table.columns.map((c: string) => (
+                <th
+                  key={c}
+                  className="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold"
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {currentQuestion.table.rows.map((row: string[], i: number) => (
+              <tr key={i}>
+                {row.map((cell, j) => (
+                  <td
+                    key={j}
+                    className="border border-gray-300 px-4 py-2 text-center"
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : null;
 
   useEffect(() => {
     if (!auth) return;
@@ -646,16 +623,21 @@ export default function PracticeTestPage() {
         router.push("/sign-in");
       } else {
         setUser(user);
+        if (attemptId) {
+          // A test we just finished is already in memory (even if storage failed).
+          if (finishedAttempt?.id !== attemptId) {
+            setViewedAttempt(
+              loadAttempts(user.uid).find((a) => a.id === attemptId) ??
+                "missing",
+            );
+          }
+        } else if (testId) {
+          loadModule1Questions();
+        }
       }
     });
     return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    if (selectedSection && testId) {
-      loadModule1Questions();
-    }
-  }, [selectedSection, testId]);
+  }, [router, testId, attemptId]);
 
   useEffect(() => {
     if (timeRemaining > 0 && !showResults && !isTimeUp && !isTimerPaused) {
@@ -664,7 +646,7 @@ export default function PracticeTestPage() {
           if (prev <= 1) {
             clearInterval(timerRef.current!);
             setIsTimeUp(true);
-            handleModuleComplete();
+            completeRef.current();
             return 0;
           }
           return prev - 1;
@@ -713,24 +695,29 @@ export default function PracticeTestPage() {
   const loadModule1Questions = async () => {
     try {
       setIsLoading(true);
-      setShowSelection(false);
       setLoadError(null);
-      const testParam = selectedSection || "Reading and Writing";
-      const limit = testParam === "Math" ? 22 : 27;
+      recordsRef.current = [];
+      setShowResults(false);
+      setFinishedAttempt(null);
+      setViewedAttempt(null);
+      setIsTimeUp(false);
+      setModule2Difficulty(null);
+      setSelectedSection("Reading and Writing");
       const response = await fetch(
-        `/api/questions?test=${testParam}&source=october_sat&module_level=standard&limit=${limit}`,
+        `/api/questions?test=Reading and Writing&source=october_sat&module_level=standard`,
       );
       const data = await response.json();
       if (!Array.isArray(data) || data.length === 0) {
         setLoadError("No questions found for this test.");
       } else {
         setQuestions(data);
-        // Set timing based on section
-        setTimeRemaining(
-          testParam === "Math"
-            ? SAT_TIMING.math.module1 * 60
-            : SAT_TIMING.rw.module1 * 60,
-        );
+        setModule(1);
+        setCurrentQuestionIndex(0);
+        setSelectedAnswers({});
+        setSelectedAnswer("");
+        setEliminatedChoices(new Set());
+        setMarkedQuestions(new Set());
+        setTimeRemaining(SAT_TIMING.rw.module1 * 60);
       }
       setIsTimerPaused(false);
       setIsLoading(false);
@@ -741,8 +728,24 @@ export default function PracticeTestPage() {
     }
   };
 
+  // Saves the finished attempt and shows the results page.
+  const finishTest = () => {
+    const attempt: TestAttempt = {
+      id: newAttemptId(),
+      testId: testId ?? "october-sat",
+      testName: "October 2026 SAT",
+      date: new Date().toISOString(),
+      modules: recordsRef.current,
+    };
+    saveAttempt(attempt, auth?.currentUser?.uid);
+    setFinishedAttempt(attempt);
+    setShowResults(true);
+    router.replace(`/practice-test?attempt=${attempt.id}`);
+  };
+
   const loadModule2Questions = async (
     difficulty: "Easy" | "Hard" | "Medium",
+    section: SectionName,
   ) => {
     try {
       setIsLoading(true);
@@ -753,51 +756,41 @@ export default function PracticeTestPage() {
           : difficulty === "Hard"
             ? "hard"
             : "standard";
-      const testParam = selectedSection || "Reading and Writing";
-      const limit = testParam === "Math" ? 22 : 27;
+      const testParam = section;
       const response = await fetch(
-        `/api/questions?test=${testParam}&source=october_sat&module_level=${moduleLevel}&limit=${limit}`,
+        `/api/questions?test=${testParam}&source=october_sat&module_level=${moduleLevel}`,
       );
       const data = await response.json();
+      const applyQuestions = (qs: DSATQuestion[]) => {
+        setQuestions(qs);
+        setCurrentQuestionIndex(0);
+        setSelectedAnswers({});
+        setSelectedAnswer("");
+        setEliminatedChoices(new Set());
+        setMarkedQuestions(new Set());
+        setTimeRemaining(
+          testParam === "Math"
+            ? SAT_TIMING.math.module2 * 60
+            : SAT_TIMING.rw.module2 * 60,
+        );
+        setIsTimeUp(false);
+        setIsTimerPaused(false);
+        setIsLoading(false);
+      };
       if (!Array.isArray(data) || data.length === 0) {
         const fallbackResponse = await fetch(
-          `/api/questions?test=${testParam}&source=october_sat&module_level=standard&limit=${limit}`,
+          `/api/questions?test=${testParam}&source=october_sat&module_level=standard`,
         );
         const fallbackData = await fallbackResponse.json();
         if (Array.isArray(fallbackData) && fallbackData.length > 0) {
-          setQuestions(fallbackData);
-          setCurrentQuestionIndex(0);
-          setSelectedAnswers({});
-          setSelectedAnswer("");
-          setTimeRemaining(
-            testParam === "Math"
-              ? SAT_TIMING.math.module2 * 60
-              : SAT_TIMING.rw.module2 * 60,
-          );
-          setIsTimerPaused(false);
-          setIsLoading(false);
+          applyQuestions(fallbackData);
           return;
         }
-        setScore((prev) => ({
-          correct: prev.correct,
-          total: prev.total,
-          percentage: prev.percentage,
-        }));
-        setShowResults(true);
         setIsLoading(false);
+        finishTest();
         return;
       }
-      setQuestions(data);
-      setCurrentQuestionIndex(0);
-      setSelectedAnswers({});
-      setSelectedAnswer("");
-      setTimeRemaining(
-        testParam === "Math"
-          ? SAT_TIMING.math.module2 * 60
-          : SAT_TIMING.rw.module2 * 60,
-      );
-      setIsTimerPaused(false);
-      setIsLoading(false);
+      applyQuestions(data);
     } catch (error) {
       console.error("Error loading Module 2 questions:", error);
       setLoadError("Failed to load Module 2 questions. Please try again.");
@@ -814,7 +807,6 @@ export default function PracticeTestPage() {
   };
 
   const handleAnswerHighlight = (key: string) => {
-    if (selectedAnswer === key) return;
     setHighlightedAnswer(key);
     handleAnswerSelect(key);
   };
@@ -868,62 +860,112 @@ export default function PracticeTestPage() {
   const handleModuleComplete = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const correctCount = Object.entries(selectedAnswers).filter(
-      ([index, answer]) => {
-        const question = questions[parseInt(index)];
-        return question && answer === question.correct_answer;
-      },
-    ).length;
-
-    const moduleScore = {
-      correct: correctCount,
-      total: questions.length,
-      percentage: (correctCount / questions.length) * 100,
+    const {
+      answers,
+      questions: qs,
+      marked,
+      module: mod,
+      section,
+      difficulty,
+    } = latest.current as {
+      answers: Record<number, string>;
+      questions: DSATQuestion[];
+      marked: Set<string>;
+      module: 1 | 2;
+      section: SectionName;
+      difficulty: "Easy" | "Hard" | "Medium" | null;
     };
 
-    if (module === 1) {
-      const responses = questions.map((q, index) => ({
+    if (qs.length === 0) return;
+    // Ignore double fires (timer + button).
+    if (
+      recordsRef.current.some((r) => r.section === section && r.module === mod)
+    ) {
+      return;
+    }
+
+    recordsRef.current = [
+      ...recordsRef.current,
+      {
+        section,
+        module: mod,
+        difficulty: mod === 2 ? difficulty : null,
+        questions: qs,
+        answers,
+        marked: [...marked],
+      },
+    ];
+
+    if (mod === 1) {
+      const responses = qs.map((q, index) => ({
         questionId: q.question_id,
-        isCorrect: selectedAnswers[index] === q.correct_answer,
+        isCorrect: isAnswerCorrect(q, answers[index]),
         difficulty: q.difficulty,
       }));
 
+      let nextDifficulty: "Easy" | "Hard" | "Medium" = "Medium";
       try {
         const routingResponse = await fetch("/api/adaptive-routing", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ responses, method: "EAP" }),
         });
-
         if (!routingResponse.ok) {
           throw new Error(`Routing API failed: ${routingResponse.status}`);
         }
-
         const routingData = await routingResponse.json();
-        const difficulty = routingData.routing.module2Difficulty;
-        setModule2Difficulty(difficulty);
-        setScore(moduleScore);
-
-        setModule(2);
-        await loadModule2Questions(difficulty);
+        nextDifficulty = routingData.routing.module2Difficulty;
       } catch (error) {
         console.error("Error determining routing:", error);
-        setModule2Difficulty("Medium");
-        setModule(2);
-        await loadModule2Questions("Medium");
+      }
+
+      setModule2Difficulty(nextDifficulty);
+      setModule(2);
+      // keep the live ref in sync so the next module's record carries it
+      latest.current = {
+        ...latest.current,
+        module: 2,
+        difficulty: nextDifficulty,
+      };
+      await loadModule2Questions(nextDifficulty, section);
+    } else if (section === "Reading and Writing") {
+      // RW done -> start Math module 1
+      setSelectedSection("Math");
+      setModule(1);
+      setModule2Difficulty(null);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswers({});
+      setSelectedAnswer("");
+      setEliminatedChoices(new Set());
+      setMarkedQuestions(new Set());
+      setQuestions([]);
+      setTimeRemaining(SAT_TIMING.math.module1 * 60);
+      setIsTimeUp(false);
+      setIsLoading(true);
+
+      try {
+        const response = await fetch(
+          "/api/questions?test=Math&source=october_sat&module_level=standard",
+        );
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setQuestions(data);
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
+          finishTest();
+        }
+      } catch (error) {
+        console.error("Error loading Math questions:", error);
+        setIsLoading(false);
+        setLoadError("Failed to load Math questions. Please try again.");
       }
     } else {
-      setScore((prev) => ({
-        correct: prev.correct + moduleScore.correct,
-        total: prev.total + moduleScore.total,
-        percentage:
-          ((prev.correct + moduleScore.correct) /
-            (prev.total + moduleScore.total)) *
-          100,
-      }));
-      setShowResults(true);
+      // Math module 2 done -> results
+      finishTest();
     }
   };
+  completeRef.current = handleModuleComplete;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -948,7 +990,6 @@ export default function PracticeTestPage() {
   };
 
   const handleGoBack = () => {
-    setShowSelection(true);
     router.push("/practice-test");
   };
 
@@ -996,7 +1037,7 @@ export default function PracticeTestPage() {
     setHighlightMenu({ visible: false, x: 0, y: 0 });
   };
 
-  const applyUnderlineStyle = (style: string) => {
+  const applyUnderlineStyle = (_style: string) => {
     setShowUnderlineSubmenu(false);
   };
 
@@ -1019,24 +1060,22 @@ export default function PracticeTestPage() {
       return (
         <>
           {currentQuestion.introduction && (
-            <div
-              className="mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
+            <span
+              className="text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
               dangerouslySetInnerHTML={{ __html: currentQuestion.introduction }}
             />
           )}
-          <div
-            className={`mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif ${currentQuestion.introduction ? "pl-12" : ""}`}
+          <span
+            className={`text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif ${currentQuestion.introduction ? "pl-12" : ""}`}
           >
-            <p className="mb-4">
-              While researching a topic, a student has taken the following
-              notes:
-            </p>
-            <ul className="list-disc list-inside space-y-2">
-              {currentQuestion.notes.map((note: string, idx: number) => (
-                <li key={idx}>{note}</li>
-              ))}
-            </ul>
-          </div>
+            While researching a topic, a student has taken the following notes:{" "}
+            {currentQuestion.notes.map((note: string, idx: number) => (
+              <span key={idx}>
+                {idx > 0 && "; "}
+                {note}
+              </span>
+            ))}
+          </span>
         </>
       );
     }
@@ -1055,7 +1094,7 @@ export default function PracticeTestPage() {
           const trimmed = line.trim();
           return trimmed && !trimmed.includes("|");
         });
-        htmlContent = paragraphLines.join("\n").trim();
+        htmlContent = paragraphLines.join(" ").trim();
       }
     }
 
@@ -1071,26 +1110,27 @@ export default function PracticeTestPage() {
 
     if (hasText1 && hasText2) {
       const parts = htmlContent.split("Text 2");
-      const text1Part = parts[0].replace(
-        "Text 1",
-        "<strong>Text 1</strong><br><br>",
-      );
-      const text2Part = parts[1]
-        ? `<br><br><strong>Text 2</strong><br><br>${parts[1]}`
-        : "";
+      const text1Part = parts[0].replace("Text 1", "<strong>Text 1</strong> ");
+      const text2Part = parts[1] ? ` <strong>Text 2</strong> ${parts[1]}` : "";
       htmlContent = text1Part + text2Part;
     }
+
+    // Replace all line breaks with spaces for inline display
+    htmlContent = htmlContent.replace(/\n+/g, " ");
+    htmlContent = htmlContent.replace(/<br\s*\/?>/gi, " ");
+    htmlContent = htmlContent.replace(/<\/p>\s*<p>/gi, " ");
+    htmlContent = htmlContent.replace(/<\/?p>/gi, "");
 
     return (
       <>
         {currentQuestion.introduction && (
-          <div
-            className="mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
+          <span
+            className="text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
             dangerouslySetInnerHTML={{ __html: currentQuestion.introduction }}
           />
         )}
-        <div
-          className={`mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif ${currentQuestion.introduction ? "pl-12" : ""}`}
+        <span
+          className={`text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif ${currentQuestion.introduction ? "pl-12" : ""}`}
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
       </>
@@ -1103,12 +1143,35 @@ export default function PracticeTestPage() {
     currentQuestion?.notes,
   ]);
 
+  const exitToSelection = () => {
+    router.push("/practice-test");
+  };
+
   if (showSelection) {
     return <PracticeTestSelection />;
   }
 
-  if (testId && !selectedSection) {
-    return <SectionSelection onSelectSection={setSelectedSection} />;
+  // Results: a saved attempt (?attempt=<id>) or the one we just finished.
+  if (attemptId) {
+    const attempt =
+      finishedAttempt?.id === attemptId ? finishedAttempt : viewedAttempt;
+    if (attempt === "missing") {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-white text-gray-700">
+          <div className="text-center">
+            <p className="text-xl font-medium mb-4">Attempt not found.</p>
+            <button
+              onClick={exitToSelection}
+              className="px-6 py-2 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
+            >
+              Back to practice tests
+            </button>
+          </div>
+        </div>
+      );
+    }
+    if (!attempt) return <SkeletonLoader />;
+    return <TestResults attempt={attempt} onExitAction={exitToSelection} />;
   }
 
   if (isLoading) {
@@ -1124,417 +1187,13 @@ export default function PracticeTestPage() {
             <button
               onClick={() => {
                 setLoadError(null);
-                setShowSelection(true);
+                router.push("/practice-test");
               }}
               className="px-6 py-2 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
             >
               Go back to test selection
             </button>
           )}
-        </div>
-      </div>
-    );
-  }
-
-  if (showResults) {
-    const correctAnswers = Object.entries(selectedAnswers).filter(
-      ([index, answer]) => {
-        const question = questions[parseInt(index)];
-        return question && answer === question.correct_answer;
-      },
-    );
-
-    const incorrectAnswers = Object.entries(selectedAnswers).filter(
-      ([index, answer]) => {
-        const question = questions[parseInt(index)];
-        return question && answer !== question.correct_answer;
-      },
-    );
-
-    const unansweredCount =
-      questions.length - Object.keys(selectedAnswers).length;
-
-    const domainBreakdown = questions.reduce((acc: any, q, idx) => {
-      const domain = q.domain || "Unknown";
-      if (!acc[domain]) {
-        acc[domain] = { total: 0, correct: 0 };
-      }
-      acc[domain].total++;
-      if (selectedAnswers[idx] === q.correct_answer) {
-        acc[domain].correct++;
-      }
-      return acc;
-    }, {});
-
-    return (
-      <div className="min-h-screen bg-[#fbfbfd] dark:bg-gray-950 px-4 py-12 md:px-8 md:py-16 font-sans antialiased text-[#1d1d1f] dark:text-gray-100 transition-colors">
-        <div className="max-w-4xl mx-auto space-y-10">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center space-y-2"
-          >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/5 dark:bg-white/10 text-xs font-semibold tracking-wide uppercase text-gray-600 dark:text-gray-300 mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Practice Test Complete
-            </div>
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-              October 2026 SAT
-            </h1>
-            <p className="text-lg text-gray-500 dark:text-gray-400">
-              Reading & Writing • Adaptive Assessment
-            </p>
-          </motion.div>
-
-          {/* Main Score Hero Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
-          >
-            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/0 blur-3xl pointer-events-none" />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-              <div className="md:col-span-1 text-center md:text-left space-y-2">
-                <span className="text-sm font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  Overall Score
-                </span>
-                <div className="text-6xl md:text-7xl font-bold tracking-tighter text-[#1d1d1f] dark:text-white">
-                  {score.percentage.toFixed(0)}
-                  <span className="text-3xl md:text-4xl font-normal text-gray-400">
-                    %
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 pt-1">
-                  Module 1 →{" "}
-                  <span className="font-semibold text-gray-900 dark:text-gray-200">
-                    {module2Difficulty === "Easy"
-                      ? "Easy"
-                      : module2Difficulty === "Hard"
-                        ? "Hard"
-                        : "Medium"}
-                  </span>{" "}
-                  Module 2
-                </p>
-              </div>
-
-              <div className="md:col-span-2 grid grid-cols-3 gap-4 border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-800 pt-6 md:pt-0 md:pl-8">
-                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-                    {score.correct}
-                  </div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Correct
-                  </div>
-                </div>
-                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-rose-500 dark:text-rose-400 mb-1">
-                    {score.total - score.correct}
-                  </div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Incorrect
-                  </div>
-                </div>
-                <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-gray-500 dark:text-gray-400 mb-1">
-                    {unansweredCount}
-                  </div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Unanswered
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Domain Breakdown */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] space-y-6"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-                Performance by Domain
-              </h2>
-              <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                Accuracy & Breakdown
-              </span>
-            </div>
-
-            <div className="space-y-5">
-              {Object.entries(domainBreakdown).map(
-                ([domain, stats]: [string, any]) => {
-                  const percentage = (stats.correct / stats.total) * 100;
-                  return (
-                    <div key={domain} className="space-y-2">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="font-medium text-gray-800 dark:text-gray-200">
-                          {domain}
-                        </span>
-                        <span className="font-semibold text-gray-600 dark:text-gray-400 tabular-nums">
-                          {stats.correct}/{stats.total} ({percentage.toFixed(0)}
-                          %)
-                        </span>
-                      </div>
-                      <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden p-0.5">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{
-                            duration: 0.8,
-                            ease: [0.16, 1, 0.3, 1],
-                          }}
-                          className="h-full rounded-full"
-                          style={{
-                            backgroundColor:
-                              percentage >= 70
-                                ? "#10B981"
-                                : percentage >= 40
-                                  ? "#F59E0B"
-                                  : "#EF4444",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                },
-              )}
-            </div>
-          </motion.div>
-
-          {/* Question Review Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-[32px] bg-white dark:bg-gray-900 border border-black/5 dark:border-white/10 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] space-y-6"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-                  Question Review
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Click any question number to review detailed answers and
-                  explanations.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowQuestionReview(!showQuestionReview)}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium text-gray-900 dark:text-white transition-colors"
-              >
-                {showQuestionReview ? "Hide Details" : "Expand Review"}
-              </button>
-            </div>
-
-            {!showQuestionReview ? (
-              <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-12 gap-2.5 pt-2">
-                {questions.map((q, idx) => {
-                  const isCorrect = selectedAnswers[idx] === q.correct_answer;
-                  const isAnswered = selectedAnswers[idx] !== undefined;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setReviewQuestionIndex(idx);
-                        setShowQuestionReview(true);
-                      }}
-                      className={`h-11 rounded-2xl text-sm font-semibold transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        !isAnswered
-                          ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200"
-                          : isCorrect
-                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-sm"
-                            : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 shadow-sm"
-                      }`}
-                    >
-                      <span>{idx + 1}</span>
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${!isAnswered ? "bg-gray-300 dark:bg-gray-600" : isCorrect ? "bg-emerald-500" : "bg-rose-500"}`}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="space-y-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-                {/* Question Navigator in Review */}
-                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-3">
-                  <button
-                    onClick={() =>
-                      setReviewQuestionIndex(
-                        Math.max(0, reviewQuestionIndex - 1),
-                      )
-                    }
-                    disabled={reviewQuestionIndex === 0}
-                    className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white shadow-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Question {reviewQuestionIndex + 1} of {questions.length}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setReviewQuestionIndex(
-                        Math.min(questions.length - 1, reviewQuestionIndex + 1),
-                      )
-                    }
-                    disabled={reviewQuestionIndex === questions.length - 1}
-                    className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-900 dark:text-white shadow-sm disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Next
-                  </button>
-                </div>
-
-                {/* Question Detail Card */}
-                {(() => {
-                  const q = questions[reviewQuestionIndex];
-                  const userAnswer = selectedAnswers[reviewQuestionIndex];
-                  const isCorrect = userAnswer === q.correct_answer;
-                  const isAnswered = userAnswer !== undefined;
-
-                  return (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 md:p-8 space-y-6">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                          {q.domain}
-                        </span>
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                          {q.difficulty}
-                        </span>
-                        {isAnswered ? (
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                              isCorrect
-                                ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
-                                : "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
-                            }`}
-                          >
-                            {isCorrect ? "Correct" : "Incorrect"}
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-500">
-                            Unanswered
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-4">
-                        {q.prompt && (
-                          <div className="text-lg font-medium text-gray-900 dark:text-white font-serif leading-relaxed">
-                            {q.prompt}
-                          </div>
-                        )}
-                        {q.passage && (
-                          <div className="text-base font-serif text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl leading-relaxed">
-                            {q.passage}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        {Object.entries(q.choices).map(([key, value]) => {
-                          const isUserChoice = userAnswer === key;
-                          const isCorrectChoice = key === q.correct_answer;
-                          let borderClass =
-                            "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900";
-                          let textClass = "text-gray-800 dark:text-gray-200";
-
-                          if (isCorrectChoice) {
-                            borderClass =
-                              "border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/20";
-                            textClass =
-                              "text-emerald-900 dark:text-emerald-200 font-medium";
-                          } else if (isUserChoice && !isCorrect) {
-                            borderClass =
-                              "border-rose-300 dark:border-rose-800/80 bg-rose-50/50 dark:bg-rose-950/20";
-                            textClass =
-                              "text-rose-900 dark:text-rose-200 font-medium";
-                          }
-
-                          return (
-                            <div
-                              key={key}
-                              className={`p-4 rounded-xl border-2 ${borderClass} ${textClass} flex items-start gap-4 transition-all`}
-                            >
-                              <span className="font-bold text-sm mt-0.5">
-                                {key}.
-                              </span>
-                              <span className="flex-1 text-base font-serif leading-relaxed">
-                                {value}
-                              </span>
-                              {isCorrectChoice && (
-                                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2.5 py-1 rounded-full shrink-0">
-                                  Correct Answer
-                                </span>
-                              )}
-                              {isUserChoice && !isCorrect && (
-                                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/50 px-2.5 py-1 rounded-full shrink-0">
-                                  Your Answer
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {q.rationale && (
-                        <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-6 space-y-2">
-                          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 uppercase tracking-wide">
-                            Explanation
-                          </h4>
-                          <p className="text-sm text-blue-950/80 dark:text-blue-200/90 leading-relaxed font-serif">
-                            {q.rationale}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </motion.div>
-
-          {/* Action Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col sm:flex-row gap-4 justify-center pt-4 pb-8"
-          >
-            <button
-              onClick={() => router.push("/practice-test")}
-              className="flex items-center justify-center h-14 px-8 rounded-full bg-[#171717] dark:bg-white text-white dark:text-gray-900 font-medium text-base hover:bg-black dark:hover:bg-gray-100 transition-all shadow-lg active:scale-95"
-            >
-              Return to Practice
-            </button>
-            <button
-              onClick={() => {
-                localStorage.setItem(
-                  "satTestResults",
-                  JSON.stringify({
-                    date: new Date().toISOString(),
-                    score,
-                    module2Difficulty,
-                    totalQuestions: questions.length,
-                    correctAnswers: correctAnswers.length,
-                    incorrectAnswers: incorrectAnswers.length,
-                    unanswered: unansweredCount,
-                    domainBreakdown,
-                  }),
-                );
-                alert("Results saved to browser storage!");
-              }}
-              className="flex items-center justify-center h-14 px-8 rounded-full bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 text-gray-900 dark:text-white font-medium text-base hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm active:scale-95"
-            >
-              Save Results
-            </button>
-          </motion.div>
         </div>
       </div>
     );
@@ -1824,258 +1483,518 @@ export default function PracticeTestPage() {
             </div>
           </header>
 
-          <main className="flex flex-col md:flex-row flex-1 overflow-auto md:overflow-hidden relative">
-            {selectedSection !== "Math" && (
-              <div
-                style={!isMobile ? { width: `${leftPaneWidth}%` } : undefined}
-                className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto md:overflow-y-auto bg-white dark:bg-gray-900 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
-                onClick={handleWordDoubleClick}
-              >
-                {isQuestionLoading ? (
-                  <PassageSkeletonBlock />
-                ) : (
-                  <div
-                    ref={passageRef}
-                    className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
-                  >
-                    {currentQuestion.has_graphic &&
-                      currentQuestion.graphics &&
-                      currentQuestion.graphics.length > 0 && (
-                        <div className="my-4">
-                          {currentQuestion.graphics.map((graphic, idx) => {
-                            const zoom = imageZoomLevels[idx] ?? 100;
-                            const imagePath =
-                              typeof graphic === "string"
-                                ? graphic
-                                : graphic.image_path;
-                            return (
-                              <div
-                                key={idx}
-                                className="mb-6 flex items-start gap-3"
-                              >
-                                {imagePath && (
-                                  <div className="flex-1 min-w-0 overflow-auto">
-                                    <img
-                                      src={imagePath}
-                                      alt="Question graphic"
-                                      style={{ width: `${zoom}%` }}
-                                      className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
-                                      onError={(e) => {
-                                        (
-                                          e.target as HTMLImageElement
-                                        ).style.display = "none";
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                                <div className="flex flex-col gap-2 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => adjustImageZoom(idx, 20)}
-                                    disabled={zoom >= 200}
-                                    aria-label="Zoom in"
-                                    className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                  >
-                                    <ZoomIn size={16} strokeWidth={2} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => adjustImageZoom(idx, -20)}
-                                    disabled={zoom <= 50}
-                                    aria-label="Zoom out"
-                                    className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                  >
-                                    <ZoomOut size={16} strokeWidth={2} />
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
+          <main className="flex flex-col flex-1 min-h-0 overflow-auto md:overflow-hidden relative">
+            <div className="w-full flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+              {isMath ? (
+                // Math: question pane + full-height calculator pane
+                <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-gray-900">
+                  {/* Question pane */}
+                  <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
+                    {/* Toolbar */}
+                    <div className="sticky top-0 z-10 px-6 md:px-8 py-3 bg-white dark:bg-gray-900 w-full max-w-3xl mx-auto">
+                      <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-full px-2 py-1.5">
+                        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                          <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
+                            {currentQuestionIndex + 1}
+                          </div>
+                          <button
+                            onClick={toggleMarkForReview}
+                            className={`flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full border-2 whitespace-nowrap transition-colors ${
+                              markedQuestions.has(currentQuestion.question_id)
+                                ? "bg-gray-900 border-gray-900 text-white"
+                                : "border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <Bookmark
+                              size={16}
+                              strokeWidth={2.5}
+                              className={
+                                markedQuestions.has(currentQuestion.question_id)
+                                  ? "text-white fill-white"
+                                  : "text-gray-600"
+                              }
+                            />
+                            <span className="hidden sm:inline">
+                              Mark for Review
+                            </span>
+                          </button>
                         </div>
-                      )}
-                    {memoizedPassage}
-                  </div>
-                )}
-              </div>
-            )}
 
-            {selectedSection !== "Math" && isMobile ? (
-              <div className="h-px w-full bg-gray-200 dark:bg-gray-700 shrink-0" />
-            ) : selectedSection !== "Math" ? (
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                className="group hidden md:flex w-3 relative flex-col items-center justify-center shrink-0 z-10 cursor-col-resize"
-                onMouseDown={handleMouseDown}
-              >
-                <div
-                  className={`absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600"}`}
-                />
-                <div
-                  className={`relative w-2 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 dark:bg-gray-600 group-hover:bg-gray-400 dark:group-hover:bg-gray-500"}`}
-                />
-              </div>
-            ) : null}
-
-            <div
-              style={
-                !isMobile
-                  ? {
-                      width:
-                        selectedSection === "Math"
-                          ? "100%"
-                          : `${100 - leftPaneWidth}%`,
-                    }
-                  : undefined
-              }
-              className="w-full md:w-auto bg-white dark:bg-gray-900 flex flex-col relative overflow-auto md:overflow-hidden"
-            >
-              <div className="px-6 md:px-8 py-3 bg-white dark:bg-gray-900 sticky top-0 z-10">
-                <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-full px-2 py-1.5">
-                  <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                    <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
-                      {currentQuestionIndex + 1}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => setIsCrossOutMode(!isCrossOutMode)}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${
+                              isCrossOutMode
+                                ? "bg-sky-400 border-sky-500 text-white"
+                                : "border-transparent text-gray-900 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <span className="font-sans font-bold text-xs">
+                              S
+                            </span>
+                            <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
+                          </button>
+                          <button
+                            onClick={() => setShowCalculator(!showCalculator)}
+                            className={`px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors ${
+                              showCalculator
+                                ? "bg-sky-400 border-sky-500 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            Calculator
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    <button
-                      onClick={toggleMarkForReview}
-                      className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-1.5 rounded-full border-2 whitespace-nowrap ${markedQuestions.has(currentQuestion.question_id) ? "bg-gray-900 dark:bg-gray-700 border-gray-900 dark:border-gray-600 text-white" : "border-transparent text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                    {/* Question content */}
+                    <div
+                      className={`${showCalculator ? "" : "mx-auto"} px-6 md:px-8 pb-8 pt-2 w-full max-w-3xl`}
                     >
-                      <Bookmark
-                        size={16}
-                        strokeWidth={2.5}
-                        className={
-                          markedQuestions.has(currentQuestion.question_id)
-                            ? "text-white fill-white shrink-0"
-                            : "text-gray-600 shrink-0"
-                        }
-                      />
-                      <span className="hidden sm:inline">Mark for Review</span>
-                    </button>
-                  </div>
+                      {isQuestionLoading ? (
+                        <QuestionSkeletonBlock />
+                      ) : (
+                        <>
+                          <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] dark:text-gray-100 leading-relaxed">
+                            {currentQuestion.question}
+                          </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => {
-                        if (currentQuestion) {
-                          const questionText = currentQuestion.question || "";
-                          const choices = Object.entries(
-                            currentQuestion.choices || {},
-                          )
-                            .map(([key, value]) => `${key}. ${value}`)
-                            .join("\n");
-                          const fullText = `${questionText}\n\n${choices}`;
-                          navigator.clipboard
-                            .writeText(fullText)
-                            .catch((err) => {
-                              console.error("Clipboard write failed:", err);
-                            });
-                        }
-                      }}
-                      className="w-9 h-9 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                      <Copy size={16} strokeWidth={2} />
-                    </button>
+                          {graphicsBlock}
+                          {tableBlock}
 
-                    <button
-                      onClick={() => setIsCrossOutMode(!isCrossOutMode)}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${isCrossOutMode ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"}`}
-                    >
-                      <span className="font-sans font-bold text-xs">S</span>
-                      <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                          {currentQuestion.choices &&
+                          Object.keys(currentQuestion.choices).length > 0 ? (
+                            <div className="space-y-3">
+                              {Object.entries(currentQuestion.choices).map(
+                                ([key, value]) => {
+                                  const isSelected = selectedAnswer === key;
+                                  const isHighlighted =
+                                    highlightedAnswer === key;
+                                  const isEliminated =
+                                    eliminatedChoices.has(key);
 
-              <div
-                ref={questionRef}
-                className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 overflow-y-auto flex-1 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
-                onMouseUp={handleTextSelection}
-                onClick={handleWordDoubleClick}
-              >
-                {isQuestionLoading ? (
-                  <QuestionSkeletonBlock />
-                ) : (
-                  <div className="max-w-3xl mx-auto md:mx-0">
-                    {currentQuestion.prompt && (
-                      <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] dark:text-gray-100 leading-relaxed">
-                        {currentQuestion.prompt}
-                      </div>
-                    )}
+                                  const borderClass = isHighlighted
+                                    ? "border-sky-500"
+                                    : isEliminated
+                                      ? "border-gray-300 bg-gray-50/40"
+                                      : "border-gray-600 hover:border-gray-900";
+                                  const textClass = isEliminated
+                                    ? "text-gray-400 line-through"
+                                    : "text-[#1C1C1E] dark:text-gray-100";
 
-                    <div className="space-y-3">
-                      {Object.entries(currentQuestion.choices).map(
-                        ([key, value]) => {
-                          const isSelected = selectedAnswer === key;
-                          const isHighlighted = highlightedAnswer === key;
-                          const isEliminated = eliminatedChoices.has(key);
+                                  return (
+                                    <div
+                                      key={key}
+                                      onClick={() => handleAnswerHighlight(key)}
+                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all bg-white dark:bg-gray-800 min-w-0 cursor-pointer ${borderClass}`}
+                                    >
+                                      <div
+                                        className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans ${
+                                          isHighlighted
+                                            ? "bg-sky-500 text-white"
+                                            : isSelected
+                                              ? "bg-black text-white"
+                                              : isEliminated
+                                                ? "border-2 border-gray-300 text-gray-400"
+                                                : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
+                                        }`}
+                                      >
+                                        {key}
+                                      </div>
 
-                          let borderClass =
-                            "border-gray-400 dark:border-gray-600";
-                          let bgClass = "bg-white dark:bg-gray-800";
-                          let textClass = isEliminated
-                            ? "text-gray-400 dark:text-gray-500 line-through"
-                            : "text-[#1C1C1E] dark:text-gray-100";
+                                      {currentQuestion.choice_graphics?.[
+                                        key
+                                      ] ? (
+                                        <img
+                                          src={
+                                            currentQuestion.choice_graphics[key]
+                                          }
+                                          alt={`Choice ${key}`}
+                                          className="h-auto max-w-full"
+                                        />
+                                      ) : (
+                                        <span
+                                          className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                                        >
+                                          {value}
+                                        </span>
+                                      )}
 
-                          if (isHighlighted) {
-                            borderClass = "border-sky-500";
-                            bgClass = "bg-white dark:bg-gray-800";
-                          } else if (!isEliminated) {
-                            borderClass =
-                              "border-gray-600 dark:border-gray-500 hover:border-gray-900 dark:hover:border-gray-400";
-                          } else {
-                            borderClass =
-                              "border-gray-300 dark:border-gray-600 bg-gray-50/40 dark:bg-gray-700/40";
-                          }
-
-                          return (
-                            <div
-                              key={key}
-                              onClick={() => handleAnswerHighlight(key)}
-                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 cursor-pointer`}
-                            >
-                              <div
-                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
-                                  isHighlighted
-                                    ? "bg-sky-500 text-white"
-                                    : isSelected
-                                      ? "bg-black text-white"
-                                      : isEliminated
-                                        ? "border-2 border-gray-300 text-gray-400"
-                                        : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
-                                }`}
-                              >
-                                {key}
-                              </div>
-
-                              <span
-                                className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                              >
-                                {value}
-                              </span>
-
-                              {isCrossOutMode && (
-                                <button
-                                  onClick={(e) => toggleElimination(e, key)}
-                                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors relative ml-2"
-                                >
-                                  <div
-                                    className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 dark:border-gray-600 text-gray-400 dark:text-gray-500" : "border-gray-500 dark:border-gray-400 text-gray-600 dark:text-gray-300 group-hover:border-gray-800 dark:group-hover:border-gray-300 group-hover:text-gray-800 dark:group-hover:text-gray-200"}`}
-                                  >
-                                    {key}
-                                    <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
-                                  </div>
-                                </button>
+                                      {isCrossOutMode && (
+                                        <button
+                                          onClick={(e) =>
+                                            toggleElimination(e, key)
+                                          }
+                                          className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full ml-2"
+                                        >
+                                          <div className="relative flex items-center justify-center w-6 h-6 rounded-full border-2 border-gray-500 text-gray-600 text-[11px] font-bold font-sans">
+                                            {key}
+                                            <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
+                                          </div>
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                },
                               )}
                             </div>
-                          );
-                        },
+                          ) : (
+                            <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <p className="text-gray-600 dark:text-gray-400">
+                                Enter your answer below.
+                              </p>
+                              <input
+                                value={
+                                  selectedAnswers[currentQuestionIndex] ?? ""
+                                }
+                                onChange={(e) =>
+                                  handleAnswerSelect(e.target.value)
+                                }
+                                placeholder="Enter your answer"
+                                className="mt-4 w-full max-w-xs p-4 rounded border-2 border-gray-300 font-mono text-xl text-center dark:bg-gray-900"
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Calculator pane: full height, no padding */}
+                  <AnimatePresence>
+                    {showCalculator && (
+                      <motion.aside
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: "50%", opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="hidden md:flex flex-col shrink-0 border-l-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                            Graphing Calculator
+                          </h3>
+                          <button
+                            onClick={() => setShowCalculator(false)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <X
+                              size={18}
+                              className="text-gray-600 dark:text-gray-400"
+                            />
+                          </button>
+                        </div>
+                        <div className="flex-1 min-h-0">
+                          <DesmosCalculator />
+                        </div>
+                      </motion.aside>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                // Reading & Writing: Split pane layout
+                <>
+                  <div
+                    style={
+                      !isMobile ? { width: `${leftPaneWidth}%` } : undefined
+                    }
+                    className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto md:overflow-y-auto bg-white dark:bg-gray-900 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                    onClick={handleWordDoubleClick}
+                  >
+                    {isQuestionLoading ? (
+                      <PassageSkeletonBlock />
+                    ) : (
+                      <div
+                        ref={passageRef}
+                        className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
+                      >
+                        {memoizedPassage && (
+                          <div className="mb-6">{memoizedPassage}</div>
+                        )}
+                        {currentQuestion.has_graphic &&
+                          currentQuestion.graphics &&
+                          currentQuestion.graphics.length > 0 && (
+                            <div className="my-4">
+                              {currentQuestion.graphics.map((graphic, idx) => {
+                                const zoom = imageZoomLevels[idx] ?? 100;
+                                const imagePath =
+                                  typeof graphic === "string"
+                                    ? graphic
+                                    : graphic.image_path;
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="mb-6 flex items-start gap-3"
+                                  >
+                                    {imagePath && (
+                                      <div className="flex-1 min-w-0 overflow-auto">
+                                        <img
+                                          src={imagePath}
+                                          alt="Question graphic"
+                                          style={{ width: `${zoom}%` }}
+                                          className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
+                                          onError={(e) => {
+                                            (
+                                              e.target as HTMLImageElement
+                                            ).style.display = "none";
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex flex-col gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => adjustImageZoom(idx, 20)}
+                                        disabled={zoom >= 200}
+                                        aria-label="Zoom in"
+                                        className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                      >
+                                        <ZoomIn size={16} strokeWidth={2} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          adjustImageZoom(idx, -20)
+                                        }
+                                        disabled={zoom <= 50}
+                                        aria-label="Zoom out"
+                                        className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
+                                      >
+                                        <ZoomOut size={16} strokeWidth={2} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+
+                  {isMobile ? (
+                    <div className="h-px w-full bg-gray-200 dark:bg-gray-700 shrink-0" />
+                  ) : (
+                    <div
+                      role="separator"
+                      aria-orientation="vertical"
+                      className="group hidden md:flex w-3 relative flex-col items-center justify-center shrink-0 z-10 cursor-col-resize"
+                      onMouseDown={handleMouseDown}
+                    >
+                      <div
+                        className={`absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-200 dark:bg-gray-700 group-hover:bg-gray-300 dark:group-hover:bg-gray-600"}`}
+                      />
+                      <div
+                        className={`relative w-2 h-10 rounded-full transition-colors ${isResizing ? "bg-sky-400" : "bg-gray-300 dark:bg-gray-600 group-hover:bg-gray-400 dark:group-hover:bg-gray-500"}`}
+                      />
+                    </div>
+                  )}
+
+                  <div
+                    style={
+                      !isMobile
+                        ? {
+                            width: `${100 - leftPaneWidth}%`,
+                          }
+                        : undefined
+                    }
+                    className="w-full md:w-auto bg-white dark:bg-gray-900 flex flex-col relative overflow-auto md:overflow-hidden"
+                  >
+                    <div className="px-6 md:px-8 py-3 bg-white dark:bg-gray-900 sticky top-0 z-10">
+                      <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-full px-2 py-1.5">
+                        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                          <div className="bg-black text-white w-8 h-8 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0">
+                            {currentQuestionIndex + 1}
+                          </div>
+
+                          <button
+                            onClick={toggleMarkForReview}
+                            className={`flex items-center gap-2 text-sm font-semibold transition-colors px-3 py-1.5 rounded-full border-2 whitespace-nowrap ${markedQuestions.has(currentQuestion.question_id) ? "bg-gray-900 dark:bg-gray-700 border-gray-900 dark:border-gray-600 text-white" : "border-transparent text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                          >
+                            <Bookmark
+                              size={16}
+                              strokeWidth={2.5}
+                              className={
+                                markedQuestions.has(currentQuestion.question_id)
+                                  ? "text-white fill-white shrink-0"
+                                  : "text-gray-600 shrink-0"
+                              }
+                            />
+                            <span className="hidden sm:inline">
+                              Mark for Review
+                            </span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              if (currentQuestion) {
+                                const questionText =
+                                  currentQuestion.question || "";
+                                const choices = Object.entries(
+                                  currentQuestion.choices || {},
+                                )
+                                  .map(([key, value]) => `${key}. ${value}`)
+                                  .join("\n");
+                                const fullText = `${questionText}\n\n${choices}`;
+                                navigator.clipboard
+                                  .writeText(fullText)
+                                  .catch((err) => {
+                                    console.error(
+                                      "Clipboard write failed:",
+                                      err,
+                                    );
+                                  });
+                              }
+                            }}
+                            className="w-9 h-9 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                          >
+                            <Copy size={16} strokeWidth={2} />
+                          </button>
+
+                          <button
+                            onClick={() => setIsCrossOutMode(!isCrossOutMode)}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center relative border-2 transition-colors ${isCrossOutMode ? "bg-sky-400 border-sky-500 text-white" : "border-transparent text-gray-900 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+                          >
+                            <span className="font-sans font-bold text-xs">
+                              S
+                            </span>
+                            <div className="absolute w-[16px] h-[1.5px] bg-current -rotate-45" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      ref={questionRef}
+                      className={`p-5 sm:p-6 md:p-8 pt-5 sm:pt-6 pb-6 overflow-y-auto flex-1 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                      onMouseUp={handleTextSelection}
+                      onClick={handleWordDoubleClick}
+                    >
+                      {isQuestionLoading ? (
+                        <QuestionSkeletonBlock />
+                      ) : (
+                        <div className="max-w-3xl mx-auto md:mx-0">
+                          {(currentQuestion.prompt ||
+                            currentQuestion.question) && (
+                            <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] dark:text-gray-100 leading-relaxed">
+                              {currentQuestion.prompt ||
+                                currentQuestion.question}
+                            </div>
+                          )}
+
+                          {currentQuestion.choices &&
+                          Object.keys(currentQuestion.choices).length > 0 ? (
+                            <div className="space-y-3">
+                              {Object.entries(currentQuestion.choices).map(
+                                ([key, value]) => {
+                                  const isSelected = selectedAnswer === key;
+                                  const isHighlighted =
+                                    highlightedAnswer === key;
+                                  const isEliminated =
+                                    eliminatedChoices.has(key);
+
+                                  let borderClass = "border-gray-400";
+                                  let bgClass = "bg-white dark:bg-gray-800";
+                                  let textClass = isEliminated
+                                    ? "text-gray-400 dark:text-gray-500 line-through"
+                                    : "text-[#1C1C1E] dark:text-gray-100";
+
+                                  if (isHighlighted) {
+                                    borderClass = "border-sky-500";
+                                    bgClass = "bg-white dark:bg-gray-800";
+                                  } else if (!isEliminated) {
+                                    borderClass =
+                                      "border-gray-600 hover:border-gray-900";
+                                  } else {
+                                    borderClass =
+                                      "border-gray-300 bg-gray-50/40";
+                                  }
+
+                                  return (
+                                    <div
+                                      key={key}
+                                      onClick={() => handleAnswerHighlight(key)}
+                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 cursor-pointer`}
+                                    >
+                                      <div
+                                        className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
+                                          isHighlighted
+                                            ? "bg-sky-500 text-white"
+                                            : isSelected
+                                              ? "bg-black text-white"
+                                              : isEliminated
+                                                ? "border-2 border-gray-300 text-gray-400"
+                                                : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
+                                        }`}
+                                      >
+                                        {key}
+                                      </div>
+
+                                      {currentQuestion.choice_graphics?.[
+                                        key
+                                      ] ? (
+                                        <img
+                                          src={
+                                            currentQuestion.choice_graphics[key]
+                                          }
+                                          alt={`Choice ${key}`}
+                                          className="h-auto max-w-full"
+                                        />
+                                      ) : (
+                                        <span
+                                          className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                                        >
+                                          {value}
+                                        </span>
+                                      )}
+
+                                      {isCrossOutMode && (
+                                        <button
+                                          onClick={(e) =>
+                                            toggleElimination(e, key)
+                                          }
+                                          className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors relative ml-2"
+                                        >
+                                          <div
+                                            className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 dark:border-gray-600 text-gray-400 dark:text-gray-500" : "border-gray-500 dark:border-gray-400 text-gray-600 dark:text-gray-300 group-hover:border-gray-800 dark:group-hover:border-gray-300 group-hover:text-gray-800 dark:group-hover:text-gray-200"}`}
+                                          >
+                                            {key}
+                                            <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
+                                          </div>
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                },
+                              )}
+                            </div>
+                          ) : (
+                            <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                              <p className="text-gray-600 dark:text-gray-400">
+                                This is a student-produced response question.
+                                Enter your answer in the grid provided.
+                              </p>
+                              <input
+                                value={
+                                  selectedAnswers[currentQuestionIndex] ?? ""
+                                }
+                                onChange={(e) =>
+                                  handleAnswerSelect(e.target.value)
+                                }
+                                placeholder="Enter your answer"
+                                className="mt-4 w-full max-w-xs p-4 rounded border-2 border-gray-300 font-mono text-xl text-center dark:bg-gray-900"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </main>
 

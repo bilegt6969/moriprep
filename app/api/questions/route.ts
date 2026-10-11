@@ -20,7 +20,7 @@ function loadQuestionsData(
     // Determine which JSON file to load based on test type
     const isMath = testType === "Math";
     const dataFile = isMath
-      ? "deepseek_json_20261010_361c4d.json"
+      ? "october_sat_math_questions.json"
       : "october_sat_rw_questions.json";
     const cacheVar = isMath ? cachedOctoberSATMathData : cachedOctoberSATData;
     const pathVar = isMath ? octoberSATMathPath : octoberSATPath;
@@ -51,14 +51,48 @@ function loadQuestionsData(
               allQuestions.push(...questionsWithMetadata);
             }
           });
+
+          // Filter out bad questions (duplicate_of exists)
+          // Allow both multiple choice (has choices) and student-produced response (has correct_answer)
+          const usableQuestions = allQuestions.filter(
+            (q: any) =>
+              !q.duplicate_of &&
+              ((q.choices && Object.keys(q.choices).length > 0) ||
+                q.question_type === "student_produced_response"),
+          );
+
+          // Limit to 22 questions per module for October SAT Math AFTER filtering
+          // Group by module and limit each to 22
+          let finalQuestions = usableQuestions;
           if (isMath) {
-            cachedOctoberSATMathData = allQuestions;
-          } else {
-            cachedOctoberSATData = allQuestions;
+            const questionsByModule: Record<string, any[]> = {};
+            usableQuestions.forEach((q) => {
+              const moduleKey = q.module || q.module_level;
+              if (!questionsByModule[moduleKey]) {
+                questionsByModule[moduleKey] = [];
+              }
+              questionsByModule[moduleKey].push(q);
+            });
+
+            // Take first 22 from each module
+            const limitedQuestions: any[] = [];
+            Object.values(questionsByModule).forEach((moduleQuestions) => {
+              limitedQuestions.push(...moduleQuestions.slice(0, 22));
+            });
+
+            finalQuestions = limitedQuestions;
           }
+
+          if (isMath) {
+            cachedOctoberSATMathData = finalQuestions;
+          } else {
+            cachedOctoberSATData = finalQuestions;
+          }
+
           console.log(
             `October SAT ${testType} questions loaded and cached. Total questions:`,
-            allQuestions.length,
+            finalQuestions.length,
+            `(filtered from ${allQuestions.length})`,
           );
         } else {
           // Fallback: if no modules structure, use the data as-is

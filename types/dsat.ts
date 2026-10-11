@@ -55,6 +55,13 @@ export interface DSATQuestion {
   question_number?: number;
   answer_source?: string;
   has_watermark_artifacts?: boolean;
+  choice_graphics?: {
+    [key: string]: string;
+  };
+  accepted_answers?: string[];
+  question_type?: "mcq" | "spr";
+  status?: string;
+  duplicate_of?: string;
 }
 
 // SAT Math Question Bank types
