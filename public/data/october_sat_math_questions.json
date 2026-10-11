@@ -1,0 +1,912 @@
+{
+  "test_name": "October DSAT",
+  "assessment": "SAT",
+  "section": "Math",
+  "source_files": ["bluebookycom.pdf (main source)"],
+  "modules": [
+    {
+      "module": "Module 1",
+      "module_level": "standard",
+      "module_key": "m1",
+      "question_count": 22,
+      "questions": [
+        {
+          "question_id": "oct_dsat_math_pdf_m1_01",
+          "assessment": "SAT",
+          "test": "Math",
+          "module": "Module 1",
+          "module_level": "standard",
+          "question_number": 1,
+          "source_set": "bluebooky_pdf",
+          "domain": "Algebra",
+          "skill": "Linear functions",
+          "difficulty": "Medium",
+          "question": "The function h is defined by h(x) = 100x − 50. What is the value of h(x) when x = 6?",
+          "choices": { "A": "56", "B": "156", "C": "550", "D": "650" },
+          "question_type": "multiple_choice",
+          "correct_answer": "C",
+          "correct_answer_text": "550",
+          "rationale": "h(6) = 600 − 50 = 550.",
+          "has_graphic": false,
+          "source_page": 45
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_02",
+          "question_number": 2,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Medium",
+          "question": "The graph shown gives the estimated value, in dollars, of a mountain bike as a function of the number of months since it was purchased. What is the best interpretation of the y-intercept of the graph in this context?",
+          "choices": {
+            "A": "The estimated value of the bike was $275 when it was purchased.",
+            "B": "The estimated value of the bike 24 months after it was purchased was $275.",
+            "C": "The estimated value of the bike had decreased by $275 in the 24 months after it was purchased.",
+            "D": "The estimated value of the bike decreased by approximately 2.75% each year after it was purchased."
+          },
+          "correct_answer": "A",
+          "rationale": "The y-intercept is the value at 0 months, the purchase price of about $275.",
+          "has_graphic": true,
+          "source_page": 45
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_03",
+          "question_number": 3,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Percentages",
+          "difficulty": "Medium",
+          "question": "Out of 200 attempts, 55% were successful. How many of these attempts were successful?",
+          "question_type": "student_produced_response",
+          "correct_answer": "110",
+          "rationale": "0.55 × 200 = 110.",
+          "source_page": 45
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_04",
+          "question_number": 4,
+          "domain": "Advanced Math",
+          "skill": "Equivalent expressions",
+          "difficulty": "Medium",
+          "question": "Which expression is equivalent to 29x² + 29?",
+          "choices": {
+            "A": "29(x² + 1)",
+            "B": "29(x² + 29)",
+            "C": "29(29x² + 1)",
+            "D": "29(x² + 1/29)"
+          },
+          "correct_answer": "A",
+          "rationale": "Factor out 29.",
+          "source_page": 46
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_05",
+          "question_number": 5,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Medium",
+          "question": "If 2(x − 3) = (2)(90), what is the value of x − 3?",
+          "choices": { "A": "30", "B": "60", "C": "90", "D": "180" },
+          "correct_answer": "C",
+          "rationale": "Divide both sides by 2: x − 3 = 90.",
+          "source_page": 46
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_06",
+          "question_number": 6,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Ratios, rates, proportional relationships, and units",
+          "difficulty": "Medium",
+          "question": "A commercial water pump drains water from a reservoir at a constant rate of 180 gallons per minute. At this rate, how many hours will it take to drain 32,400 gallons of water?",
+          "choices": { "A": "2.5", "B": "3.0", "C": "3.5", "D": "4.0" },
+          "correct_answer": "B",
+          "rationale": "32,400 ÷ 180 = 180 minutes = 3 hours.",
+          "source_page": 46
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_07",
+          "question_number": 7,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Medium",
+          "question": "A store sells two different-sized bottles of a certain shampoo. The store's sales of this shampoo totaled 902.07 dollars last month. The equation 4.57x + 6.08y = 902.07 represents this situation, where x is the number of smaller bottles sold and y is the number of larger bottles sold. According to the equation, what is the price, in dollars, of each smaller bottle?",
+          "question_type": "student_produced_response",
+          "correct_answer": "4.57",
+          "rationale": "The coefficient of x is the price of each smaller bottle.",
+          "source_page": 46
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_08",
+          "question_number": 8,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Lines, angles, and triangles",
+          "difficulty": "Medium",
+          "question": "Triangle ABC is similar to triangle XYZ, where A, B, and C correspond to X, Y, and Z, respectively. In triangle ABC, the length of AB is 180 and the length of BC is 900. In triangle XYZ, the length of YZ is 80. What is the length of XY?",
+          "choices": { "A": "288", "B": "196", "C": "80", "D": "16" },
+          "correct_answer": "D",
+          "rationale": "BC corresponds to YZ, so the scale is 80/900; XY = 180 × 80/900 = 16.",
+          "source_page": 47
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_09",
+          "question_number": 9,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Medium",
+          "question": "|x| − 43 = 0. Which value is a solution to the given equation?",
+          "choices": { "A": "1/43", "B": "0", "C": "−1/43", "D": "−43" },
+          "correct_answer": "D",
+          "rationale": "|x| = 43, so x = 43 or x = −43; only −43 is listed.",
+          "source_page": 47
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_10",
+          "question_number": 10,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Medium",
+          "question": "In the xy-plane, line k passes through the points (0, −8) and (1, −5). Which equation defines line k?",
+          "choices": {
+            "A": "y = (1/3)x − 8",
+            "B": "y = −x + 1/3",
+            "C": "y = 3x − 8",
+            "D": "y = −x + 3"
+          },
+          "correct_answer": "C",
+          "rationale": "Slope = 3 and the y-intercept is −8.",
+          "source_page": 47
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_11",
+          "question_number": 11,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Two-variable data: models and scatterplots",
+          "difficulty": "Medium",
+          "question": "Which of the following equations is the most appropriate linear model for the data shown in the scatterplot?",
+          "choices": {
+            "A": "y = 0.2 + 2.25x",
+            "B": "y = 0.2 − 2.25x",
+            "C": "y = 2.25 + 0.2x",
+            "D": "y = 2.25 − 0.2x"
+          },
+          "correct_answer": "A",
+          "has_graphic": true,
+          "source_page": 48
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_12",
+          "question_number": 12,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Medium",
+          "question": "What is the x-intercept of the graph of y = (21 − x)/(ax + b) in the xy-plane, where a and b are positive constants?",
+          "choices": {
+            "A": "(21, 0)",
+            "B": "(0, −21)",
+            "C": "(0, 21/b)",
+            "D": "(−b/a, 0)"
+          },
+          "correct_answer": "A",
+          "rationale": "Set y = 0: the numerator 21 − x = 0, so x = 21.",
+          "source_page": 48
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_13",
+          "question_number": 13,
+          "domain": "Algebra",
+          "skill": "Linear inequalities in one or two variables",
+          "difficulty": "Medium",
+          "question": "A model estimates that a glacier moves between 17 and 24 centimeters per day. Which inequality represents possible values of x, where x is the total distance, in centimeters, the glacier moves in 2 days?",
+          "choices": {
+            "A": "0 ≤ x ≤ 2",
+            "B": "(17)(0.5) ≤ x ≤ (24)(0.5)",
+            "C": "17 ≤ x ≤ 24",
+            "D": "(17)(2) ≤ x ≤ (24)(2)"
+          },
+          "correct_answer": "D",
+          "source_page": 49
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_14",
+          "question_number": 14,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Ratios, rates, proportional relationships, and units",
+          "difficulty": "Medium",
+          "question": "In the ancient Roman measurement system, a leuga was a unit of length that was equal to 7,500 pedes. In this measurement system, how many pedes were equivalent to 4.6 leugas?",
+          "question_type": "student_produced_response",
+          "correct_answer": "34500",
+          "source_page": 49
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_15",
+          "question_number": 15,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear equations in one variable and systems of equations in two variables",
+          "difficulty": "Medium",
+          "question": "A rectangle has a width of n yards and a length of (n + 7) yards. If the rectangle has an area of 198 square yards, what is the value of n?",
+          "question_type": "student_produced_response",
+          "correct_answer": "11",
+          "source_page": 49
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_16",
+          "question_number": 16,
+          "domain": "Advanced Math",
+          "skill": "Equivalent expressions",
+          "difficulty": "Medium",
+          "question": "55 = 2K/v². For an object with a mass of 55 kilograms, the given equation relates the kinetic energy K, in joules, of the object to the object's speed v, in meters per second, where K and v are positive. Which equation correctly expresses this object's speed, in meters per second, in terms of the object's kinetic energy, in joules?",
+          "choices": {
+            "A": "v = 2K/55²",
+            "B": "v = 55²/(2K)",
+            "C": "v = √(55/(2K))",
+            "D": "v = √(2K/55)"
+          },
+          "correct_answer": "D",
+          "source_page": 49
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_17",
+          "question_number": 17,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Medium",
+          "question": "If j/k = 83 and 44j/(22xk) = 83, what is the value of x?",
+          "choices": { "A": "22/83", "B": "1/2", "C": "2", "D": "44" },
+          "correct_answer": "C",
+          "source_page": 50
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_18",
+          "question_number": 18,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Medium",
+          "question": "A certain company measures its solar cell production C(n), in peak kilowatts, generated by all the solar cells manufactured by the company. The company's solar cell production grew by approximately 22% each year for the 5 years following 2013. If solar cell production was 7,138 peak kilowatts in 2013, which of the following functions best models the solar cell production, in peak kilowatts, n years after 2013, where 0 ≤ n ≤ 5?",
+          "choices": {
+            "A": "C(n) = 7,138(0.22)^n",
+            "B": "C(n) = 7,138(1.22)^n",
+            "C": "C(n) = 0.22(7,138)^n",
+            "D": "C(n) = 1.22(7,138)^n"
+          },
+          "correct_answer": "B",
+          "source_page": 50
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_19",
+          "question_number": 19,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Right triangles and trigonometry",
+          "difficulty": "Medium",
+          "question": "In the triangle shown, the value of x is 19. What is the value of sin A?",
+          "choices": { "A": "1/√3", "B": "1/√2", "C": "1", "D": "√2" },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 50
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_20",
+          "question_number": 20,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Area and volume",
+          "difficulty": "Medium",
+          "question": "A right square prism has a height of 15 units. The volume of the prism is 1,815 cubic units. What is the length, in units, of an edge of the base?",
+          "question_type": "student_produced_response",
+          "correct_answer": "11",
+          "source_page": 51
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_21",
+          "question_number": 21,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear equations in one variable and systems of equations in two variables",
+          "difficulty": "Medium",
+          "question": "y = x − 1 and y = 19(x − 1)² − 20. A solution to the given system of equations is (x, y). What is one possible value of x − 1?",
+          "choices": { "A": "−2", "B": "−20/19", "C": "−1", "D": "−1/19" },
+          "correct_answer": "C",
+          "source_page": 51
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m1_22",
+          "question_number": 22,
+          "domain": "Algebra",
+          "skill": "Systems of two linear equations in two variables",
+          "difficulty": "Medium",
+          "question": "18x + 6y = 8y + 9 and ty = 1/5 + 9x. In the given system of equations, t is a constant. If the system has no solution, what is the value of t?",
+          "question_type": "student_produced_response",
+          "correct_answer": "1",
+          "rationale": "The lines must be parallel: slope equality gives t = 1.",
+          "source_page": 51
+        }
+      ]
+    },
+    {
+      "module": "Module 2",
+      "module_level": "easy",
+      "module_key": "m2e",
+      "question_count": 22,
+      "questions": [
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_01",
+          "question_number": 1,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear equations in one variable and systems of equations in two variables",
+          "difficulty": "Easy",
+          "question": "The system of two equations, y = 22/x and y = 22x, is graphed in the xy-plane as shown. Which ordered pair is a solution to this system?",
+          "choices": {
+            "A": "(0, 0)",
+            "B": "(0, 22)",
+            "C": "(1, 22)",
+            "D": "(22, 22)"
+          },
+          "correct_answer": "C",
+          "has_graphic": true,
+          "source_page": 52
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_02",
+          "question_number": 2,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Lines, angles, and triangles",
+          "difficulty": "Easy",
+          "question": "In the figure, two lines intersect at a point. If r = 71, what is the value of s?",
+          "choices": { "A": "19", "B": "71", "C": "161", "D": "251" },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 53
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_03",
+          "question_number": 3,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Easy",
+          "question": "The y-intercept of the graph shown is (x, y). What is the value of y?",
+          "question_type": "student_produced_response",
+          "correct_answer": "7",
+          "has_graphic": true,
+          "source_page": 53
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_04",
+          "question_number": 4,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Easy",
+          "question": "x + y = 88. The given equation relates the total number of marble queen pothos stems, x, and the total number of snow queen pothos stems, y, a plant nursery propagates to create pothos plants. If 28 snow queen pothos stems are propagated, how many marble queen pothos stems are propagated?",
+          "choices": { "A": "88", "B": "60", "C": "32", "D": "28" },
+          "correct_answer": "B",
+          "source_page": 53
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_05",
+          "question_number": 5,
+          "domain": "Algebra",
+          "skill": "Linear inequalities in one or two variables",
+          "difficulty": "Easy",
+          "question": "The shaded region shown represents the solutions to which inequality?",
+          "choices": {
+            "A": "y < 3x + 4",
+            "B": "y < 3x − 4",
+            "C": "y > 3x + 4",
+            "D": "y > 3x − 4"
+          },
+          "correct_answer": "C",
+          "has_graphic": true,
+          "source_page": 54
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_06",
+          "question_number": 6,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Easy",
+          "question": "If 3(2x − 5) = 4x + 7, what is the value of x?",
+          "choices": { "A": "8", "B": "11", "C": "14", "D": "22" },
+          "correct_answer": "B",
+          "source_page": 54
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_07",
+          "question_number": 7,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Two-variable data: models and scatterplots",
+          "difficulty": "Easy",
+          "question": "A botanist recorded the weight, in pounds, of all apricots that grew on a dwarf apricot tree during each growing season after the tree's transplantation. The scatterplot shows this weight, in pounds, for each growing season after the tree's transplantation. What was the weight, to the nearest pound, of all apricots that grew on the tree during the 4th growing season after the tree's transplantation?",
+          "question_type": "student_produced_response",
+          "correct_answer": "30",
+          "has_graphic": true,
+          "source_page": 55
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_08",
+          "question_number": 8,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Easy",
+          "question": "A shipment consists of 5-pound boxes and 10-pound boxes with a total weight of 300 pounds. There are 13 10-pound boxes in the shipment. How many 5-pound boxes are in the shipment?",
+          "choices": { "A": "5", "B": "10", "C": "13", "D": "34" },
+          "correct_answer": "D",
+          "source_page": 55
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_09",
+          "question_number": 9,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "One-variable data: distributions and measures of center and spread",
+          "difficulty": "Easy",
+          "question": "A data set consists of 8 integers: 4, 7, 7, 9, 12, 14, 15, 20. What is the median of this data set?",
+          "choices": { "A": "7", "B": "9", "C": "10.5", "D": "11" },
+          "correct_answer": "C",
+          "source_page": 55
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_10",
+          "question_number": 10,
+          "domain": "Advanced Math",
+          "skill": "Equivalent expressions",
+          "difficulty": "Easy",
+          "question": "Which expression is equivalent to 18x² − 3x²?",
+          "choices": { "A": "−54x²", "B": "15x²", "C": "21x²", "D": "42x²" },
+          "correct_answer": "B",
+          "source_page": 56
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_11",
+          "question_number": 11,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Easy",
+          "question": "4(x − 5) + 8 = 2(x − 3) + 26. What value of x is the solution to the given equation?",
+          "choices": { "A": "56", "B": "32", "C": "28", "D": "16" },
+          "correct_answer": "D",
+          "source_page": 56
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_12",
+          "question_number": 12,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Inference from sample statistics and margin of error",
+          "difficulty": "Easy",
+          "question": "A market researcher collected data on the price of an iced coffee at 42 locations selected at random in a state. The mean price of an iced coffee in the state was estimated to be $1.37, with an associated margin of error of $0.05. Which of the following is a plausible statement about the mean price of an iced coffee for all locations that sell this product in the state?",
+          "choices": {
+            "A": "It is between $1.32 and $1.42.",
+            "B": "It is either less than $1.32 or greater than $1.42.",
+            "C": "It is less than $1.32.",
+            "D": "It is greater than $1.42."
+          },
+          "correct_answer": "A",
+          "source_page": 56
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_13",
+          "question_number": 13,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Easy",
+          "question": "A teacher is creating an assignment worth 10 points. The assignment will consist of questions worth 1 point and questions worth 2 points. Which equation represents this situation, where x represents the number of 1-point questions and y represents the number of 2-point questions?",
+          "choices": {
+            "A": "3xy = 10",
+            "B": "3(x + y) = 10",
+            "C": "2x + y = 10",
+            "D": "x + 2y = 10"
+          },
+          "correct_answer": "D",
+          "source_page": 56
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_14",
+          "question_number": 14,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "One-variable data: distributions and measures of center and spread",
+          "difficulty": "Easy",
+          "question": "Data set X: 8, 12, 12, 16. Data set Y: 8, 12, 12, 16, 33. Which statement correctly compares the mean of data set X and the mean of data set Y?",
+          "choices": {
+            "A": "The mean of data set X is greater than the mean of data set Y.",
+            "B": "The mean of data set X is less than the mean of data set Y.",
+            "C": "The means of data set X and data set Y are equal.",
+            "D": "There is not enough information to compare the means."
+          },
+          "correct_answer": "B",
+          "source_page": 57
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_15",
+          "question_number": 15,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Easy",
+          "question": "The function f is defined by f(x) = x³ + 26. What is the value of f(2)?",
+          "question_type": "student_produced_response",
+          "correct_answer": "34",
+          "source_page": 57
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_16",
+          "question_number": 16,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Easy",
+          "question": "y = 2,200(a)^x. The given equation, where a is a positive constant, gives the predicted number of bacteria, y, in a growth medium x hours after the number of bacteria was initially measured. According to the equation, what was the predicted number of bacteria initially measured in the growth medium?",
+          "question_type": "student_produced_response",
+          "correct_answer": "2200",
+          "source_page": 57
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_17",
+          "question_number": 17,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Area and volume",
+          "difficulty": "Easy",
+          "question": "The figure shows the lengths, in units, of two sides of a triangle. What is the area, in square units, of the triangle?",
+          "choices": { "A": "15", "B": "11", "C": "6", "D": "5" },
+          "correct_answer": "A",
+          "has_graphic": true,
+          "source_page": 57
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_18",
+          "question_number": 18,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear equations in one variable and systems of equations in two variables",
+          "difficulty": "Easy",
+          "question": "What is the positive solution to the equation x² − 7x − 18 = 0?",
+          "choices": { "A": "2", "B": "6", "C": "9", "D": "18" },
+          "correct_answer": "C",
+          "source_page": 58
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_19",
+          "question_number": 19,
+          "domain": "Algebra",
+          "skill": "Systems of two linear equations in two variables",
+          "difficulty": "Easy",
+          "question": "2x − 2y = 8 and −3y = 18. The solution to the given system of equations is (x, y). What is the value of x?",
+          "question_type": "student_produced_response",
+          "correct_answer": "1",
+          "source_page": 58
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_20",
+          "question_number": 20,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Lines, angles, and triangles",
+          "difficulty": "Easy",
+          "question": "In triangle ABC, DE is parallel to AC, BD = AD, BE = 9, and AC = 8. What is the length of BC?",
+          "choices": { "A": "72", "B": "18", "C": "17", "D": "16" },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 58
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_21",
+          "question_number": 21,
+          "domain": "Algebra",
+          "skill": "Linear functions",
+          "difficulty": "Easy",
+          "question": "The table shows three values of x and their corresponding values of y. There is a linear relationship between x and y. Which of the following equations represents this relationship?",
+          "choices": {
+            "A": "y = (1/4)x + 12",
+            "B": "y = (1/12)x + 4",
+            "C": "y = 4x + 12",
+            "D": "y = 12x + 4"
+          },
+          "correct_answer": "A",
+          "source_page": 59
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2e_22",
+          "question_number": 22,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Easy",
+          "question": "The graph of the function f is shown, where y = f(x). What is the value of f(−3)?",
+          "choices": { "A": "−5", "B": "−3", "C": "0", "D": "2" },
+          "correct_answer": "A",
+          "has_graphic": true,
+          "source_page": 59
+        }
+      ]
+    },
+    {
+      "module": "Module 2",
+      "module_level": "hard",
+      "module_key": "m2h",
+      "question_count": 22,
+      "questions": [
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_01",
+          "question_number": 1,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Lines, angles, and triangles",
+          "difficulty": "Hard",
+          "question": "In the figure shown, lines ℓ and k are parallel and line t intersects both lines. If x > 137, which of the following must be true?",
+          "choices": {
+            "A": "y < 43",
+            "B": "y > 43",
+            "C": "x + y < 180",
+            "D": "x + y > 180"
+          },
+          "correct_answer": "A",
+          "has_graphic": true,
+          "source_page": 61
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_02",
+          "question_number": 2,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Circles",
+          "difficulty": "Hard",
+          "question": "A circle in the xy-plane has equation (x − 4)² + (y + 1)² = 49. What is the radius of the circle?",
+          "choices": { "A": "7", "B": "14", "C": "24.5", "D": "49" },
+          "correct_answer": "A",
+          "source_page": 61
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_03",
+          "question_number": 3,
+          "domain": "Algebra",
+          "skill": "Linear functions",
+          "difficulty": "Hard",
+          "question": "The roofs on the buildings of a public garden are designed to allow water to drain into the garden. The table shows the relationship between the area x, in square feet, of a roof and the amount of water f(x), in gallons, drained from the roof into the garden over a certain period of time. Which equation could define f?",
+          "choices": {
+            "A": "f(x) = 0.6x",
+            "B": "f(x) = 1.8x",
+            "C": "f(x) = 2,160.0x",
+            "D": "f(x) = 4,320.0x"
+          },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 62
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_04",
+          "question_number": 4,
+          "domain": "Algebra",
+          "skill": "Linear equations in one variable",
+          "difficulty": "Hard",
+          "question": "15x + 435 = a(x + 29). In the given equation, a is a constant. If the equation has infinitely many solutions, what is the value of a?",
+          "question_type": "student_produced_response",
+          "correct_answer": "15",
+          "source_page": 62
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_05",
+          "question_number": 5,
+          "domain": "Algebra",
+          "skill": "Linear functions",
+          "difficulty": "Hard",
+          "question": "What is the slope of the graph of y = (1/3)(26x + 11) + 9x in the xy-plane?",
+          "choices": { "A": "26/3", "B": "53/3", "C": "26", "D": "35" },
+          "correct_answer": "B",
+          "source_page": 62
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_06",
+          "question_number": 6,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Hard",
+          "question": "A plumbing company charges its customers $116 for the first hour of a plumbing service call and $70 for each additional hour, plus the cost of plumbing parts. Which equation represents the total cost y, in dollars, for an x-hour plumbing service call where the cost of parts was $z and x ≥ 1?",
+          "choices": {
+            "A": "y = 70x + z",
+            "B": "y = 70x + z + 46",
+            "C": "y = 116x + z",
+            "D": "y = 116x + 70z + 46"
+          },
+          "correct_answer": "B",
+          "source_page": 62
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_07",
+          "question_number": 7,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Hard",
+          "question": "For the quadratic function f, the table shows three values of x and their corresponding values of f(x). Which equation defines f?",
+          "choices": {
+            "A": "f(x) = (x − 25)(x − 27) + 2",
+            "B": "f(x) = (x − 25)(x − 27) − 4",
+            "C": "f(x) = (x − 4)(x − 29) + 16",
+            "D": "f(x) = (x − 4)(x − 29) − 16"
+          },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 63
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_08",
+          "question_number": 8,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Hard",
+          "question": "The function h is defined by h(x) = |x − 8| − |6 − x| + a, where a is a constant, and h(−4) = 1. What is the value of a?",
+          "question_type": "student_produced_response",
+          "correct_answer": "-1",
+          "source_page": 63
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_09",
+          "question_number": 9,
+          "domain": "Algebra",
+          "skill": "Linear equations in two variables",
+          "difficulty": "Hard",
+          "question": "Line h is defined by (1/3)x + (1/2)y − 30 = 0. Line j is perpendicular to line h in the xy-plane. What is the slope of line j?",
+          "choices": { "A": "−2/3", "B": "−3/2", "C": "2/3", "D": "3/2" },
+          "correct_answer": "D",
+          "source_page": 63
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_10",
+          "question_number": 10,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Hard",
+          "question": "A laboratory culture of bacteria grows according to the model P(t) = 250(1.08)^t, where t represents the elapsed time in hours. By what percentage does the population increase each hour?",
+          "choices": { "A": "0.08%", "B": "8%", "C": "25%", "D": "108%" },
+          "correct_answer": "B",
+          "source_page": 63
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_11",
+          "question_number": 11,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Hard",
+          "question": "A beaker containing a liquid is placed on a table. The function g(t) = 296 + (362 − 296)(2.72)^(−0.104t) gives the approximate temperature, in kelvins, of the liquid t minutes after the beaker was placed on the table. According to this function, what was the approximate temperature, in kelvins, of the liquid when the beaker was placed on the table?",
+          "question_type": "student_produced_response",
+          "correct_answer": "362",
+          "source_page": 63
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_12",
+          "question_number": 12,
+          "domain": "Algebra",
+          "skill": "Linear inequalities in one or two variables",
+          "difficulty": "Hard",
+          "question": "The shaded region shown represents the solutions to which inequality?",
+          "choices": {
+            "A": "y < 3x + 4",
+            "B": "y < 3x − 4",
+            "C": "y > 3x + 4",
+            "D": "y > 3x − 4"
+          },
+          "correct_answer": "C",
+          "has_graphic": true,
+          "source_page": 64
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_13",
+          "question_number": 13,
+          "domain": "Algebra",
+          "skill": "Systems of two linear equations in two variables",
+          "difficulty": "Hard",
+          "question": "3(2x) + 8(9y) = 534 and 3(2x) − 8(9y) = −618. The solution to the given system of equations is (x, y). What is the value of 2x + 9y?",
+          "choices": { "A": "−86", "B": "−14", "C": "58", "D": "72" },
+          "correct_answer": "C",
+          "source_page": 64
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_14",
+          "question_number": 14,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear functions",
+          "difficulty": "Hard",
+          "question": "The function f is defined by f(x) = −2(x − 3)² + 8. What is the maximum value of f(x)?",
+          "choices": { "A": "-2", "B": "3", "C": "6", "D": "8" },
+          "correct_answer": "D",
+          "source_page": 64
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_15",
+          "question_number": 15,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "One-variable data: distributions and measures of center and spread",
+          "difficulty": "Hard",
+          "question": "The frequency table summarizes the age, in years, of each of the 50 coins in Vivek's original collection. Vivek will add a 130-year-old coin to his original collection, creating a new collection of 51 coins. Which statement correctly compares the mean ages and median ages of Vivek's original and new collections?",
+          "choices": {
+            "A": "The mean age for the new collection is greater than the mean age for the original collection, and the median age for the new collection is greater than the median age for the original collection.",
+            "B": "The mean age for the new collection is greater than the mean age for the original collection, but the median age is the same for the original and new collections.",
+            "C": "The mean age for the new collection is less than the mean age for the original collection, and the median age for the new collection is less than the median age for the original collection.",
+            "D": "The median age for the new collection is greater than the median age for the original collection, but the mean age is the same for the original and new collections."
+          },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 65
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_16",
+          "question_number": 16,
+          "domain": "Advanced Math",
+          "skill": "Nonlinear equations in one variable and systems of equations in two variables",
+          "difficulty": "Hard",
+          "question": "x² + y² = 64 and y = mx + b/2. In the given system of equations, m and b are negative constants. In the xy-plane, the graphs of the equations in the given system intersect at the point (−7, y), where y < 0. Which expression represents the value of b?",
+          "choices": {
+            "A": "14m − 2√15",
+            "B": "−14m + 2√15",
+            "C": "7m/2 − √15/2",
+            "D": "−7m/2 + √15/2"
+          },
+          "correct_answer": "A",
+          "source_page": 65
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_17",
+          "question_number": 17,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Lines, angles, and triangles",
+          "difficulty": "Hard",
+          "question": "In triangle ABC, DE is parallel to AC, BD = AD, BE = 9, and AC = 8. What is the length of BC?",
+          "choices": { "A": "72", "B": "18", "C": "17", "D": "16" },
+          "correct_answer": "B",
+          "has_graphic": true,
+          "source_page": 66
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_18",
+          "question_number": 18,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Right triangles and trigonometry",
+          "difficulty": "Hard",
+          "question": "In the figure, 3r > 19s. Which of the following values must be the greatest?",
+          "choices": {
+            "A": "sin r°",
+            "B": "cos r°",
+            "C": "sin r° / sin s°",
+            "D": "sin r° / cos s°"
+          },
+          "correct_answer": "C",
+          "has_graphic": true,
+          "source_page": 66
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_19",
+          "question_number": 19,
+          "domain": "Algebra",
+          "skill": "Systems of two linear equations in two variables",
+          "difficulty": "Hard",
+          "question": "Consider the system of equations below: 2x + 3y = 19 and x − y = 2. What is the value of x + y?",
+          "choices": { "A": "5", "B": "7", "C": "8", "D": "11" },
+          "correct_answer": "C",
+          "source_page": 67
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_20",
+          "question_number": 20,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Inference from sample statistics and margin of error",
+          "difficulty": "Hard",
+          "question": "A researcher conducted a study to examine the melatonin levels of gamers and the amount of time the gamers spent playing video games. A total of 125 gamers were selected at random from three countries. ... which of the following aspects of the study will prevent the results from being generalized to all gamers?",
+          "choices": {
+            "A": "The gamers were not selected at random from all gamers.",
+            "B": "The number of selected gamers is too small.",
+            "C": "The number of selected gamers from each country is different.",
+            "D": "The melatonin levels of the selected gamers were not measured over a long enough period of time."
+          },
+          "correct_answer": "A",
+          "has_graphic": true,
+          "source_page": 67
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_21",
+          "question_number": 21,
+          "domain": "Geometry and Trigonometry",
+          "skill": "Right triangles and trigonometry",
+          "difficulty": "Hard",
+          "question": "In right triangle ABC, angle C measures 90°. If cos(A) = 5/13, what is the value of tan(A)?",
+          "choices": { "A": "12/5", "B": "5/12", "C": "12/13", "D": "13/5" },
+          "correct_answer": "A",
+          "source_page": 67
+        },
+        {
+          "question_id": "oct_dsat_math_pdf_m2h_22",
+          "question_number": 22,
+          "domain": "Problem-Solving and Data Analysis",
+          "skill": "Percentages",
+          "difficulty": "Hard",
+          "question": "At a hotel, guests used the pool for a total of t hours in March. At the same hotel, guests used the pool for 3.41t hours in April. What is the percent increase in the number of hours guests used the pool from March to April?",
+          "choices": { "A": "2.41%", "B": "3.41%", "C": "241%", "D": "341%" },
+          "correct_answer": "C",
+          "source_page": 68
+        }
+      ]
+    }
+  ]
+}

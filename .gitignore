@@ -24,6 +24,7 @@
 !package-lock.json
 !pnpm-lock.yaml
 !tsconfig.json
+!public/data/*.json
 
 # debug
 npm-debug.log*
