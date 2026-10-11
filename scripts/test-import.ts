@@ -35,7 +35,12 @@ async function testImport() {
     return;
   }
 
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
   const questionsData = fs.readFileSync(questionsPath, "utf-8");
   const questions: any[] = JSON.parse(questionsData);
 

@@ -26,7 +26,12 @@ const SKILL_TO_DOMAIN = {
 };
 
 // Load questions.json to look up skills by questionId
-const questionsPath = path.join(process.cwd(), "questions.json");
+const questionsPath = path.join(
+  process.cwd(),
+  "public",
+  "data",
+  "questions.json",
+);
 const questions = JSON.parse(fs.readFileSync(questionsPath, "utf8"));
 const questionMap = new Map();
 for (const q of questions) {

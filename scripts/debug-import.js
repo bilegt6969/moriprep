@@ -2,10 +2,15 @@ const fs = require("fs");
 const path = require("path");
 
 async function debugImport() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
-  
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
+
   if (!fs.existsSync(questionsPath)) {
-    console.error("questions.json not found.");
+    console.error("questions.json not found in public/data/.");
     process.exit(1);
   }
 
@@ -13,9 +18,10 @@ async function debugImport() {
   const questions = JSON.parse(questionsData);
 
   console.log(`Found ${questions.length} questions to import`);
-  
+
   // Find the exact question that is causing the initial failure
-  const testQuestion = questions.find(q => q.question_id === 'f1bfbed3') || questions[0];
+  const testQuestion =
+    questions.find((q) => q.question_id === "f1bfbed3") || questions[0];
 
   console.log("--- EXACT DATA FIRESTORE IS REJECTING ---");
   console.log(JSON.stringify(testQuestion, null, 2));

@@ -19,12 +19,18 @@
 # misc
 .DS_Store
 *.pem
+
+# JSON files - exclude specific ones, allow others
 *.json
 !package.json
 !package-lock.json
 !pnpm-lock.yaml
 !tsconfig.json
+!next.config.mjs
 !public/data/*.json
+!public/schools_enriched_v4.json
+!public/hydration_data.json
+!vercel.json
 
 # debug
 npm-debug.log*

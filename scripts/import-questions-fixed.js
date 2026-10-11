@@ -1,5 +1,10 @@
 const { initializeApp, getApps, getApp } = require("firebase/app");
-const { getFirestore, writeBatch, doc, collection } = require("firebase/firestore");
+const {
+  getFirestore,
+  writeBatch,
+  doc,
+  collection,
+} = require("firebase/firestore");
 const fs = require("fs");
 const path = require("path");
 
@@ -18,30 +23,30 @@ const db = getFirestore(app);
 // Function to sanitize data by removing nested arrays
 function sanitizeData(obj) {
   if (obj === null || obj === undefined) return obj;
-  
+
   if (Array.isArray(obj)) {
     // If it's an array, check if elements are objects/arrays
-    return obj.map(item => sanitizeData(item));
+    return obj.map((item) => sanitizeData(item));
   }
-  
-  if (typeof obj === 'object') {
+
+  if (typeof obj === "object") {
     const sanitized = {};
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
         const value = obj[key];
-        
+
         // If value is an array of arrays, convert to array of strings or remove
         if (Array.isArray(value)) {
-          const hasNestedArrays = value.some(item => Array.isArray(item));
+          const hasNestedArrays = value.some((item) => Array.isArray(item));
           if (hasNestedArrays) {
             // Flatten nested arrays or convert to string representation
-            sanitized[key] = value.map(item => 
-              Array.isArray(item) ? JSON.stringify(item) : sanitizeData(item)
+            sanitized[key] = value.map((item) =>
+              Array.isArray(item) ? JSON.stringify(item) : sanitizeData(item),
             );
           } else {
             sanitized[key] = sanitizeData(value);
           }
-        } else if (typeof value === 'object' && value !== null) {
+        } else if (typeof value === "object" && value !== null) {
           sanitized[key] = sanitizeData(value);
         } else {
           sanitized[key] = value;
@@ -50,14 +55,21 @@ function sanitizeData(obj) {
     }
     return sanitized;
   }
-  
+
   return obj;
 }
 
 async function importQuestions() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
   if (!fs.existsSync(questionsPath)) {
-    console.error("questions.json not found. Please create it with your question data.");
+    console.error(
+      "questions.json not found in public/data/. Please create it with your question data.",
+    );
     process.exit(1);
   }
 
@@ -73,7 +85,7 @@ async function importQuestions() {
   for (let i = 0; i < questions.length; i += batchSize) {
     const batch = writeBatch(db);
     const batchQuestions = questions.slice(i, i + batchSize);
-    
+
     batchQuestions.forEach((question) => {
       try {
         const sanitizedQuestion = sanitizeData(question);
@@ -83,7 +95,10 @@ async function importQuestions() {
           createdAt: new Date().toISOString(),
         });
       } catch (error) {
-        console.error(`Error sanitizing question ${question.question_id}:`, error.message);
+        console.error(
+          `Error sanitizing question ${question.question_id}:`,
+          error.message,
+        );
         skipped++;
       }
     });
@@ -98,12 +113,17 @@ async function importQuestions() {
       imported += batch._mutations.length;
       console.log(`Imported ${imported}/${questions.length} questions`);
     } catch (error) {
-      console.error(`Error importing batch ${i}-${i + batchSize}:`, error.message);
+      console.error(
+        `Error importing batch ${i}-${i + batchSize}:`,
+        error.message,
+      );
       errors += batchQuestions.length;
     }
   }
 
-  console.log(`\nImport complete: ${imported} questions imported, ${errors} errors, ${skipped} skipped`);
+  console.log(
+    `\nImport complete: ${imported} questions imported, ${errors} errors, ${skipped} skipped`,
+  );
 }
 
 importQuestions().catch(console.error);

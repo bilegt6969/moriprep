@@ -5,7 +5,6 @@ import {
     doc,
     getDocs,
     getFirestore,
-    query,
     setDoc,
 } from "firebase/firestore";
 import fs from "fs";
@@ -47,9 +46,18 @@ const db = getFirestore(app);
 
 // Load questions from JSON
 function loadQuestionsData() {
-  const questionsPath = path.join(process.cwd(), "math_questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "math_questions.json",
+  );
   const questionsData = JSON.parse(fs.readFileSync(questionsPath, "utf8"));
-  console.log("Loaded", questionsData.length, "questions from math_questions.json");
+  console.log(
+    "Loaded",
+    questionsData.length,
+    "questions from public/data/math_questions.json",
+  );
   return questionsData;
 }
 
@@ -124,7 +132,7 @@ function calculateStats(questions: any[]) {
 function calculateUserStats(questions: any[], userProgress: any[]) {
   const answeredQuestionIds = new Set(userProgress.map((p) => p.question_id));
   const answeredQuestions = questions.filter((q) =>
-    answeredQuestionIds.has(q.question_id)
+    answeredQuestionIds.has(q.question_id),
   );
 
   const stats = {
@@ -136,8 +144,14 @@ function calculateUserStats(questions: any[], userProgress: any[]) {
     skillCounts: {} as Record<string, number>,
     difficultyCounts: {} as Record<string, number>,
     // Joint counts for exact domain/skill × difficulty combinations
-    skillDifficultyCounts: {} as Record<string, { answered: number; correct: number; incorrect: number }>,
-    domainDifficultyCounts: {} as Record<string, { answered: number; correct: number; incorrect: number }>,
+    skillDifficultyCounts: {} as Record<
+      string,
+      { answered: number; correct: number; incorrect: number }
+    >,
+    domainDifficultyCounts: {} as Record<
+      string,
+      { answered: number; correct: number; incorrect: number }
+    >,
   };
 
   answeredQuestions.forEach((q) => {
@@ -171,7 +185,11 @@ function calculateUserStats(questions: any[], userProgress: any[]) {
       const sanitizedDifficulty = sanitizeFieldName(q.difficulty);
       const jointKey = `${sanitizedSkill}__${sanitizedDifficulty}`;
       if (!stats.skillDifficultyCounts[jointKey]) {
-        stats.skillDifficultyCounts[jointKey] = { answered: 0, correct: 0, incorrect: 0 };
+        stats.skillDifficultyCounts[jointKey] = {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
       }
       stats.skillDifficultyCounts[jointKey].answered += 1;
       if (isCorrect) {
@@ -187,7 +205,11 @@ function calculateUserStats(questions: any[], userProgress: any[]) {
       const sanitizedDifficulty = sanitizeFieldName(q.difficulty);
       const jointKey = `${sanitizedDomain}__${sanitizedDifficulty}`;
       if (!stats.domainDifficultyCounts[jointKey]) {
-        stats.domainDifficultyCounts[jointKey] = { answered: 0, correct: 0, incorrect: 0 };
+        stats.domainDifficultyCounts[jointKey] = {
+          answered: 0,
+          correct: 0,
+          incorrect: 0,
+        };
       }
       stats.domainDifficultyCounts[jointKey].answered += 1;
       if (isCorrect) {
@@ -230,10 +252,11 @@ async function main() {
   for (const userDoc of userProgressSnapshot.docs) {
     const userId = userDoc.id;
     const userProgressData = userDoc.data();
-    
+
     // Filter for math progress only
-    const mathProgress = userProgressData.progress?.filter((p: any) => p.test === "Math") || [];
-    
+    const mathProgress =
+      userProgressData.progress?.filter((p: any) => p.test === "Math") || [];
+
     if (mathProgress.length === 0) {
       console.log("Skipping user", userId, "- no math progress");
       continue;

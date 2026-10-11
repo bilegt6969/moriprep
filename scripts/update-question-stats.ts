@@ -47,9 +47,18 @@ const db = getFirestore(app);
 
 // Load questions from JSON
 function loadQuestionsData() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
   const questionsData = JSON.parse(fs.readFileSync(questionsPath, "utf8"));
-  console.log("Loaded", questionsData.length, "questions from questions.json");
+  console.log(
+    "Loaded",
+    questionsData.length,
+    "questions from public/data/questions.json",
+  );
   return questionsData;
 }
 

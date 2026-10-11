@@ -1,4 +1,6 @@
+import { readFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 
 // Cache the questions data in memory to avoid repeated file reads
 let cachedRWQuestionsData: any = null;
@@ -15,37 +17,18 @@ async function loadQuestionsData(
     // Determine which JSON file to load based on test type
     const isMath = testType === "Math";
     const dataFile = isMath
-      ? "/data/october_sat_math_questions.json"
-      : "/data/october_sat_rw_questions.json";
+      ? "october_sat_math_questions.json"
+      : "october_sat_rw_questions.json";
     const cacheVar = isMath ? cachedOctoberSATMathData : cachedOctoberSATData;
 
     if (cacheVar === null) {
       console.log(
-        `Loading October SAT ${testType} questions from ${dataFile}...`,
+        `Loading October SAT ${testType} questions from /data/${dataFile}...`,
       );
 
-      // Construct base URL from request or environment
-      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      if (!baseUrl && request) {
-        const protocol = request.headers.get("x-forwarded-proto") || "https";
-        const host = request.headers.get("host") || "localhost:3000";
-        baseUrl = `${protocol}://${host}`;
-      }
-      if (!baseUrl) {
-        baseUrl = "http://localhost:3000";
-      }
-
-      const fullUrl = `${baseUrl}${dataFile}`;
-      console.log("Fetching from:", fullUrl);
-
       try {
-        const response = await fetch(fullUrl);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch ${dataFile}: ${response.statusText}`,
-          );
-        }
-        const fileContent = await response.text();
+        const filePath = path.join(process.cwd(), "public", "data", dataFile);
+        const fileContent = await readFile(filePath, "utf-8");
         console.log("File read successfully, size:", fileContent.length);
         const rawData = JSON.parse(fileContent);
 
@@ -130,56 +113,46 @@ async function loadQuestionsData(
     if (cachedMathQuestionsData === null) {
       console.log("Loading math questions from /data/math_questions.json...");
 
-      // Construct base URL from request or environment
-      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      if (!baseUrl && request) {
-        const protocol = request.headers.get("x-forwarded-proto") || "https";
-        const host = request.headers.get("host") || "localhost:3000";
-        baseUrl = `${protocol}://${host}`;
-      }
-      if (!baseUrl) {
-        baseUrl = "http://localhost:3000";
-      }
-
-      const response = await fetch(`${baseUrl}/data/math_questions.json`);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch math_questions.json: ${response.statusText}`,
+      try {
+        const filePath = path.join(
+          process.cwd(),
+          "public",
+          "data",
+          "math_questions.json",
         );
+        const fileContent = await readFile(filePath, "utf-8");
+        cachedMathQuestionsData = JSON.parse(fileContent);
+        console.log(
+          "Math questions loaded and cached. Total questions:",
+          cachedMathQuestionsData.length,
+        );
+      } catch (error) {
+        console.error("Error loading math_questions.json:", error);
+        throw new Error("Failed to load math_questions.json from filesystem");
       }
-      cachedMathQuestionsData = await response.json();
-      console.log(
-        "Math questions loaded and cached. Total questions:",
-        cachedMathQuestionsData.length,
-      );
     }
     return cachedMathQuestionsData;
   } else {
     if (cachedRWQuestionsData === null) {
       console.log("Loading questions from /data/questions.json...");
 
-      // Construct base URL from request or environment
-      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      if (!baseUrl && request) {
-        const protocol = request.headers.get("x-forwarded-proto") || "https";
-        const host = request.headers.get("host") || "localhost:3000";
-        baseUrl = `${protocol}://${host}`;
-      }
-      if (!baseUrl) {
-        baseUrl = "http://localhost:3000";
-      }
-
-      const response = await fetch(`${baseUrl}/data/questions.json`);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch questions.json: ${response.statusText}`,
+      try {
+        const filePath = path.join(
+          process.cwd(),
+          "public",
+          "data",
+          "questions.json",
         );
+        const fileContent = await readFile(filePath, "utf-8");
+        cachedRWQuestionsData = JSON.parse(fileContent);
+        console.log(
+          "Questions loaded and cached. Total questions:",
+          cachedRWQuestionsData.length,
+        );
+      } catch (error) {
+        console.error("Error loading questions.json:", error);
+        throw new Error("Failed to load questions.json from filesystem");
       }
-      cachedRWQuestionsData = await response.json();
-      console.log(
-        "Questions loaded and cached. Total questions:",
-        cachedRWQuestionsData.length,
-      );
     }
     return cachedRWQuestionsData;
   }

@@ -32,6 +32,56 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/schools_enriched_v4.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400",
+          },
+          { key: "Content-Type", value: "application/json; charset=utf-8" },
+        ],
+      },
+      {
+        source: "/data/questions.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400",
+          },
+          { key: "Content-Type", value: "application/json; charset=utf-8" },
+        ],
+      },
+      {
+        source: "/data/math_questions.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400",
+          },
+          { key: "Content-Type", value: "application/json; charset=utf-8" },
+        ],
+      },
+      {
+        source: "/data/october_sat_rw_questions.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400",
+          },
+          { key: "Content-Type", value: "application/json; charset=utf-8" },
+        ],
+      },
+      {
+        source: "/data/october_sat_math_questions.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=86400",
+          },
+          { key: "Content-Type", value: "application/json; charset=utf-8" },
+        ],
+      },
+      {
         source: "/framer-index.html",
         headers: [
           { key: "X-Frame-Options", value: "SAMEORIGIN" },

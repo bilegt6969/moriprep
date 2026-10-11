@@ -1,5 +1,10 @@
 const { initializeApp, getApps, getApp } = require("firebase/app");
-const { getFirestore, writeBatch, doc, collection } = require("firebase/firestore");
+const {
+  getFirestore,
+  writeBatch,
+  doc,
+  collection,
+} = require("firebase/firestore");
 const fs = require("fs");
 const path = require("path");
 
@@ -16,9 +21,16 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 async function importQuestions() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
   if (!fs.existsSync(questionsPath)) {
-    console.error("questions.json not found. Please create it with your question data.");
+    console.error(
+      "questions.json not found in public/data/. Please create it with your question data.",
+    );
     process.exit(1);
   }
 
@@ -33,11 +45,11 @@ async function importQuestions() {
   for (let i = 0; i < questions.length; i += batchSize) {
     const batch = writeBatch(db);
     const batchQuestions = questions.slice(i, i + batchSize);
-    
+
     batchQuestions.forEach((question) => {
       try {
         const docRef = doc(collection(db, "questions"), question.question_id);
-        
+
         // Only include essential fields that are Firestore-compatible
         const sanitizedData = {
           question_id: question.question_id,
@@ -60,10 +72,13 @@ async function importQuestions() {
           graphics: Array.isArray(question.graphics) ? question.graphics : [],
           createdAt: new Date().toISOString(),
         };
-        
+
         batch.set(docRef, sanitizedData);
       } catch (error) {
-        console.error(`Error processing question ${question.question_id}:`, error.message);
+        console.error(
+          `Error processing question ${question.question_id}:`,
+          error.message,
+        );
       }
     });
 
@@ -77,16 +92,21 @@ async function importQuestions() {
       imported += batch._mutations.length;
       console.log(`Imported ${imported}/${questions.length} questions`);
     } catch (error) {
-      console.error(`Error importing batch ${i}-${i + batchSize}:`, error.message);
+      console.error(
+        `Error importing batch ${i}-${i + batchSize}:`,
+        error.message,
+      );
       errors += batchQuestions.length;
-      
+
       // Try importing one by one to identify the problematic question
-      console.log(`Attempting to import batch ${i}-${i + batchSize} one by one...`);
+      console.log(
+        `Attempting to import batch ${i}-${i + batchSize} one by one...`,
+      );
       for (const question of batchQuestions) {
         try {
           const singleBatch = writeBatch(db);
           const docRef = doc(collection(db, "questions"), question.question_id);
-          
+
           const sanitizedData = {
             question_id: question.question_id,
             assessment: question.assessment,
@@ -108,20 +128,25 @@ async function importQuestions() {
             graphics: Array.isArray(question.graphics) ? question.graphics : [],
             createdAt: new Date().toISOString(),
           };
-          
+
           singleBatch.set(docRef, sanitizedData);
           await singleBatch.commit();
           imported++;
           console.log(`Imported question ${question.question_id}`);
         } catch (singleError) {
-          console.error(`Failed to import question ${question.question_id}:`, singleError.message);
+          console.error(
+            `Failed to import question ${question.question_id}:`,
+            singleError.message,
+          );
           errors++;
         }
       }
     }
   }
 
-  console.log(`\nImport complete: ${imported} questions imported, ${errors} errors`);
+  console.log(
+    `\nImport complete: ${imported} questions imported, ${errors} errors`,
+  );
 }
 
 importQuestions().catch(console.error);

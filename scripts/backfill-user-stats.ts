@@ -1,12 +1,12 @@
 import dotenv from "dotenv";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
-  collection,
-  doc,
-  getDocs,
-  getFirestore,
-  query,
-  setDoc,
+    collection,
+    doc,
+    getDocs,
+    getFirestore,
+    query,
+    setDoc,
 } from "firebase/firestore";
 import fs from "fs";
 import path from "path";
@@ -47,9 +47,18 @@ const db = getFirestore(app);
 
 // Load questions from JSON
 function loadQuestionsData() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
   const questionsData = JSON.parse(fs.readFileSync(questionsPath, "utf8"));
-  console.log("Loaded", questionsData.length, "questions from questions.json");
+  console.log(
+    "Loaded",
+    questionsData.length,
+    "questions from public/data/questions.json",
+  );
   return questionsData;
 }
 
@@ -62,7 +71,10 @@ function sanitizeFieldName(name: string): string {
 }
 
 // Recalculate user stats from scratch using distinct question counts (not attempt counts)
-function recalculateUserStats(questions: any[], userProgress: Map<string, any>) {
+function recalculateUserStats(
+  questions: any[],
+  userProgress: Map<string, any>,
+) {
   const userStats = {
     totalAnswered: userProgress.size, // Distinct questions, not attempts
     totalCorrect: 0,
@@ -220,7 +232,9 @@ async function updateUserStatsInFirebase(userId: string, userStats: any) {
       ...userStats,
       updatedAt: new Date().toISOString(),
     });
-    console.log(`✅ Successfully backfilled user stats for ${userId} in Firebase`);
+    console.log(
+      `✅ Successfully backfilled user stats for ${userId} in Firebase`,
+    );
   } catch (error) {
     console.error(
       `❌ Error backfilling user stats for ${userId} in Firebase:`,
@@ -232,7 +246,9 @@ async function updateUserStatsInFirebase(userId: string, userStats: any) {
 
 // Main function
 async function main() {
-  console.log("🚀 Starting user stats backfill to fix attempt-inflation bug...");
+  console.log(
+    "🚀 Starting user stats backfill to fix attempt-inflation bug...",
+  );
 
   try {
     // Load questions
@@ -280,8 +296,12 @@ async function main() {
 
     console.log("✨ Backfill complete!");
     console.log("📝 Next steps:");
-    console.log("   1. Run 'npm run update-question-stats' to update global summary with joint counts");
-    console.log("   2. Test the popup vs practice page counts to verify the fix");
+    console.log(
+      "   1. Run 'npm run update-question-stats' to update global summary with joint counts",
+    );
+    console.log(
+      "   2. Test the popup vs practice page counts to verify the fix",
+    );
   } catch (error) {
     console.error("❌ Error:", error);
     process.exit(1);

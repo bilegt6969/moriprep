@@ -43,11 +43,16 @@ interface DSATQuestion {
 }
 
 async function importQuestions() {
-  const questionsPath = path.join(process.cwd(), "questions.json");
+  const questionsPath = path.join(
+    process.cwd(),
+    "public",
+    "data",
+    "questions.json",
+  );
 
   if (!fs.existsSync(questionsPath)) {
     console.error(
-      "questions.json not found. Please create it with your question data.",
+      "questions.json not found in public/data/. Please create it with your question data.",
     );
     process.exit(1);
   }
