@@ -24,9 +24,10 @@ export default function HomePage() {
   useEffect(() => {
     if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
-      if (user) {
-        router.push("/overview");
-      }
+      // Don't redirect from landing page - let user choose where to go
+      // if (user) {
+      //   router.push("/overview");
+      // }
     });
     return () => unsubscribe();
   }, [router]);

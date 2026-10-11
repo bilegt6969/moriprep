@@ -1,18 +1,12 @@
-import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 
 // Cache the questions data in memory to avoid repeated file reads
 let cachedRWQuestionsData: any = null;
 let cachedMathQuestionsData: any = null;
 let cachedOctoberSATData: any = null;
 let cachedOctoberSATMathData: any = null;
-let rwQuestionsPath: string = "";
-let mathQuestionsPath: string = "";
-let octoberSATPath: string = "";
-let octoberSATMathPath: string = "";
 
-function loadQuestionsData(
+async function loadQuestionsData(
   testType: string = "Reading and Writing",
   source: string = "default",
 ) {
@@ -20,20 +14,24 @@ function loadQuestionsData(
     // Determine which JSON file to load based on test type
     const isMath = testType === "Math";
     const dataFile = isMath
-      ? "october_sat_math_questions.json"
-      : "october_sat_rw_questions.json";
+      ? "/data/october_sat_math_questions.json"
+      : "/data/october_sat_rw_questions.json";
     const cacheVar = isMath ? cachedOctoberSATMathData : cachedOctoberSATData;
-    const pathVar = isMath ? octoberSATMathPath : octoberSATPath;
 
     if (cacheVar === null) {
       console.log(
         `Loading October SAT ${testType} questions from ${dataFile}...`,
       );
-      const filePath = path.join(process.cwd(), dataFile);
-      console.log("File path:", filePath);
-      console.log("File exists:", fs.existsSync(filePath));
       try {
-        const fileContent = fs.readFileSync(filePath, "utf8");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL || ""}${dataFile}`,
+        );
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch ${dataFile}: ${response.statusText}`,
+          );
+        }
+        const fileContent = await response.text();
         console.log("File read successfully, size:", fileContent.length);
         const rawData = JSON.parse(fileContent);
 
@@ -116,11 +114,16 @@ function loadQuestionsData(
 
   if (testType === "Math") {
     if (cachedMathQuestionsData === null) {
-      console.log("Loading math questions from math_questions.json...");
-      mathQuestionsPath = path.join(process.cwd(), "math_questions.json");
-      cachedMathQuestionsData = JSON.parse(
-        fs.readFileSync(mathQuestionsPath, "utf8"),
+      console.log("Loading math questions from /data/math_questions.json...");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || ""}/data/math_questions.json`,
       );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch math_questions.json: ${response.statusText}`,
+        );
+      }
+      cachedMathQuestionsData = await response.json();
       console.log(
         "Math questions loaded and cached. Total questions:",
         cachedMathQuestionsData.length,
@@ -129,11 +132,16 @@ function loadQuestionsData(
     return cachedMathQuestionsData;
   } else {
     if (cachedRWQuestionsData === null) {
-      console.log("Loading questions from questions.json...");
-      rwQuestionsPath = path.join(process.cwd(), "questions.json");
-      cachedRWQuestionsData = JSON.parse(
-        fs.readFileSync(rwQuestionsPath, "utf8"),
+      console.log("Loading questions from /data/questions.json...");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || ""}/data/questions.json`,
       );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch questions.json: ${response.statusText}`,
+        );
+      }
+      cachedRWQuestionsData = await response.json();
       console.log(
         "Questions loaded and cached. Total questions:",
         cachedRWQuestionsData.length,
@@ -148,7 +156,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const test = searchParams.get("test") || "Reading and Writing";
     const source = searchParams.get("source") || "default";
-    const questionsData = loadQuestionsData(test, source);
+    const questionsData = await loadQuestionsData(test, source);
 
     const domain = searchParams.get("domain");
     const difficulty = searchParams.get("difficulty");
