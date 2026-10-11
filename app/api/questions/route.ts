@@ -9,6 +9,7 @@ let cachedOctoberSATMathData: any = null;
 async function loadQuestionsData(
   testType: string = "Reading and Writing",
   source: string = "default",
+  request?: NextRequest,
 ) {
   if (source === "october_sat") {
     // Determine which JSON file to load based on test type
@@ -22,10 +23,23 @@ async function loadQuestionsData(
       console.log(
         `Loading October SAT ${testType} questions from ${dataFile}...`,
       );
+
+      // Construct base URL from request or environment
+      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl && request) {
+        const protocol = request.headers.get("x-forwarded-proto") || "https";
+        const host = request.headers.get("host") || "localhost:3000";
+        baseUrl = `${protocol}://${host}`;
+      }
+      if (!baseUrl) {
+        baseUrl = "http://localhost:3000";
+      }
+
+      const fullUrl = `${baseUrl}${dataFile}`;
+      console.log("Fetching from:", fullUrl);
+
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL || ""}${dataFile}`,
-        );
+        const response = await fetch(fullUrl);
         if (!response.ok) {
           throw new Error(
             `Failed to fetch ${dataFile}: ${response.statusText}`,
@@ -115,9 +129,19 @@ async function loadQuestionsData(
   if (testType === "Math") {
     if (cachedMathQuestionsData === null) {
       console.log("Loading math questions from /data/math_questions.json...");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL || ""}/data/math_questions.json`,
-      );
+
+      // Construct base URL from request or environment
+      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl && request) {
+        const protocol = request.headers.get("x-forwarded-proto") || "https";
+        const host = request.headers.get("host") || "localhost:3000";
+        baseUrl = `${protocol}://${host}`;
+      }
+      if (!baseUrl) {
+        baseUrl = "http://localhost:3000";
+      }
+
+      const response = await fetch(`${baseUrl}/data/math_questions.json`);
       if (!response.ok) {
         throw new Error(
           `Failed to fetch math_questions.json: ${response.statusText}`,
@@ -133,9 +157,19 @@ async function loadQuestionsData(
   } else {
     if (cachedRWQuestionsData === null) {
       console.log("Loading questions from /data/questions.json...");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL || ""}/data/questions.json`,
-      );
+
+      // Construct base URL from request or environment
+      let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl && request) {
+        const protocol = request.headers.get("x-forwarded-proto") || "https";
+        const host = request.headers.get("host") || "localhost:3000";
+        baseUrl = `${protocol}://${host}`;
+      }
+      if (!baseUrl) {
+        baseUrl = "http://localhost:3000";
+      }
+
+      const response = await fetch(`${baseUrl}/data/questions.json`);
       if (!response.ok) {
         throw new Error(
           `Failed to fetch questions.json: ${response.statusText}`,
@@ -156,7 +190,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const test = searchParams.get("test") || "Reading and Writing";
     const source = searchParams.get("source") || "default";
-    const questionsData = await loadQuestionsData(test, source);
+    const questionsData = await loadQuestionsData(test, source, request);
 
     const domain = searchParams.get("domain");
     const difficulty = searchParams.get("difficulty");
