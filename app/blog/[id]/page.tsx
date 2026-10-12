@@ -1106,12 +1106,12 @@ export default function BlogPostPage() {
 
   return (
     <main className="min-h-screen bg-white text-neutral-medium font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
-      <div className="max-w-[48rem] mx-auto px-6 pt-24 py-16 md:py-24">
+      <div className="max-w-[48rem] mx-auto px-4 sm:px-6 pt-20 sm:pt-24 py-12 sm:py-16 md:py-24">
         {/* Back Link */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-2 text-[15px] font-medium text-[#848281] hover:text-[#343433] transition-colors group"
+            className="inline-flex items-center gap-2 text-[14px] sm:text-[15px] font-medium text-[#848281] hover:text-[#343433] transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
             Back to Blog
@@ -1119,8 +1119,8 @@ export default function BlogPostPage() {
         </div>
 
         {/* Header Section */}
-        <header className="mb-12">
-          <div className="flex items-center gap-2 text-[15px] text-[#848281] mb-6">
+        <header className="mb-8 sm:mb-12">
+          <div className="flex flex-wrap items-center gap-2 text-[13px] sm:text-[15px] text-[#848281] mb-4 sm:mb-6">
             <span>{post.date}</span>
             <span>by</span>
             <strong className="font-medium text-[#343433]">
@@ -1134,25 +1134,26 @@ export default function BlogPostPage() {
               {post.categories.join(", ")}
             </Link>
           </div>
-          <h1 className="text-[36px] md:text-[44px] font-medium leading-[42px] md:leading-[48px] tracking-[-1.35px] text-[#343433]">
+          <h1 className="text-[28px] sm:text-[32px] md:text-[44px] font-medium leading-[34px] sm:leading-[38px] md:leading-[48px] tracking-[-1.35px] text-[#343433]">
             {post.title}
           </h1>
         </header>
 
         {/* Article Body */}
-        <article className="flex flex-col gap-6 text-[17px] leading-[26px] tracking-[-0.22px] text-[#494440]">
+        <article className="flex flex-col gap-4 sm:gap-6 text-[15px] sm:text-[16px] md:text-[17px] leading-[24px] sm:leading-[25px] md:leading-[26px] tracking-[-0.22px] text-[#494440]">
           {post.content}
         </article>
 
         {/* Footer Sharing & Metadata Section */}
-        <div className="mt-16 pt-12 border-t border-[#f2f0ed] flex flex-col gap-8 text-[15px] text-[#848281]">
+        <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-[#f2f0ed] flex flex-col gap-6 sm:gap-8 text-[14px] sm:text-[15px] text-[#848281]">
           {/* Share Article */}
           <div>
             <h4 className="font-medium text-[#343433] mb-3">Share Article</h4>
-            <div className="flex items-center gap-4 text-[#494440]">
+            <div className="flex items-center gap-3 sm:gap-4 text-[#494440]">
               <button
                 onClick={handleFacebookShare}
                 className="p-2 bg-[#FBFAF9] rounded-full hover:bg-[#EAEAEA] transition-colors"
+                aria-label="Share on Facebook"
               >
                 <svg
                   width="16"
@@ -1167,6 +1168,7 @@ export default function BlogPostPage() {
               <button
                 onClick={handleTwitterShare}
                 className="p-2 bg-[#FBFAF9] rounded-full hover:bg-[#EAEAEA] transition-colors"
+                aria-label="Share on Twitter"
               >
                 <svg
                   width="16"
@@ -1181,12 +1183,14 @@ export default function BlogPostPage() {
               <button
                 onClick={handleEmailShare}
                 className="p-2 bg-[#FBFAF9] rounded-full hover:bg-[#EAEAEA] transition-colors"
+                aria-label="Share via email"
               >
                 <Mail className="w-4 h-4" />
               </button>
               <button
                 onClick={handleCopyLink}
                 className="p-2 bg-[#FBFAF9] rounded-full hover:bg-[#EAEAEA] transition-colors"
+                aria-label="Copy link"
               >
                 <Share2 className="w-4 h-4" />
               </button>
@@ -1198,7 +1202,7 @@ export default function BlogPostPage() {
             <h4 className="font-medium text-[#343433] mb-2">Resources</h4>
             <button
               onClick={handleCopyText}
-              className="text-[#1A88F8] hover:underline inline-flex items-center gap-1.5"
+              className="text-[#1A88F8] hover:underline inline-flex items-center gap-1.5 text-sm"
             >
               <Copy className="w-3.5 h-3.5" /> Copy Text
             </button>
@@ -1207,7 +1211,7 @@ export default function BlogPostPage() {
           {/* About Mori Prep */}
           <div>
             <h4 className="font-medium text-[#343433] mb-2">About Mori Prep</h4>
-            <p className="leading-[22px]">
+            <p className="leading-[22px] text-sm sm:text-base">
               Mori Prep is a non-profit open education initiative by{" "}
               <a
                 href="https://bytecode.mn"
@@ -1225,7 +1229,7 @@ export default function BlogPostPage() {
           {/* About Bytecode */}
           <div>
             <h4 className="font-medium text-[#343433] mb-2">About Bytecode</h4>
-            <p className="leading-[22px]">
+            <p className="leading-[22px] text-sm sm:text-base">
               Bytecode was founded in 2023 to make learning to code more
               accessible in Mongolia through open-source education initiatives.
               Mori Prep extends this mission to university preparation, ensuring
@@ -1237,7 +1241,7 @@ export default function BlogPostPage() {
 
         {/* Toast Notification */}
         {showToast && (
-          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/90 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg z-200">
+          <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 bg-black/90 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg z-200">
             {toastMessage}
           </div>
         )}
