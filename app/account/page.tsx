@@ -4,13 +4,20 @@ import {
     auth,
     db,
     doc,
-    getDoc,
     getDownloadURL,
     ref,
     storage,
     updateProfile,
     uploadBytes,
 } from "@/lib/firebase";
+import {
+    getDomainAnalytics,
+    getStreak,
+    getUserProfile,
+    getUserSessions,
+    updateStreak,
+    updateUserProfile,
+} from "@/lib/user-api";
 import type { Auth } from "firebase/auth";
 import { onAuthStateChanged, signOut, updateEmail } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
@@ -159,6 +166,14 @@ export default function AccountPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // New feature states
+  const [streakData, setStreakData] = useState<{
+    currentStreak: number;
+    longestStreak: number;
+  } | null>(null);
+  const [domainAnalytics, setDomainAnalytics] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+
   // Active tab state (mostly visual for this implementation)
   const [activeTab, setActiveTab] = useState("Account");
 
@@ -188,12 +203,25 @@ export default function AccountPage() {
 
   useEffect(() => {
     const fetchOnboardingData = async () => {
-      if (!auth?.currentUser || !db) return;
+      if (!auth?.currentUser) return;
       try {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-        if (userDoc.exists()) {
-          setOnboardingData(userDoc.data());
+        const userData = await getUserProfile();
+        if (userData) {
+          setOnboardingData(userData);
         }
+
+        // Update streak
+        await updateStreak();
+        const streak = await getStreak();
+        setStreakData(streak);
+
+        // Fetch domain analytics
+        const analytics = await getDomainAnalytics();
+        setDomainAnalytics(analytics);
+
+        // Fetch recent sessions
+        const userSessions = await getUserSessions();
+        setSessions(userSessions.slice(0, 5)); // Last 5 sessions
       } catch (error) {
         console.error("Error fetching onboarding data:", error);
       } finally {
@@ -241,11 +269,8 @@ export default function AccountPage() {
       await updateProfile(user, { photoURL: downloadURL });
       setUserPhotoURL(downloadURL);
 
-      // Also update Firestore user document
-      if (db) {
-        const { updateDoc } = await import("firebase/firestore");
-        await updateDoc(doc(db, "users", user.uid), { photoURL: downloadURL });
-      }
+      // Also update Firestore user document via API
+      await updateUserProfile({ photoURL: downloadURL });
     } catch (error) {
       console.error("Error uploading photo:", error);
       alert("Failed to upload photo. Please try again.");
@@ -262,28 +287,21 @@ export default function AccountPage() {
   };
 
   const handleSaveName = async (newName: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), { name: newName });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ name: newName });
     await updateProfile(auth.currentUser, { displayName: newName });
     setUserName(newName);
   };
 
   const handleSaveInstitution = async (newSchool: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      school: newSchool,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ school: newSchool });
     setOnboardingData((prev: any) => ({ ...prev, school: newSchool }));
   };
 
   const handleSaveRole = async (newRole: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      role: newRole.toLowerCase(),
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ role: newRole.toLowerCase() });
     setOnboardingData((prev: any) => ({
       ...prev,
       role: newRole.toLowerCase(),
@@ -291,20 +309,14 @@ export default function AccountPage() {
   };
 
   const handleSaveGraduationYear = async (newYear: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      graduationYear: newYear,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ graduationYear: newYear });
     setOnboardingData((prev: any) => ({ ...prev, graduationYear: newYear }));
   };
 
   const handleSaveTopScore = async (newScore: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      bestTotalScore: parseInt(newScore) || null,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ bestTotalScore: parseInt(newScore) || null });
     setOnboardingData((prev: any) => ({
       ...prev,
       bestTotalScore: parseInt(newScore) || null,
@@ -312,11 +324,8 @@ export default function AccountPage() {
   };
 
   const handleSaveTargetScore = async (newScore: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      goalScore: parseInt(newScore) || null,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ goalScore: parseInt(newScore) || null });
     setOnboardingData((prev: any) => ({
       ...prev,
       goalScore: parseInt(newScore) || null,
@@ -339,17 +348,15 @@ export default function AccountPage() {
   };
 
   const handleDownloadData = async () => {
-    if (!auth?.currentUser || !db) return;
+    if (!auth?.currentUser) return;
     try {
-      const { getDocs, collection } = await import("firebase/firestore");
-      const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-      const progressSnap = await getDocs(
-        collection(db, "users", auth.currentUser.uid, "progress"),
-      );
+      const userData = await getUserProfile();
+      const { getUserProgress } = await import("@/lib/dsat/questions-api");
+      const progress = await getUserProgress();
 
       const data = {
-        profile: userDoc.data(),
-        progress: progressSnap.docs.map((doc) => doc.data()),
+        profile: userData,
+        progress,
         exportedAt: new Date().toISOString(),
       };
 
@@ -426,7 +433,12 @@ export default function AccountPage() {
     window.location.href = `mailto:support@moriprep.xyz?subject=${subject}&body=${body}`;
   };
 
-  const tabs = ["Account", "Data & Privacy", "Help & Support"];
+  const tabs = [
+    "Account",
+    "Stats & Progress",
+    "Data & Privacy",
+    "Help & Support",
+  ];
 
   return (
     <div className="min-h-screen w-full bg-[#fafafa] sm:bg-white text-[#111827] font-sans selection:bg-gray-200 selection:text-black flex flex-col items-center">
@@ -711,6 +723,110 @@ export default function AccountPage() {
                       </button>
                     </SettingsSection>
                   </>
+                )}
+
+                {/* Stats & Progress Tab */}
+                {activeTab === "Stats & Progress" && (
+                  <div className="flex flex-col">
+                    <SettingsSection
+                      title="Study Streak"
+                      description="Track your consistency with daily practice."
+                    >
+                      <div className="flex items-center gap-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-[#111827]">
+                            {streakData?.currentStreak || 0}
+                          </div>
+                          <div className="text-[13px] text-gray-500 mt-1">
+                            Current Streak
+                          </div>
+                        </div>
+                        <div className="w-px h-12 bg-gray-200"></div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-[#111827]">
+                            {streakData?.longestStreak || 0}
+                          </div>
+                          <div className="text-[13px] text-gray-500 mt-1">
+                            Longest Streak
+                          </div>
+                        </div>
+                      </div>
+                    </SettingsSection>
+
+                    <SettingsSection
+                      title="Domain Analytics"
+                      description="Time spent and performance by subject domain."
+                    >
+                      <div className="space-y-3 max-w-md">
+                        {domainAnalytics.length > 0 ? (
+                          domainAnalytics
+                            .slice(0, 5)
+                            .map((domain: any, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              >
+                                <div>
+                                  <div className="text-[14px] font-medium text-[#111827]">
+                                    {domain.domain}
+                                  </div>
+                                  <div className="text-[12px] text-gray-500">
+                                    {Math.round(domain.accuracy)}% accuracy
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[14px] font-medium text-[#111827]">
+                                    {Math.round(domain.totalTime / 60)}m
+                                  </div>
+                                  <div className="text-[12px] text-gray-500">
+                                    {domain.questionsAnswered} questions
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                        ) : (
+                          <div className="text-[14px] text-gray-500">
+                            No data yet
+                          </div>
+                        )}
+                      </div>
+                    </SettingsSection>
+
+                    <SettingsSection
+                      title="Recent Sessions"
+                      description="Your last 5 study sessions."
+                      isLast={true}
+                    >
+                      <div className="space-y-3 max-w-md">
+                        {sessions.length > 0 ? (
+                          sessions.map((session: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            >
+                              <div>
+                                <div className="text-[14px] font-medium text-[#111827]">
+                                  {new Date(
+                                    session.startTime,
+                                  ).toLocaleDateString()}
+                                </div>
+                                <div className="text-[12px] text-gray-500">
+                                  {session.questionsAttempted} questions
+                                </div>
+                              </div>
+                              <div className="text-[14px] font-medium text-[#111827]">
+                                {Math.round(session.duration / 60)}m
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-[14px] text-gray-500">
+                            No sessions yet
+                          </div>
+                        )}
+                      </div>
+                    </SettingsSection>
+                  </div>
                 )}
 
                 {/* Data & Privacy Tab */}

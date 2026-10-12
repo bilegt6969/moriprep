@@ -28,6 +28,15 @@ const fadeInUp = {
 
 const blogPosts = [
   {
+    id: "data-science-equitable-learning",
+    title:
+      "Beyond Free SAT Prep: Can Data Science Make Learning More Equitable?",
+    excerpt:
+      "Making education free is a good place to start. But what happens after a student gains access to it? We explore how learning analytics and data science can help make free educational resources more effective for the students who need them most.",
+    date: "12 October, 2026",
+    categories: ["News", "Education", "Data Science"],
+  },
+  {
     id: "closing-dsat-information-gap",
     title: "Closing the DSAT Information Gap in Mongolia",
     excerpt:
@@ -45,7 +54,7 @@ const blogPosts = [
   },
 ];
 
-const filters = ["All", "News", "Education"];
+const filters = ["All", "News", "Education", "Data Science"];
 
 export default function BlogPage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -55,8 +64,8 @@ export default function BlogPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
-      <div className="max-w-[67rem] mx-auto px-2 md:px-6 pt-12">
+    <main className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
+      <div className="max-w-[67rem] mx-auto px-2 md:px-6 pt-24">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between py-20 gap-6">
           <div className="flex flex-col gap-5">
@@ -130,6 +139,6 @@ export default function BlogPage() {
           ))}
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

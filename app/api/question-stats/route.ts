@@ -1,3 +1,4 @@
+import { handleAuthError, verifyAuthToken } from "@/lib/auth-verification";
 import { db, doc, getDoc } from "@/lib/firebase";
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
@@ -192,14 +193,6 @@ function sumJointUserCounts(
 
 export async function GET(request: NextRequest) {
   try {
-    if (!db) {
-      console.error("Firebase db is not initialized");
-      return NextResponse.json(
-        { error: "Firebase not initialized" },
-        { status: 500 },
-      );
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get("userId");
     const test = searchParams.get("test") || "Reading and Writing";
@@ -221,6 +214,23 @@ export async function GET(request: NextRequest) {
 
     // ---- Per-user stats ----
     if (userId) {
+      // Firebase is required for user-specific stats
+      if (!db) {
+        console.error("Firebase db is not initialized");
+        return NextResponse.json(
+          { error: "Firebase not initialized" },
+          { status: 500 },
+        );
+      }
+
+      // Require authentication for user-specific stats
+      const authenticatedUserId = await verifyAuthToken(request);
+
+      // User can only request their own data
+      if (userId !== authenticatedUserId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
       const userStatsDocName = test === "Math" ? `${userId}-math` : userId;
       const userStatsDoc = await getDoc(
         doc(db, "userQuestionStats", userStatsDocName),
@@ -381,6 +391,9 @@ export async function GET(request: NextRequest) {
       count: count,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return handleAuthError(error);
+    }
     console.error("Error fetching question stats:", error);
     return NextResponse.json(
       { error: "Failed to fetch question stats" },

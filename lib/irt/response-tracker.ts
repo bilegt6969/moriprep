@@ -1,11 +1,14 @@
 /**
  * Response Tracker
- * 
+ *
  * Converts question responses into IRT-compatible format
  * and tracks performance during a practice session
  */
 
-import { QuestionResponse, IRTParameters, DEFAULT_PARAMETERS } from "./ability-estimator";
+import {
+    DEFAULT_PARAMETERS,
+    QuestionResponse
+} from "./ability-estimator";
 
 export interface TrackedResponse {
   questionId: string;
@@ -32,10 +35,9 @@ export interface SessionData {
 /**
  * Convert tracked response to IRT QuestionResponse
  */
-export function toIRTResponse(
-  tracked: TrackedResponse
-): QuestionResponse {
-  const parameters = DEFAULT_PARAMETERS[tracked.difficulty] || DEFAULT_PARAMETERS.Medium;
+export function toIRTResponse(tracked: TrackedResponse): QuestionResponse {
+  const parameters =
+    DEFAULT_PARAMETERS[tracked.difficulty] || DEFAULT_PARAMETERS.Medium;
 
   return {
     questionId: tracked.questionId,
@@ -48,7 +50,7 @@ export function toIRTResponse(
  * Convert array of tracked responses to IRT format
  */
 export function toIRTResponses(
-  trackedResponses: TrackedResponse[]
+  trackedResponses: TrackedResponse[],
 ): QuestionResponse[] {
   return trackedResponses.map(toIRTResponse);
 }
@@ -65,12 +67,15 @@ export interface PerformanceStats {
     Medium: { total: number; correct: number; accuracy: number };
     Hard: { total: number; correct: number; accuracy: number };
   };
-  byDomain: Record<string, { total: number; correct: number; accuracy: number }>;
+  byDomain: Record<
+    string,
+    { total: number; correct: number; accuracy: number }
+  >;
   averageTime: number; // seconds per question
 }
 
 export function calculatePerformanceStats(
-  responses: TrackedResponse[]
+  responses: TrackedResponse[],
 ): PerformanceStats {
   const totalQuestions = responses.length;
   const correctCount = responses.filter((r) => r.isCorrect).length;
@@ -84,7 +89,10 @@ export function calculatePerformanceStats(
   };
 
   // By domain
-  const byDomain: Record<string, { total: number; correct: number; accuracy: number }> = {};
+  const byDomain: Record<
+    string,
+    { total: number; correct: number; accuracy: number }
+  > = {};
 
   // Average time
   let totalTime = 0;
@@ -105,8 +113,8 @@ export function calculatePerformanceStats(
     byDomain[response.domain].total++;
     if (response.isCorrect) byDomain[response.domain].correct++;
 
-    // Time
-    if (response.timeSpent) {
+    // Time (ignore negative or invalid values)
+    if (response.timeSpent && response.timeSpent > 0) {
       totalTime += response.timeSpent;
       timedQuestions++;
     }
@@ -142,9 +150,7 @@ export function calculatePerformanceStats(
 /**
  * Generate a summary of performance for display
  */
-export function generatePerformanceSummary(
-  stats: PerformanceStats
-): string {
+export function generatePerformanceSummary(stats: PerformanceStats): string {
   const lines = [
     `Total Questions: ${stats.totalQuestions}`,
     `Correct: ${stats.correctCount}`,
@@ -159,7 +165,9 @@ export function generatePerformanceSummary(
   ];
 
   for (const [domain, data] of Object.entries(stats.byDomain)) {
-    lines.push(`  ${domain}: ${data.correct}/${data.total} (${(data.accuracy * 100).toFixed(1)}%)`);
+    lines.push(
+      `  ${domain}: ${data.correct}/${data.total} (${(data.accuracy * 100).toFixed(1)}%)`,
+    );
   }
 
   if (stats.averageTime > 0) {
@@ -182,7 +190,7 @@ export interface PerformancePattern {
 }
 
 export function detectPerformancePatterns(
-  responses: TrackedResponse[]
+  responses: TrackedResponse[],
 ): PerformancePattern {
   const stats = calculatePerformanceStats(responses);
 
@@ -204,9 +212,7 @@ export function detectPerformancePatterns(
 
   // Time pressure (very fast responses with low accuracy)
   const timePressure =
-    stats.averageTime > 0 &&
-    stats.averageTime < 10 &&
-    stats.accuracy < 0.5;
+    stats.averageTime > 0 && stats.averageTime < 10 && stats.accuracy < 0.5;
 
   // Trend analysis (first half vs second half)
   const midPoint = Math.floor(responses.length / 2);

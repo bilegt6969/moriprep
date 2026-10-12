@@ -1,3 +1,4 @@
+import { handleAuthError, verifyAuthToken } from "@/lib/auth-verification";
 import { allSkills, domainSkills } from "@/lib/dsat/domain-skills";
 import { db } from "@/lib/firebase";
 import {
@@ -11,23 +12,34 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  // Check Firebase initialization first
+  if (!db) {
+    return NextResponse.json(
+      { error: "Firebase not initialized" },
+      { status: 500 },
+    );
+  }
+
   try {
-    if (!db) {
-      return NextResponse.json(
-        { error: "Firebase not initialized" },
-        { status: 500 },
-      );
-    }
+    // Authenticate the request
+    const authenticatedUserId = await verifyAuthToken(request);
 
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId");
+    const requestedUserId = searchParams.get("userId");
 
-    if (!userId) {
+    // User can only request their own data
+    if (!requestedUserId) {
       return NextResponse.json(
         { error: "userId is required" },
         { status: 400 },
       );
     }
+
+    if (requestedUserId !== authenticatedUserId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const userId = requestedUserId;
 
     // Fetch user profile data
     const userDoc = await getDoc(doc(db, "users", userId));
@@ -469,9 +481,12 @@ export async function GET(request: NextRequest) {
       dailyGoal: userData?.dailyGoal || 20,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return handleAuthError(error);
+    }
     console.error("Error fetching analytics:", error);
     return NextResponse.json(
-      { error: "Failed to fetch analytics", details: String(error) },
+      { error: "Failed to fetch analytics" },
       { status: 500 },
     );
   }

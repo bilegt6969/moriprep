@@ -1,8 +1,8 @@
 "use client";
 
-import { getUserProgress, getUserStats } from "@/lib/dsat/questions";
+import type { UserProgress, UserStats } from "@/lib/dsat/questions-api";
+import { getUserProgress, getUserStats } from "@/lib/dsat/questions-api";
 import { auth } from "@/lib/firebase";
-import { UserProgress, UserStats } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 
@@ -29,8 +29,8 @@ export default function DashboardPage() {
   async function fetchUserData(userId: string) {
     try {
       const [userStats, userProgress] = await Promise.all([
-        getUserStats(userId),
-        getUserProgress(userId),
+        getUserStats(),
+        getUserProgress(),
       ]);
       setStats(userStats);
       setProgress(userProgress);

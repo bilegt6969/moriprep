@@ -1,9 +1,9 @@
 /**
  * Item Response Theory (IRT) Based Ability Estimator
- * 
+ *
  * Uses 3-parameter logistic model (3PL) for ability estimation:
  * P(correct) = c + (1 - c) / (1 + exp(-a * (theta - b)))
- * 
+ *
  * Where:
  * - theta: student ability (estimated)
  * - a: discrimination parameter (how well item distinguishes ability levels)
@@ -44,7 +44,7 @@ export const DEFAULT_PARAMETERS: Record<string, IRTParameters> = {
  */
 export function probabilityCorrect(
   theta: number,
-  parameters: IRTParameters
+  parameters: IRTParameters,
 ): number {
   const { a, b, c } = parameters;
   const z = a * (theta - b);
@@ -58,7 +58,7 @@ export function probabilityCorrect(
  */
 export function estimateAbilityMLE(
   responses: QuestionResponse[],
-  initialTheta: number = 0
+  initialTheta: number = 0,
 ): AbilityEstimate {
   if (responses.length === 0) {
     return { theta: 0, standardError: 1, confidence: 1.96 };
@@ -76,13 +76,15 @@ export function estimateAbilityMLE(
     for (const response of responses) {
       const p = probabilityCorrect(theta, response.parameters);
       const { a, b, c } = response.parameters;
-      
+
       // Gradient (first derivative)
       const gradientTerm = response.correct ? 1 - p : -p;
-      gradient += a * gradientTerm * (1 - c) * p * (1 - p) / (p - c);
-      
+      gradient += (a * gradientTerm * (1 - c) * p * (1 - p)) / (p - c);
+
       // Hessian (second derivative)
-      const hessianTerm = -a * a * (1 - c) * p * (1 - p) * (1 - 2 * c * p + c * p * p) / ((p - c) * (p - c));
+      const hessianTerm =
+        (-a * a * (1 - c) * p * (1 - p) * (1 - 2 * c * p + c * p * p)) /
+        ((p - c) * (p - c));
       hessian += hessianTerm;
     }
 
@@ -118,19 +120,20 @@ export function estimateAbilityMLE(
 export function estimateAbilityEAP(
   responses: QuestionResponse[],
   thetaRange: number = 4,
-  numPoints: number = 40
+  numPoints: number = 40,
 ): AbilityEstimate {
   if (responses.length === 0) {
     return { theta: 0, standardError: 1, confidence: 1.96 };
   }
 
   // Discretize theta range
-  const thetas = Array.from({ length: numPoints }, (_, i) => 
-    -thetaRange + (2 * thetaRange * i) / (numPoints - 1)
+  const thetas = Array.from(
+    { length: numPoints },
+    (_, i) => -thetaRange + (2 * thetaRange * i) / (numPoints - 1),
   );
 
   // Calculate likelihood for each theta
-  const likelihoods = thetas.map(theta => {
+  const likelihoods = thetas.map((theta) => {
     let logLikelihood = 0;
     for (const response of responses) {
       const p = probabilityCorrect(theta, response.parameters);
@@ -141,8 +144,8 @@ export function estimateAbilityEAP(
   });
 
   // Multiply by prior (standard normal)
-  const prior = thetas.map(theta => 
-    Math.exp(-0.5 * theta * theta) / Math.sqrt(2 * Math.PI)
+  const prior = thetas.map(
+    (theta) => Math.exp(-0.5 * theta * theta) / Math.sqrt(2 * Math.PI),
   );
 
   // Posterior = likelihood * prior
@@ -150,7 +153,7 @@ export function estimateAbilityEAP(
 
   // Normalize posterior
   const sum = posterior.reduce((a, b) => a + b, 0);
-  const normalizedPosterior = posterior.map(p => p / sum);
+  const normalizedPosterior = posterior.map((p) => p / sum);
 
   // Calculate expected value (EAP estimate)
   let expectedTheta = 0;
@@ -172,39 +175,57 @@ export function estimateAbilityEAP(
 /**
  * Detect guessing patterns in responses
  * Returns true if pattern suggests random guessing
+ * Guessing is indicated by: high accuracy on hard questions but low accuracy on easy questions
  */
 export function detectGuessing(
   responses: QuestionResponse[],
-  threshold: number = 0.3
+  threshold: number = 0.3,
 ): boolean {
   if (responses.length < 5) return false;
 
-  // Calculate average probability of correct for incorrect answers
-  let avgProbIncorrect = 0;
-  let incorrectCount = 0;
+  // Calculate accuracy by difficulty
+  const byDifficulty = {
+    Easy: { correct: 0, total: 0 },
+    Medium: { correct: 0, total: 0 },
+    Hard: { correct: 0, total: 0 },
+  };
 
   for (const response of responses) {
-    if (!response.correct) {
-      const p = probabilityCorrect(0, response.parameters); // assuming average ability
-      avgProbIncorrect += p;
-      incorrectCount++;
+    const difficulty = (Object.entries(DEFAULT_PARAMETERS).find(
+      ([, params]) => params.b === response.parameters.b,
+    )?.[0] || "Medium") as keyof typeof byDifficulty;
+
+    if (byDifficulty[difficulty]) {
+      byDifficulty[difficulty].total++;
+      if (response.correct) byDifficulty[difficulty].correct++;
     }
   }
 
-  if (incorrectCount === 0) return false;
-  avgProbIncorrect /= incorrectCount;
+  // Calculate accuracies
+  const easyAccuracy =
+    byDifficulty.Easy.total > 0
+      ? byDifficulty.Easy.correct / byDifficulty.Easy.total
+      : 0;
+  const hardAccuracy =
+    byDifficulty.Hard.total > 0
+      ? byDifficulty.Hard.correct / byDifficulty.Hard.total
+      : 0;
 
-  // If user is getting easy questions wrong (suggesting guessing)
-  return avgProbIncorrect > threshold;
+  // Guessing pattern: high accuracy on hard questions but low on easy questions
+  // This suggests the student might be guessing on hard questions and getting lucky
+  return (
+    hardAccuracy > 0.6 &&
+    easyAccuracy < 0.5 &&
+    byDifficulty.Easy.total >= 3 &&
+    byDifficulty.Hard.total >= 3
+  );
 }
 
 /**
  * Calculate weighted score considering question difficulty
  * Used as a simpler alternative to full IRT
  */
-export function calculateWeightedScore(
-  responses: QuestionResponse[]
-): number {
+export function calculateWeightedScore(responses: QuestionResponse[]): number {
   const weights = {
     Easy: 1,
     Medium: 2,
@@ -215,9 +236,10 @@ export function calculateWeightedScore(
   let earnedWeight = 0;
 
   for (const response of responses) {
-    const difficulty = Object.entries(DEFAULT_PARAMETERS).find(
-      ([, params]) => params.b === response.parameters.b
-    )?.[0] || "Medium";
+    const difficulty =
+      Object.entries(DEFAULT_PARAMETERS).find(
+        ([, params]) => params.b === response.parameters.b,
+      )?.[0] || "Medium";
 
     const weight = weights[difficulty as keyof typeof weights] || 2;
     totalWeight += weight;

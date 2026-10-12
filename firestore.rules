@@ -1,23 +1,86 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ===== PUBLIC COLLECTIONS =====
     
-    // Allow all access for development
+    // Question banks are publicly readable (no write access from client)
+    match /questions/{questionId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Question statistics are publicly readable (global counts only)
+    match /questionStats/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ===== USER-SPECIFIC COLLECTIONS =====
+
+    // User profiles - owner can read/write their own
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
-    
-    match /userProgress/{document=**} {
-      allow read, write: if true;
+
+    // User progress - owner can read/write their own
+    // Document IDs are in format: {userId}_{questionId}
+    match /userProgress/{documentId} {
+      allow read: if isAuthenticated() && documentId.startsWith(request.auth.uid + '_');
+      allow write: if isAuthenticated() && documentId.startsWith(request.auth.uid + '_');
     }
-    
-    match /userStats/{document=**} {
-      allow read, write: if true;
+
+    // User stats - owner can read/write their own
+    match /userStats/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
-    
-    // Fallback for any other collections
+
+    // User question stats - owner can read/write their own
+    // Document IDs are either {userId} or {userId}-math
+    match /userQuestionStats/{documentId} {
+      allow read: if isAuthenticated() && (
+        documentId == request.auth.uid || 
+        documentId == request.auth.uid + '-math'
+      );
+      allow write: if isAuthenticated() && (
+        documentId == request.auth.uid || 
+        documentId == request.auth.uid + '-math'
+      );
+    }
+
+    // User answered questions - owner can read/write their own
+    match /userAnsweredQuestions/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // Question reports - users can create reports, but only read their own
+    match /questionReports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Reports are immutable
+    }
+
+    // User answers - owner can read/write their own
+    match /userAnswers/{answerId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // ===== FALLBACK: DENY ALL OTHER ACCESS =====
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

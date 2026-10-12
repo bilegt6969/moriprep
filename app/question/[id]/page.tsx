@@ -1,6 +1,6 @@
 "use client";
 
-import { saveUserProgress, updateUserStats } from "@/lib/dsat/questions";
+import { saveUserProgress, updateUserStats } from "@/lib/dsat/questions-api";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
@@ -220,14 +220,13 @@ function QuestionDetailPageContent({
         if (user) {
           try {
             await saveUserProgress(
-              user.uid,
               question.question_id,
               highlightedAnswer,
               isCorrect,
               timeSpent,
               question,
             );
-            await updateUserStats(user.uid, isCorrect, timeSpent);
+            await updateUserStats(isCorrect, timeSpent);
           } catch (error) {
             console.error("Error saving to Firebase:", error);
           }

@@ -15,6 +15,326 @@ const blogPosts: Record<
     content: ReactNode;
   }
 > = {
+  "data-science-equitable-learning": {
+    title:
+      "Beyond Free SAT Prep: Can Data Science Make Learning More Equitable?",
+    date: "12 October, 2026",
+    author: "Bytecode Team",
+    categories: ["News", "Education", "Data Science"],
+    content: (
+      <>
+        <p className="pb-8">
+          Making education free is a good place to start. But what happens after
+          a student gains access to it?
+        </p>
+        <p className="pb-8">
+          When we started Mori Prep, we had a simple goal: make Digital SAT
+          preparation accessible to Mongolian students regardless of their
+          family's financial circumstances.
+        </p>
+        <p className="pb-8">
+          We knew that some students could afford private tutoring, preparation
+          books, and structured study programs, while others had to navigate the
+          process independently. We believed that students should not have to
+          pay for access to the knowledge and resources they need to pursue
+          higher education.
+        </p>
+        <p className="pb-8">So we built Mori Prep.</p>
+        <p className="pb-8">
+          Today, students can use our platform to practice SAT Math and Reading
+          and Writing, explore preparation resources, and work toward their
+          academic goals without a subscription fee.
+        </p>
+        <p className="pb-8">
+          But building the platform has led us to another question.
+        </p>
+        <p className="pb-8 font-semibold">
+          If two students have access to the same free resources, will they
+          necessarily have the same opportunity to learn effectively?
+        </p>
+        <p className="pb-8">We don't think the answer is that simple.</p>
+
+        <section id="free-resources-guidance" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+            Free Resources Don't Always Tell You What to Do Next
+          </h2>
+          <p className="pb-8">
+            Imagine a student who takes a practice test and discovers that their
+            Math performance needs improvement.
+          </p>
+          <p className="pb-8">What should they do next?</p>
+          <p className="pb-8">
+            Should they spend more time studying algebra? Should they review
+            advanced math concepts? Should they revisit questions they answered
+            incorrectly? Or should they focus on understanding why they
+            repeatedly make certain mistakes?
+          </p>
+          <p className="pb-8">
+            A student with access to an experienced tutor might receive guidance
+            on these questions. A student studying independently may have to
+            figure everything out alone.
+          </p>
+          <p className="pb-8">
+            Free practice questions solve part of the problem. They give
+            students something to work on.
+          </p>
+          <p className="pb-8">
+            But students also need ways to understand their progress, identify
+            weaknesses, and decide how to use their limited study time.
+          </p>
+          <p className="pb-8">
+            For many independent learners, that process can be difficult.
+          </p>
+          <p className="pb-8">
+            And this leads us to an important distinction:{" "}
+            <strong>
+              access to information is not the same as knowing how to use it
+              effectively.
+            </strong>
+          </p>
+          <p className="pb-8">
+            We built Mori Prep to help address the first problem. Now we want to
+            investigate how we can address the second.
+          </p>
+        </section>
+
+        <section id="learning-data" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+            What If We Used Learning Data to Understand Students Better?
+          </h2>
+          <p className="pb-8">
+            Every time students practice, they generate information about their
+            learning.
+          </p>
+          <p className="pb-8">
+            A student's answers can reveal which skills they understand and
+            which concepts they may need to revisit. Their practice history can
+            show whether they return to difficult questions, how consistently
+            they study, and which areas they spend the most time working on.
+          </p>
+          <p className="pb-8">
+            Individually, these observations can help students reflect on their
+            preparation. Across many students, they may reveal broader patterns
+            that are difficult to identify by looking at individual scores
+            alone.
+          </p>
+          <p className="pb-8">This is where data science becomes valuable.</p>
+          <p className="pb-8">
+            Rather than simply collecting more questions and adding more
+            resources, we want to explore how educational data can help us
+            understand the learning process itself.
+          </p>
+          <p className="pb-8">
+            Which practice habits are associated with better performance?
+          </p>
+          <p className="pb-8">
+            Which SAT skills consistently require more attention?
+          </p>
+          <p className="pb-8">
+            Do students who review their mistakes make different kinds of
+            progress from students who only complete new questions?
+          </p>
+          <p className="pb-8">
+            Can a structured study plan help independent learners prepare more
+            consistently?
+          </p>
+          <p className="pb-8">
+            These are questions we want to investigate, not conclusions we have
+            already reached.
+          </p>
+          <p className="pb-8">
+            The purpose of learning analytics is not to turn students into
+            numbers. It is to use information to make educational support more
+            relevant to the people who need it.
+          </p>
+        </section>
+
+        <section id="guided-learning" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+            From a Question Bank to a Guided Learning Experience
+          </h2>
+          <p className="pb-8">
+            We see several ways this research could shape the next stage of Mori
+            Prep.
+          </p>
+
+          <h3 className="text-[20px] font-medium leading-[25px] tracking-[-0.3px] text-[#343433] mb-3 mt-6">
+            1. Helping students understand their weaknesses
+          </h3>
+          <p className="pb-8">
+            Instead of looking only at an overall practice score, students could
+            examine their performance across specific skills and identify which
+            areas deserve attention.
+          </p>
+          <p className="pb-8">
+            A student struggling with a particular algebra concept, for example,
+            could receive a more useful recommendation than a general
+            instruction to study Math harder.
+          </p>
+
+          <h3 className="text-[20px] font-medium leading-[25px] tracking-[-0.3px] text-[#343433] mb-3 mt-6">
+            2. Making practice more purposeful
+          </h3>
+          <p className="pb-8">
+            A student's next study session should have a reason behind it.
+          </p>
+          <p className="pb-8">
+            We want to explore whether recommendations based on skill-level
+            performance, previous mistakes, and study goals can help students
+            make better decisions about what to practice next.
+          </p>
+          <p className="pb-8">
+            The aim is not to make studying effortless. It is to help students
+            spend their effort more purposefully.
+          </p>
+
+          <h3 className="text-[20px] font-medium leading-[25px] tracking-[-0.3px] text-[#343433] mb-3 mt-6">
+            3. Understanding the barriers students share
+          </h3>
+          <p className="pb-8">
+            Learning data may also help us recognize common difficulties across
+            the platform.
+          </p>
+          <p className="pb-8">
+            If many students struggle with the same skill, that could signal an
+            opportunity to create a clearer lesson or improve the explanations
+            available on Mori Prep.
+          </p>
+          <p className="pb-8">
+            If students frequently begin practicing but do not return, we should
+            investigate why before assuming they simply lack motivation.
+          </p>
+          <p className="pb-8">
+            The problem might be the study experience, competing
+            responsibilities, limited internet access, or something else
+            entirely.
+          </p>
+          <p className="pb-8">
+            Data can help us identify patterns. Listening to students can help
+            us understand them.
+          </p>
+
+          <h3 className="text-[20px] font-medium leading-[25px] tracking-[-0.3px] text-[#343433] mb-3 mt-6">
+            4. Measuring whether our improvements work
+          </h3>
+          <p className="pb-8">
+            We do not want to add features simply because they look impressive.
+          </p>
+          <p className="pb-8">
+            When we introduce a new study tool or recommendation system, we want
+            to examine whether it helps students engage more consistently and
+            improve their understanding.
+          </p>
+          <p className="pb-8">
+            That requires measuring outcomes, comparing results carefully, and
+            being honest when a feature does not work as expected.
+          </p>
+          <p className="pb-8">
+            A successful educational platform should not be judged only by how
+            many students register. We should also ask whether students are
+            getting meaningful value from using it.
+          </p>
+        </section>
+
+        <section id="why-matters-mongolia" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+            Why This Matters for Mongolia
+          </h2>
+          <p className="pb-8">
+            Our focus remains on Mongolian students, especially those who cannot
+            afford private SAT tutoring.
+          </p>
+          <p className="pb-8">
+            We are not suggesting that every student has the same circumstances
+            or that one platform can solve every barrier to education. Students
+            may face different challenges depending on their school, location,
+            access to technology, and available support.
+          </p>
+          <p className="pb-8">
+            That is precisely why we want to understand those differences rather
+            than assume they do not exist.
+          </p>
+          <p className="pb-8">
+            A student in Ulaanbaatar and a student in a rural province may use
+            the same question bank but have very different study environments.
+            Some students may need more targeted explanations. Others may
+            benefit from a clearer study plan or resources that are easier to
+            access with limited connectivity.
+          </p>
+          <p className="pb-8">
+            Our responsibility is to investigate these needs and build
+            accordingly.
+          </p>
+          <p className="pb-8">
+            We want Mori Prep to become more than a free place to answer
+            questions. We want it to become a platform that learns from how
+            students use it and improves the support it provides.
+          </p>
+          <p className="pb-8">
+            Throughout this process, student privacy must remain important.
+            Learning data should be collected only when necessary, handled
+            responsibly, and used to improve education—not to label students or
+            publicly rank their circumstances.
+          </p>
+        </section>
+
+        <section id="the-question" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+            The Question We Want to Answer
+          </h2>
+          <p className="pb-8">
+            Mori Prep began with a belief: a student's financial situation
+            should not determine whether they can access high-quality SAT
+            preparation.
+          </p>
+          <p className="pb-8">We still believe that.</p>
+          <p className="pb-8">
+            But we now see another question worth exploring.
+          </p>
+          <p className="pb-8 font-semibold">
+            Can data science help make free educational resources more effective
+            for the students who need them most?
+          </p>
+          <p className="pb-8">
+            We want to investigate whether a structured, data-informed
+            preparation pathway can help students study more consistently,
+            identify their weaknesses more effectively, and improve their skills
+            without relying on paid tutoring.
+          </p>
+          <p className="pb-8">
+            We will need to listen to students, examine learning patterns, test
+            ideas, and measure results. We may discover that some of our
+            assumptions are wrong. If that happens, we want the evidence to
+            change what we build.
+          </p>
+          <p className="pb-8">That is part of the point.</p>
+          <p className="pb-8">
+            We do not believe that building an educational platform means having
+            every answer from the beginning. It means identifying a problem,
+            developing a thoughtful solution, and continuing to learn from the
+            people the solution is intended to serve.
+          </p>
+          <p className="pb-8">
+            Bytecode began by making coding education more accessible. Mori Prep
+            extended that mission to university preparation.
+          </p>
+          <p className="pb-8">
+            Now, we want to investigate how data science can help us take the
+            next step.
+          </p>
+          <p className="pb-8 font-semibold">
+            Our goal is not simply to make learning free. It is to help make
+            effective learning more accessible, too.
+          </p>
+          <p className="pb-8">
+            Because a student's potential should not have a price tag—and the
+            information needed to improve should not be reserved for those who
+            can afford a tutor.
+          </p>
+        </section>
+      </>
+    ),
+  },
   "closing-dsat-information-gap": {
     title: "Closing the DSAT Information Gap in Mongolia",
     date: "13 May, 2026",
@@ -785,8 +1105,8 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-neutral-medium font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
-      <div className="max-w-[48rem] mx-auto px-6 pt-12 py-16 md:py-24">
+    <main className="min-h-screen bg-white text-neutral-medium font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
+      <div className="max-w-[48rem] mx-auto px-6 pt-24 py-16 md:py-24">
         {/* Back Link */}
         <div className="mb-8">
           <Link
@@ -922,6 +1242,6 @@ export default function BlogPostPage() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

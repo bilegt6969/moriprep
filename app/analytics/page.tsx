@@ -69,13 +69,34 @@ function useAnalytics() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/analytics?userId=${uid}`);
+
+      // Get Firebase ID token for authentication
+      const token = await auth?.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(`/api/analytics?userId=${uid}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error("Session expired. Please sign in again.");
+      }
+      if (response.status === 403) {
+        throw new Error("Access denied.");
+      }
       if (!response.ok) throw new Error("Failed to fetch analytics");
+
       const result: AnalyticsData = await response.json();
       setData(result);
     } catch (err) {
       console.error("Error fetching analytics:", err);
-      setError("Failed to load analytics data.");
+      setError(
+        err instanceof Error ? err.message : "Failed to load analytics data.",
+      );
     } finally {
       setIsLoading(false);
     }

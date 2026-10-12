@@ -36,7 +36,7 @@ const SKILL_TO_DOMAIN: Record<string, string> = {
   "Form Structure and Sense": "Standard English Conventions", // Alternative naming
 };
 
-function resolveDomain(question: DSATQuestion): string | null {
+export function resolveDomain(question: DSATQuestion): string | null {
   if (question.domain) return question.domain;
   if (question.skill && SKILL_TO_DOMAIN[question.skill]) {
     return SKILL_TO_DOMAIN[question.skill];
@@ -76,7 +76,7 @@ export async function getQuestionById(
 }
 
 // Sanitize field names for Firestore (replace all non-alphanumeric with underscores)
-function sanitizeFieldName(name: string): string {
+export function sanitizeFieldName(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9]/g, "_")
     .replace(/_{2,}/g, "_")

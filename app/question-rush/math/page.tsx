@@ -7,7 +7,7 @@ import {
     saveAnsweredQuestions,
     saveUserProgress,
     updateUserStats,
-} from "@/lib/dsat/questions";
+} from "@/lib/dsat/questions-api";
 import { DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
@@ -518,8 +518,10 @@ function MathPracticeContent() {
       setIsAnsweredDataSettled(false);
       try {
         if (user) {
-          const { getAnsweredQuestions } = await import("@/lib/dsat/questions");
-          const answered = await getAnsweredQuestions(user.uid);
+          const { getAnsweredQuestions } = await import(
+            "@/lib/dsat/questions-api"
+          );
+          const answered = await getAnsweredQuestions();
           setAnsweredQuestions(answered);
         } else {
           const localAnswered = localStorage.getItem("answeredQuestions_math");
@@ -578,14 +580,13 @@ function MathPracticeContent() {
     if (user) {
       const timeSpent = timeElapsed;
       saveUserProgress(
-        user.uid,
         currentQuestion.question_id,
         letter,
         correct,
         timeSpent,
         currentQuestion,
       );
-      updateUserStats(user.uid, correct, timeSpent);
+      updateUserStats(correct, timeSpent);
     } else {
       // Save to localStorage for guest users
       const localProgress = JSON.parse(
@@ -609,7 +610,7 @@ function MathPracticeContent() {
         answer: letter,
       });
       if (user) {
-        saveAnsweredQuestions(user.uid, updated);
+        saveAnsweredQuestions(updated);
       } else {
         localStorage.setItem(
           "answeredQuestions_math",
@@ -1312,14 +1313,13 @@ function MathPracticeContent() {
                           if (user && selectedAnswer) {
                             const timeSpent = timeElapsed;
                             saveUserProgress(
-                              user.uid,
                               currentQuestion.question_id,
                               selectedAnswer,
                               correct,
                               timeSpent,
                               currentQuestion,
                             );
-                            updateUserStats(user.uid, correct, timeSpent);
+                            updateUserStats(correct, timeSpent);
                           }
                         }}
                         disabled={!selectedAnswer}

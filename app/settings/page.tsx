@@ -11,6 +11,7 @@ import {
     updateProfile,
     uploadBytes,
 } from "@/lib/firebase";
+import { getUserProfile, updateUserProfile } from "@/lib/user-api";
 import type { Auth } from "firebase/auth";
 import { onAuthStateChanged, signOut, updateEmail } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
@@ -188,11 +189,11 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchOnboardingData = async () => {
-      if (!auth?.currentUser || !db) return;
+      if (!auth?.currentUser) return;
       try {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-        if (userDoc.exists()) {
-          setOnboardingData(userDoc.data());
+        const userData = await getUserProfile();
+        if (userData) {
+          setOnboardingData(userData);
         }
       } catch (error) {
         console.error("Error fetching onboarding data:", error);
@@ -241,11 +242,8 @@ export default function SettingsPage() {
       await updateProfile(user, { photoURL: downloadURL });
       setUserPhotoURL(downloadURL);
 
-      // Also update Firestore user document
-      if (db) {
-        const { updateDoc } = await import("firebase/firestore");
-        await updateDoc(doc(db, "users", user.uid), { photoURL: downloadURL });
-      }
+      // Also update Firestore user document via API
+      await updateUserProfile({ photoURL: downloadURL });
     } catch (error) {
       console.error("Error uploading photo:", error);
       alert("Failed to upload photo. Please try again.");
@@ -262,28 +260,21 @@ export default function SettingsPage() {
   };
 
   const handleSaveName = async (newName: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), { name: newName });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ name: newName });
     await updateProfile(auth.currentUser, { displayName: newName });
     setUserName(newName);
   };
 
   const handleSaveInstitution = async (newSchool: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      school: newSchool,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ school: newSchool });
     setOnboardingData((prev: any) => ({ ...prev, school: newSchool }));
   };
 
   const handleSaveRole = async (newRole: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      role: newRole.toLowerCase(),
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ role: newRole.toLowerCase() });
     setOnboardingData((prev: any) => ({
       ...prev,
       role: newRole.toLowerCase(),
@@ -291,20 +282,14 @@ export default function SettingsPage() {
   };
 
   const handleSaveGraduationYear = async (newYear: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      graduationYear: newYear,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ graduationYear: newYear });
     setOnboardingData((prev: any) => ({ ...prev, graduationYear: newYear }));
   };
 
   const handleSaveTopScore = async (newScore: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      bestTotalScore: parseInt(newScore) || null,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ bestTotalScore: parseInt(newScore) || null });
     setOnboardingData((prev: any) => ({
       ...prev,
       bestTotalScore: parseInt(newScore) || null,
@@ -312,11 +297,8 @@ export default function SettingsPage() {
   };
 
   const handleSaveTargetScore = async (newScore: string) => {
-    if (!auth?.currentUser || !db) throw new Error("Not authenticated");
-    const { updateDoc } = await import("firebase/firestore");
-    await updateDoc(doc(db, "users", auth.currentUser.uid), {
-      goalScore: parseInt(newScore) || null,
-    });
+    if (!auth?.currentUser) throw new Error("Not authenticated");
+    await updateUserProfile({ goalScore: parseInt(newScore) || null });
     setOnboardingData((prev: any) => ({
       ...prev,
       goalScore: parseInt(newScore) || null,

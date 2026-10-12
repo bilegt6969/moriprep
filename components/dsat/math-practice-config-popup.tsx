@@ -136,10 +136,20 @@ export function MathPracticeConfigPopup({
             return;
           }
 
+          // Get Firebase ID token for authentication
+          const token = await auth?.currentUser?.getIdToken();
+          if (!token) {
+            setFilteredCount(0);
+            return;
+          }
+
           const needsGlobalTotal = attemptFilter === "not-tried";
           const [userResponse, globalResponse] = await Promise.all([
             fetch(`/api/question-stats?${buildParams(userId).toString()}`, {
               signal: controller.signal,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }),
             needsGlobalTotal
               ? fetch(`/api/question-stats?${buildParams().toString()}`, {
@@ -148,6 +158,10 @@ export function MathPracticeConfigPopup({
               : Promise.resolve(null),
           ]);
 
+          if (userResponse.status === 401 || userResponse.status === 403) {
+            setFilteredCount(0);
+            return;
+          }
           if (!userResponse.ok)
             throw new Error("Failed to load question stats");
           const userData = await userResponse.json();

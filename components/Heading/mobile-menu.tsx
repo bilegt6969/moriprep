@@ -22,14 +22,14 @@ interface Props {
 const EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 
 export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
-  const [isCompaniesOpen, setIsCompaniesOpen] = useState(false);
+  const [isOrganizationsOpen, setIsOrganizationsOpen] = useState(false);
 
   const handleClose = () => {
     setIsOpen(false);
-    setTimeout(() => setIsCompaniesOpen(false), 400);
+    setTimeout(() => setIsOrganizationsOpen(false), 400);
   };
 
-  const companyLinks =
+  const organizationLinks =
     categories && categories.length > 0
       ? categories
       : [
@@ -118,7 +118,7 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
                 </div>
               ))}
 
-              {/* Company disclosure */}
+              {/* Organization disclosure */}
               <div
                 className="border-b border-black/[0.06]"
                 style={{
@@ -131,16 +131,16 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
                 }}
               >
                 <button
-                  onClick={() => setIsCompaniesOpen((v) => !v)}
+                  onClick={() => setIsOrganizationsOpen((v) => !v)}
                   className="flex w-full items-center justify-between py-5 text-left text-[28px] font-medium tracking-[-0.02em] text-[#1d1d1f] sm:text-[32px]"
                 >
-                  Company
+                  Organization
                   <ChevronDown
                     className="h-5 w-5 text-black/40 transition-transform duration-500"
                     strokeWidth={1.75}
                     style={{
                       transitionTimingFunction: EASE,
-                      transform: isCompaniesOpen
+                      transform: isOrganizationsOpen
                         ? "rotate(180deg)"
                         : "rotate(0deg)",
                     }}
@@ -150,24 +150,24 @@ export default function MobileMenu({ isOpen, setIsOpen, categories }: Props) {
                 <div
                   className="grid overflow-hidden transition-all duration-500"
                   style={{
-                    gridTemplateRows: isCompaniesOpen ? "1fr" : "0fr",
+                    gridTemplateRows: isOrganizationsOpen ? "1fr" : "0fr",
                     transitionTimingFunction: EASE,
                   }}
                 >
                   <div className="overflow-hidden">
                     <ul className="flex flex-col gap-1 pb-6 pl-1 pt-1">
-                      {companyLinks.map((item, i) => (
+                      {organizationLinks.map((item, i) => (
                         <li
                           key={item.href}
                           style={{
                             transitionProperty: "opacity, transform",
                             transitionDuration: "400ms",
                             transitionTimingFunction: EASE,
-                            transitionDelay: isCompaniesOpen
+                            transitionDelay: isOrganizationsOpen
                               ? `${i * 50}ms`
                               : "0ms",
-                            opacity: isCompaniesOpen ? 1 : 0,
-                            transform: isCompaniesOpen
+                            opacity: isOrganizationsOpen ? 1 : 0,
+                            transform: isOrganizationsOpen
                               ? "translateY(0)"
                               : "translateY(6px)",
                           }}

@@ -21,6 +21,7 @@ import {
     query,
     serverTimestamp,
     setDoc,
+    updateDoc,
     where,
 } from "firebase/firestore";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -87,6 +88,7 @@ export {
     serverTimestamp,
     setDoc,
     storage,
+    updateDoc,
     updateProfile,
     uploadBytes,
     where

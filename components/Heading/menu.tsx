@@ -22,13 +22,13 @@ const linkClass = cn(
   islandTiming,
 );
 
-interface CompanyLink {
+interface OrganizationLink {
   label: string;
   href: string;
   description: string;
 }
 
-const companyLinks: CompanyLink[] = [
+const organizationLinks: OrganizationLink[] = [
   {
     label: "About",
     href: "/info/story",
@@ -100,7 +100,7 @@ export default function Menu({
               "group inline-flex items-center gap-1.5 bg-transparent outline-none data-[state=open]:text-neutral-400",
             )}
           >
-            Company
+            Organization
             <ChevronDown
               className={cn(
                 "h-3 w-3 opacity-60 group-data-[state=open]:rotate-180",
@@ -151,7 +151,7 @@ export default function Menu({
                     Explore
                   </p>
                   <ul className="space-y-0.5">
-                    {companyLinks.map((item) => (
+                    {organizationLinks.map((item) => (
                       <li key={item.href}>
                         <NavigationMenu.Link asChild>
                           <Link

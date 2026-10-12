@@ -1,16 +1,12 @@
 "use client";
 
-import { auth, db } from "@/lib/firebase";
-import type { Auth } from "firebase/auth";
+import { auth, db, doc, updateDoc } from "@/lib/firebase";
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    updateDoc,
-    where,
-} from "firebase/firestore";
+    getUserAnswers,
+    getUserProfile,
+    updateUserProfile,
+} from "@/lib/user-api";
+import type { Auth } from "firebase/auth";
 import {
     AnimatePresence,
     animate,
@@ -632,11 +628,10 @@ export default function HomePage() {
     }
 
     const fetchUserData = async () => {
-      if (!auth?.currentUser || !db) return;
+      if (!auth?.currentUser) return;
       try {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data() as UserData;
+        const data = await getUserProfile();
+        if (data) {
           setUserData(data);
           localStorage.setItem("cachedUserData", JSON.stringify(data));
           applyExamDates(data.satTestDates);
@@ -647,50 +642,34 @@ export default function HomePage() {
       }
     };
 
-    const fetchUserAnswers = () => {
-      if (!auth?.currentUser || !db) return;
+    const fetchUserAnswers = async () => {
+      if (!auth?.currentUser) return;
 
-      const q = query(
-        collection(db, "userAnswers"),
-        where("userId", "==", auth.currentUser.uid),
-      );
+      try {
+        const answers = await getUserAnswers();
+        setUserAnswers(answers);
+        setTotalQuestions(answers.length);
 
-      const unsubscribe = onSnapshot(
-        q,
-        (querySnapshot) => {
-          const answers: UserAnswer[] = querySnapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...(docSnap.data() as Omit<UserAnswer, "id">),
-          }));
+        const streak = calculatePracticeStreak(answers as any);
+        setPracticeStreak(streak);
 
-          setUserAnswers(answers);
-          setTotalQuestions(answers.length);
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const weekly = answers.filter((a) => {
+          const answerDate = a.timestamp ? new Date(a.timestamp) : new Date();
+          return answerDate >= oneWeekAgo;
+        }).length;
+        setWeeklyQuestions(weekly);
 
-          const streak = calculatePracticeStreak(answers);
-          setPracticeStreak(streak);
-
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-          const weekly = answers.filter((a) => {
-            const answerDate = a.timestamp ? new Date(a.timestamp) : new Date();
-            return answerDate >= oneWeekAgo;
-          }).length;
-          setWeeklyQuestions(weekly);
-
-          setAchievements(calculateAchievements(answers, streak));
-        },
-        (error) => console.error("Error fetching user answers:", error),
-      );
-
-      return unsubscribe;
+        setAchievements(calculateAchievements(answers, streak));
+      } catch (error) {
+        console.error("Error fetching user answers:", error);
+      }
     };
 
     if (isAuthenticated) {
       fetchUserData();
-      const unsubscribe = fetchUserAnswers();
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
+      fetchUserAnswers();
     }
   }, [isAuthenticated, applyExamDates]);
 
@@ -923,16 +902,14 @@ export default function HomePage() {
   };
 
   const handleScoreUpdate = async () => {
-    if (!auth?.currentUser || newScore === "" || !db) return;
+    if (!auth?.currentUser || newScore === "") return;
     const scoreValue = parseInt(newScore, 10);
     if (isNaN(scoreValue) || scoreValue < 400 || scoreValue > 1600) {
       alert("Please enter a valid SAT score between 400 and 1600.");
       return;
     }
     try {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
-        bestTotalScore: scoreValue,
-      });
+      await updateUserProfile({ bestTotalScore: scoreValue });
       setUserData({ ...userData, bestTotalScore: scoreValue });
       setIsEditingScore(false);
       setNewScore("");
@@ -942,13 +919,11 @@ export default function HomePage() {
   };
 
   const handleGoalUpdate = async () => {
-    if (!auth?.currentUser || newGoal === "" || !db) return;
+    if (!auth?.currentUser || newGoal === "") return;
     const goalValue = parseInt(newGoal, 10);
     if (isNaN(goalValue) || goalValue <= 0) return;
     try {
-      await updateDoc(doc(db, "users", auth.currentUser.uid), {
-        dailyGoal: goalValue,
-      });
+      await updateUserProfile({ dailyGoal: goalValue });
       setDailyGoal(goalValue);
       setIsEditingGoal(false);
       setNewGoal("");

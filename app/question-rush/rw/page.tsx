@@ -5,7 +5,7 @@ import {
     saveQuestionReport,
     saveUserProgress,
     updateUserStats,
-} from "@/lib/dsat/questions";
+} from "@/lib/dsat/questions-api";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
@@ -624,7 +624,7 @@ function RWPracticePageContent() {
 
     // Save to Firebase if user is authenticated
     if (user) {
-      saveAnsweredQuestions(user.uid, answeredQuestions).catch((e) => {
+      saveAnsweredQuestions(answeredQuestions).catch((e) => {
         console.error("Error saving answered questions to Firebase:", e);
       });
     }
@@ -1078,14 +1078,13 @@ function RWPracticePageContent() {
         if (user) {
           try {
             await saveUserProgress(
-              user.uid,
               selectedQuestion.question_id,
               highlightedAnswer,
               isCorrect,
               timeSpent,
               selectedQuestion,
             );
-            await updateUserStats(user.uid, isCorrect, timeSpent);
+            await updateUserStats(isCorrect, timeSpent);
           } catch (error) {
             console.error("Error saving to Firebase:", error);
           }
@@ -2868,7 +2867,6 @@ function RWPracticePageContent() {
                     if (user && selectedQuestion) {
                       try {
                         await saveQuestionReport(
-                          user.uid,
                           selectedQuestion.question_id,
                           selectedReportOption,
                           reportDetails,
