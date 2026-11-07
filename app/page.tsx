@@ -6,6 +6,7 @@ import type { Auth } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Script from "next/script";
 import CTA from "./components/CTA";
 import { DSATShowcase } from "./components/DSATShowcase";
 import DetailsSection from "./components/DetailsSection";
@@ -34,6 +35,37 @@ export default function HomePage() {
 
   return (
     <>
+      <Script
+        id="home-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Mori Prep",
+            url: "https://moriprep.xyz",
+            logo: "https://moriprep.xyz/logo.png",
+            description: "Mori Prep is a free, non-profit learning platform helping students prepare for the Digital SAT and develop the skills to create, innovate, and solve problems.",
+            founders: [
+              {
+                "@type": "Person",
+                name: "Bilegt Amartuvshin",
+                image: "https://moriprep.xyz/people/bilegt-amartuvshin.jpg",
+                jobTitle: "Co-Founder",
+                description: "Co-founder of Mori Prep, building free education for Mongolia",
+              },
+              {
+                "@type": "Person",
+                name: "Gundsambuu Ganzil",
+                image: "https://moriprep.xyz/people/Gundsambuu.png",
+                jobTitle: "Co-Founder",
+                description: "Co-founder of Mori Prep, building free education for Mongolia",
+              },
+            ],
+            sameAs: ["https://moriprep.xyz"],
+          }),
+        }}
+      />
       <Navbar
         siteName="Mori Prep"
         categories={[

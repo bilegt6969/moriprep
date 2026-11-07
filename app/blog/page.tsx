@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import Script from "next/script";
 
 const customEase = [0.16, 1, 0.3, 1] as const;
 
@@ -27,6 +28,14 @@ const fadeInUp = {
 };
 
 const blogPosts = [
+  {
+    id: "rethinking-educational-technology-mongolia",
+    title: "From Digital Classrooms to Better Learning: Rethinking Educational Technology in Mongolia",
+    excerpt:
+      "Are digital learning tools actually helping Mongolian students learn better, and how can we measure that? We explore how educational technology, data science, and research can make digital education more effective and equitable.",
+    date: "7 November, 2026",
+    categories: ["News", "Education", "EdTech", "Data Science"],
+  },
   {
     id: "data-science-equitable-learning",
     title:
@@ -54,7 +63,7 @@ const blogPosts = [
   },
 ];
 
-const filters = ["All", "News", "Education", "Data Science"];
+const filters = ["All", "News", "Education", "Data Science", "EdTech"];
 
 export default function BlogPage() {
   const [activeFilter, setActiveFilter] = useState("All");
@@ -64,8 +73,45 @@ export default function BlogPage() {
   );
 
   return (
-    <main className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
-      <div className="max-w-[67rem] mx-auto px-4 sm:px-6 pt-20 sm:pt-24">
+    <>
+      <Script
+        id="blog-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Blog",
+            name: "Mori Prep Blog",
+            description: "Latest news and updates from Mori Prep by Bilegt Amartuvshin and Gundsambuu Ganzil",
+            url: "https://moriprep.xyz/blog",
+            author: [
+              {
+                "@type": "Person",
+                name: "Bilegt Amartuvshin",
+                image: "https://moriprep.xyz/people/bilegt-amartuvshin.jpg",
+              },
+              {
+                "@type": "Person",
+                name: "Gundsambuu Ganzil",
+                image: "https://moriprep.xyz/people/Gundsambuu.png",
+              },
+            ],
+            blogPost: blogPosts.map((post) => ({
+              "@type": "BlogPosting",
+              headline: post.title,
+              description: post.excerpt,
+              datePublished: post.date,
+              url: `https://moriprep.xyz/blog/${post.id}`,
+              author: {
+                "@type": "Organization",
+                name: "Bytecode Team",
+              },
+            })),
+          }),
+        }}
+      />
+      <main className="min-h-screen bg-white text-[#343433] font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
+        <div className="max-w-[67rem] mx-auto px-4 sm:px-6 pt-20 sm:pt-24">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between py-12 sm:py-16 md:py-20 gap-6">
           <div className="flex flex-col gap-4 sm:gap-5">
@@ -140,5 +186,6 @@ export default function BlogPage() {
         </motion.div>
       </div>
     </main>
+    </>
   );
 }

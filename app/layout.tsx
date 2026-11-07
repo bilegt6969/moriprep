@@ -13,9 +13,10 @@ export const metadata: Metadata = {
     template: `%s | Mori Prep`,
   },
   description:
-    "Free Digital SAT preparation for students worldwide. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
+    "Free Digital SAT preparation for students worldwide by Bilegt Amartuvshin and Gundsambuu Ganzil. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
   keywords:
-    "Digital SAT, SAT preparation, DSAT, college admissions, test prep, free education, adaptive learning, student success",
+    "Digital SAT, SAT preparation, DSAT, college admissions, test prep, free education, adaptive learning, student success, Bilegt Amartuvshin, Gundsambuu Ganzil, Mongolia education",
+  authors: [{ name: "Bilegt Amartuvshin" }, { name: "Gundsambuu Ganzil" }],
   robots: {
     follow: true,
     index: true,
@@ -42,7 +43,29 @@ export const metadata: Metadata = {
     siteName: "Mori Prep",
     title: "Mori Prep - Your Digital SAT preparation companion",
     description:
-      "Free Digital SAT preparation for students worldwide. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
+      "Free Digital SAT preparation for students worldwide by Bilegt Amartuvshin and Gundsambuu Ganzil. Practice, analyze, and master the DSAT with adaptive learning and comprehensive analytics.",
+    images: [
+      {
+        url: "https://moriprep.xyz/people/bilegt-amartuvshin.jpg",
+        width: 800,
+        height: 800,
+        alt: "Bilegt Amartuvshin - Co-Founder of Mori Prep",
+      },
+      {
+        url: "https://moriprep.xyz/people/Gundsambuu.png",
+        width: 800,
+        height: 800,
+        alt: "Gundsambuu Ganzil - Co-Founder of Mori Prep",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mori Prep - Your Digital SAT preparation companion",
+    description:
+      "Free Digital SAT preparation for students worldwide by Bilegt Amartuvshin and Gundsambuu Ganzil",
+    images: ["https://moriprep.xyz/people/bilegt-amartuvshin.jpg"],
+    creator: "@moriprep",
   },
   other: {
     // No external fonts needed - using Geist

@@ -1,13 +1,14 @@
-import { baseUrl } from "lib/utils";
+import { MetadataRoute } from "next";
 
-export default function robots() {
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
+        allow: "/",
+        disallow: ["/account", "/settings", "/dashboard", "/admin", "/verify"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    sitemap: "https://moriprep.xyz/sitemap.xml",
   };
 }

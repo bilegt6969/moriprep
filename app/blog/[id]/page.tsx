@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, Mail, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ReactNode, useState } from "react";
+import Script from "next/script";
 
 const blogPosts: Record<
   string,
@@ -15,6 +16,139 @@ const blogPosts: Record<
     content: ReactNode;
   }
 > = {
+  "rethinking-educational-technology-mongolia": {
+    title: "From Digital Classrooms to Better Learning: Rethinking Educational Technology in Mongolia",
+    date: "7 November, 2026",
+    author: "Bytecode Team",
+    categories: ["News", "Education", "EdTech", "Data Science"],
+    content: (
+      <>
+        <p className="pb-8">
+          Technology is becoming an increasingly visible part of Mongolia's education system. From national learning platforms such as Medle to AI-powered educational tools, digital transformation is creating new opportunities for students and teachers. Yet an important question remains: Are these technologies actually helping students learn better?
+        </p>
+        <p className="pb-8">
+          For Mongolia, this question goes beyond introducing computers into classrooms or making educational materials available online. It concerns how technology can address differences in learning opportunities, improve teaching practices, and help students retain what they learn.
+        </p>
+
+        <section id="challenge-beyond-access" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            The Challenge Goes Beyond Access
+          </h2>
+          <p className="pb-8">
+            Mongolia faces a distinctive set of educational challenges. Its widely dispersed population, differences between urban and rural schools, and uneven access to educational resources make delivering consistent learning opportunities particularly difficult.
+          </p>
+          <p className="pb-8">
+            The Ministry of Education's 2026–2028 action plan highlights significant differences in educational outcomes between urban and rural students. It also identifies digital transformation, including AI-assisted teaching and data-driven educational management, as priorities for addressing these challenges.
+          </p>
+          <p className="pb-8">
+            Simply providing students with access to digital platforms, however, does not guarantee improved academic performance. A student who completes an online lesson may still struggle to apply the concept independently. Similarly, access to educational resources does not necessarily translate into consistent preparation or long-term knowledge retention.
+          </p>
+          <p className="pb-8">
+            The challenge is therefore not only to make education digital, but to make digital education effective.
+          </p>
+        </section>
+
+        <section id="evidence-based-education" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            Moving Towards Evidence-Based Education
+          </h2>
+          <p className="pb-8">
+            One promising opportunity lies in combining educational technology with data science.
+          </p>
+          <p className="pb-8">
+            Digital learning environments can help educators understand how students interact with educational materials. By examining patterns in student performance, preparation habits, assessment results, and learning progress, educational platforms can provide insights that are difficult to obtain through traditional classroom assessments alone.
+          </p>
+          <p className="pb-8">
+            For example, learning analytics can help identify which concepts students repeatedly struggle with, how performance changes after additional practice, and whether students retain previously learned material over time.
+          </p>
+          <p className="pb-8">
+            These measurements can help educators move beyond simply asking whether students completed their assignments. Instead, they can examine whether students understood the material, improved their performance, and retained the knowledge.
+          </p>
+          <p className="pb-8">
+            This approach also creates opportunities for more personalized learning. Rather than providing every student with identical exercises, educational systems can use assessment results to identify individual learning needs and recommend appropriate practice materials.
+          </p>
+        </section>
+
+        <section id="mongolia-already-exploring" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            What Mongolia Is Already Exploring
+          </h2>
+          <p className="pb-8">
+            Mongolia has begun taking steps towards integrating technology into its broader educational infrastructure.
+          </p>
+          <p className="pb-8">
+            In July 2026, the World Bank published an overview of Mongolia's approach to scaling artificial intelligence in education. Among the initiatives discussed was the Teacher Virtual Assistant, introduced through the national Medle platform. The tool is designed to assist teachers with lesson planning and differentiated mathematics exercises for Grades 1–5.
+          </p>
+          <p className="pb-8">
+            The initiative is particularly interesting because it connects AI applications with curriculum-aligned educational content and stronger education data systems.
+          </p>
+          <p className="pb-8">
+            However, the effectiveness of these technologies will ultimately depend on their educational outcomes. Their success should be evaluated not only through adoption rates or the number of available resources, but also through measurable improvements in teaching practices and student learning.
+          </p>
+        </section>
+
+        <section id="educational-research" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            The Role of Educational Research
+          </h2>
+          <p className="pb-8">
+            For EdTech to create meaningful change in Mongolia, technological development must be accompanied by continuous educational research.
+          </p>
+          <p className="pb-8">
+            This means studying how students learn, identifying barriers to academic progress, and evaluating whether digital interventions produce measurable improvements.
+          </p>
+          <p className="pb-8">
+            Several approaches can contribute to this process:
+          </p>
+          <ul className="list-disc pl-6 pb-8 space-y-2">
+            <li>Learning analytics: Examining student engagement, preparation patterns, assessment performance, and progress over time.</li>
+            <li>Knowledge retention measurement: Evaluating whether students remember and can apply previously studied concepts after different intervals.</li>
+            <li>Comparative assessments: Comparing learning outcomes before and after introducing new educational tools, while accounting for differences between student groups.</li>
+            <li>Personalized learning analysis: Identifying individual knowledge gaps and examining how targeted learning materials affect subsequent performance.</li>
+          </ul>
+          <p className="pb-8">
+            Importantly, these methods should be used responsibly. Student information must be protected, and learning data should support students and educators rather than simply classify or rank learners.
+          </p>
+        </section>
+
+        <section id="equitable-educational-future" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            Building a More Equitable Educational Future
+          </h2>
+          <p className="pb-8">
+            At Bytecode, we believe educational technology should be developed around the actual needs of learners.
+          </p>
+          <p className="pb-8">
+            Our work in free digital education reflects an interest in making learning opportunities more accessible to Mongolian students. But accessibility is only one part of the equation. We are also interested in exploring how different data measurement methods can improve students' preparation, strengthen knowledge retention, and help identify areas where additional educational support is needed.
+          </p>
+          <p className="pb-8">
+            We believe that combining educational research, technology, and data science can contribute to a more responsive learning environment, particularly for students who have limited access to supplementary educational resources.
+          </p>
+          <p className="pb-8">
+            The future of EdTech in Mongolia should not be measured by how many digital platforms we build or how many AI tools we introduce. It should be measured by how effectively these technologies help students understand, apply, and retain knowledge.
+          </p>
+          <p className="pb-8 font-semibold">
+            Ultimately, better educational technology should not simply change where students learn. It should change how effectively they learn.
+          </p>
+        </section>
+
+        <section id="research-references" className="pt-6">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
+            Research references used
+          </h2>
+          <p className="pb-8">
+            The article draws on several relevant sources:
+          </p>
+          <ul className="list-disc pl-6 pb-8 space-y-2">
+            <li><a href="https://blogs.worldbank.org/en/education/scaling-ai-in-education-systems--lessons-from-mongolia" target="_blank" rel="noopener noreferrer" className="text-[#1A88F8] hover:underline">World Bank — Scaling AI in Education Systems: Lessons from Mongolia (July 21, 2026)</a></li>
+            <li><a href="https://www.unesco.org/gem-report/en/2026-gem-report-country-case-studies/mongolia" target="_blank" rel="noopener noreferrer" className="text-[#1A88F8] hover:underline">UNESCO — 2026 Global Education Monitoring Report: Mongolia</a></li>
+            <li><a href="https://en.moe.gov.mn/post/174756" target="_blank" rel="noopener noreferrer" className="text-[#1A88F8] hover:underline">Mongolian Ministry of Education — Freeing Every Mongolian Child from the Knowledge and Skills Gap</a></li>
+            <li><a href="https://mongolia.un.org/en/291189-bridging-digital-divide-how-digital-community-information-workers-transforming-education" target="_blank" rel="noopener noreferrer" className="text-[#1A88F8] hover:underline">UNICEF — Bridging the Digital Divide in Mongolia</a></li>
+          </ul>
+        </section>
+      </>
+    ),
+  },
   "data-science-equitable-learning": {
     title:
       "Beyond Free SAT Prep: Can Data Science Make Learning More Equitable?",
@@ -55,7 +189,7 @@ const blogPosts: Record<
         <p className="pb-8">We don't think the answer is that simple.</p>
 
         <section id="free-resources-guidance" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Free Resources Don't Always Tell You What to Do Next
           </h2>
           <p className="pb-8">
@@ -99,7 +233,7 @@ const blogPosts: Record<
         </section>
 
         <section id="learning-data" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             What If We Used Learning Data to Understand Students Better?
           </h2>
           <p className="pb-8">
@@ -150,7 +284,7 @@ const blogPosts: Record<
         </section>
 
         <section id="guided-learning" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             From a Question Bank to a Guided Learning Experience
           </h2>
           <p className="pb-8">
@@ -237,7 +371,7 @@ const blogPosts: Record<
         </section>
 
         <section id="why-matters-mongolia" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Why This Matters for Mongolia
           </h2>
           <p className="pb-8">
@@ -279,7 +413,7 @@ const blogPosts: Record<
         </section>
 
         <section id="the-question" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             The Question We Want to Answer
           </h2>
           <p className="pb-8">
@@ -375,7 +509,7 @@ const blogPosts: Record<
         <p className="pb-8">And that is why we built Mori Prep.</p>
 
         <section id="the-hidden-price" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             The hidden price of taking the SAT
           </h2>
           <p className="pb-8">
@@ -426,7 +560,7 @@ const blogPosts: Record<
         </section>
 
         <section id="information-is-free" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Information is free. So why is access so expensive?
           </h2>
           <p className="pb-8">
@@ -477,7 +611,7 @@ const blogPosts: Record<
         </section>
 
         <section id="meet-mori-prep" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Meet Mori Prep
           </h2>
           <p className="pb-8">
@@ -528,7 +662,7 @@ const blogPosts: Record<
         </section>
 
         <section id="you-dont-need-to-be-rich" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             You don't need to be rich to study abroad
           </h2>
           <p className="pb-8">
@@ -576,7 +710,7 @@ const blogPosts: Record<
         </section>
 
         <section id="filling-the-gap" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Filling the gap with knowledge, not money
           </h2>
           <p className="pb-8">Imagine two students.</p>
@@ -614,7 +748,7 @@ const blogPosts: Record<
         </section>
 
         <section id="we-are-still-at-the-beginning" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             We are still at the beginning
           </h2>
           <p className="pb-8">
@@ -649,7 +783,7 @@ const blogPosts: Record<
         </section>
 
         <section id="students-potential" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             A student's potential should not have a price tag
           </h2>
           <p className="pb-8">
@@ -725,7 +859,7 @@ const blogPosts: Record<
         </p>
 
         <section id="it-started-with-one-question" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             It started with one question: What can we build around the official
             material?
           </h2>
@@ -753,7 +887,7 @@ const blogPosts: Record<
         </section>
 
         <section id="turning-thousands-of-questions" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Turning thousands of questions into a usable system
           </h2>
           <p className="pb-8">
@@ -783,7 +917,7 @@ const blogPosts: Record<
         </section>
 
         <section id="building-the-digital-sat-experience" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Building the Digital SAT experience
           </h2>
           <p className="pb-8">
@@ -813,7 +947,7 @@ const blogPosts: Record<
         </section>
 
         <section id="the-context-matters" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             The question isn't enough. The context matters.
           </h2>
           <p className="pb-8">
@@ -842,7 +976,7 @@ const blogPosts: Record<
         </section>
 
         <section id="from-answers-to-weaknesses" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             From answers to weaknesses
           </h2>
           <p className="pb-8">
@@ -872,7 +1006,7 @@ const blogPosts: Record<
         </section>
 
         <section id="why-adaptive-practice-matters" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Why adaptive practice matters
           </h2>
           <p className="pb-8">Not every student needs the same questions.</p>
@@ -898,7 +1032,7 @@ const blogPosts: Record<
         </section>
 
         <section id="one-place-for-preparation" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             One place for preparation
           </h2>
           <p className="pb-8">
@@ -924,7 +1058,7 @@ const blogPosts: Record<
         </section>
 
         <section id="building-the-dashboard" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             Building the dashboard
           </h2>
           <p className="pb-8">
@@ -953,7 +1087,7 @@ const blogPosts: Record<
         </section>
 
         <section id="ai-explanations" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             AI explanations are the next layer
           </h2>
           <p className="pb-8">Correct and incorrect answers are useful.</p>
@@ -977,7 +1111,7 @@ const blogPosts: Record<
         </section>
 
         <section id="more-than-a-question-bank" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             More than a question bank
           </h2>
           <p className="pb-8">
@@ -1000,7 +1134,7 @@ const blogPosts: Record<
         </section>
 
         <section id="whats-next" className="pt-6">
-          <h2 className="text-[23px] font-medium leading-[28px] tracking-[-0.44px] text-[#343433] mb-4">
+          <h2 className="text-[23px] font-medium leading-7 tracking-[-0.44px] text-[#343433] mb-4">
             What's next
           </h2>
           <p className="pb-8">The current system is only the beginning.</p>
@@ -1105,7 +1239,42 @@ export default function BlogPostPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-neutral-medium font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
+    <>
+      <Script
+        id="blog-post-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: post?.title,
+            description: post?.title,
+            datePublished: post?.date,
+            url: `https://moriprep.xyz/blog/${postId}`,
+            author: [
+              {
+                "@type": "Person",
+                name: "Bilegt Amartuvshin",
+                image: "https://moriprep.xyz/people/bilegt-amartuvshin.jpg",
+              },
+              {
+                "@type": "Person",
+                name: "Gundsambuu Ganzil",
+                image: "https://moriprep.xyz/people/Gundsambuu.png",
+              },
+            ],
+            publisher: {
+              "@type": "Organization",
+              name: "Mori Prep",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://moriprep.xyz/logo.png",
+              },
+            },
+          }),
+        }}
+      />
+      <main className="min-h-screen bg-white text-neutral-medium font-sans selection:bg-[#D8ECFC] selection:text-[#008cff]">
       <div className="max-w-[48rem] mx-auto px-4 sm:px-6 pt-20 sm:pt-24 py-12 sm:py-16 md:py-24">
         {/* Back Link */}
         <div className="mb-6 sm:mb-8">
@@ -1247,5 +1416,6 @@ export default function BlogPostPage() {
         )}
       </div>
     </main>
+    </>
   );
 }
