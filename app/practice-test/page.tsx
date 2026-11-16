@@ -31,6 +31,7 @@ import {
   Clock,
   Command,
   Copy,
+  Check,
   FileText,
   Highlighter,
   History,
@@ -62,6 +63,11 @@ const SAT_TIMING = {
   },
 };
 
+const AUGUST_TEST_QUESTION_COUNT = 201;
+const AUGUST_TEST_DURATION_MINUTES = Math.round(
+  (AUGUST_TEST_QUESTION_COUNT * 64) / 54,
+);
+
 // Available practice tests
 const PRACTICE_TESTS = [
   {
@@ -74,6 +80,16 @@ const PRACTICE_TESTS = [
     questions: 98,
     iconName: "FileText",
     accent: "#0080FF",
+  },
+  {
+    id: "august-sat",
+    name: "August 2026",
+    description: "Reading & Writing practice test from August 2026",
+    sections: ["Reading & Writing"],
+    duration: "3h 58m",
+    questions: AUGUST_TEST_QUESTION_COUNT,
+    iconName: "FileText",
+    accent: "#10B981",
   },
   {
     id: "march-sat",
@@ -483,20 +499,25 @@ export default function PracticeTestPage() {
     }
     return false;
   });
-  const [isHighlightActive, setIsHighlightActive] = useState(false);
+  const [isHighlightActive, setIsHighlightActive] = useState(true);
   const [highlightMenu, setHighlightMenu] = useState({
     visible: false,
     x: 0,
     y: 0,
   });
-  const [highlightedText, setHighlightedText] = useState<Set<string>>(
-    new Set(),
-  );
   const [showUnderlineSubmenu, setShowUnderlineSubmenu] = useState(false);
-  const [menuDisplayColor, setMenuDisplayColor] = useState<string>("");
-  const [currentSelection, setCurrentSelection] = useState<Selection | null>(
-    null,
+  const [activeHighlightColor, setActiveHighlightColor] =
+    useState("bg-blue-200/80");
+  const [menuDisplayColor, setMenuDisplayColor] = useState<string | null>(
+    "bg-yellow-200/80",
   );
+  const [currentSelection, setCurrentSelection] = useState<Range | null>(null);
+  const [checkedAnswers, setCheckedAnswers] = useState<Record<string, string>>(
+    {},
+  );
+  const [wrongAnswerChoices, setWrongAnswerChoices] = useState<
+    Record<string, string[]>
+  >({});
   const [leftPaneWidth, setLeftPaneWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -507,6 +528,8 @@ export default function PracticeTestPage() {
   const [showQuestionBank, setShowQuestionBank] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [questionAttempts] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -532,6 +555,18 @@ export default function PracticeTestPage() {
 
   const currentQuestion = questions[currentQuestionIndex];
   const isMath = selectedSection === "Math";
+  const answerForCurrentQuestion =
+    selectedAnswers[currentQuestionIndex] ?? selectedAnswer;
+  const checkedAnswer = currentQuestion
+    ? checkedAnswers[currentQuestion.question_id]
+    : undefined;
+  const isCurrentAnswerChecked =
+    Boolean(answerForCurrentQuestion) &&
+    checkedAnswer === answerForCurrentQuestion;
+  const isCorrectAnswerLocked =
+    isCurrentAnswerChecked &&
+    currentQuestion != null &&
+    isAnswerCorrect(currentQuestion, checkedAnswer);
 
   // Shared helpers for Math content
   const graphicsBlock =
@@ -694,6 +729,7 @@ export default function PracticeTestPage() {
 
   const loadModule1Questions = async () => {
     try {
+      clearHighlights();
       setIsLoading(true);
       setLoadError(null);
       recordsRef.current = [];
@@ -703,8 +739,15 @@ export default function PracticeTestPage() {
       setIsTimeUp(false);
       setModule2Difficulty(null);
       setSelectedSection("Reading and Writing");
+      setCheckedAnswers({});
+      setWrongAnswerChoices({});
+      setCurrentSelection(null);
+      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      const isAugustTest = testId === "august-sat";
       const response = await fetch(
-        `/api/questions?test=Reading and Writing&source=october_sat&module_level=standard`,
+        isAugustTest
+          ? "/api/questions?test=Reading and Writing&source=august_2026"
+          : "/api/questions?test=Reading and Writing&source=october_sat&module_level=standard",
       );
       const data = await response.json();
       if (!Array.isArray(data) || data.length === 0) {
@@ -717,7 +760,11 @@ export default function PracticeTestPage() {
         setSelectedAnswer("");
         setEliminatedChoices(new Set());
         setMarkedQuestions(new Set());
-        setTimeRemaining(SAT_TIMING.rw.module1 * 60);
+        setTimeRemaining(
+          (isAugustTest
+            ? AUGUST_TEST_DURATION_MINUTES
+            : SAT_TIMING.rw.module1) * 60,
+        );
       }
       setIsTimerPaused(false);
       setIsLoading(false);
@@ -733,7 +780,9 @@ export default function PracticeTestPage() {
     const attempt: TestAttempt = {
       id: newAttemptId(),
       testId: testId ?? "october-sat",
-      testName: "October 2026 SAT",
+      testName:
+        PRACTICE_TESTS.find((test) => test.id === testId)?.name ??
+        "October 2026 SAT",
       date: new Date().toISOString(),
       modules: recordsRef.current,
     };
@@ -748,6 +797,7 @@ export default function PracticeTestPage() {
     section: SectionName,
   ) => {
     try {
+      clearHighlights();
       setIsLoading(true);
       setLoadError(null);
       const moduleLevel =
@@ -806,7 +856,33 @@ export default function PracticeTestPage() {
     }));
   };
 
+  const copyCurrentQuestion = () => {
+    if (!currentQuestion) return;
+    const choices = Object.entries(currentQuestion.choices || {})
+      .map(([key, value]) => `${key}. ${value}`)
+      .join("\n");
+    const text = [
+      currentQuestion.passage,
+      currentQuestion.question || currentQuestion.prompt,
+      choices,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setToastMessage("Copied to clipboard");
+        setShowCopyToast(true);
+        window.setTimeout(() => setShowCopyToast(false), 2000);
+      })
+      .catch((error) => {
+        console.error("Clipboard write failed:", error);
+      });
+  };
+
   const handleAnswerHighlight = (key: string) => {
+    if (isCorrectAnswerLocked) return;
     setHighlightedAnswer(key);
     handleAnswerSelect(key);
   };
@@ -839,6 +915,7 @@ export default function PracticeTestPage() {
 
   const handleNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
+      clearHighlights();
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer("");
       setHighlightedAnswer("");
@@ -850,6 +927,7 @@ export default function PracticeTestPage() {
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
+      clearHighlights();
       setCurrentQuestionIndex((prev) => prev - 1);
       setSelectedAnswer("");
       setHighlightedAnswer("");
@@ -896,6 +974,11 @@ export default function PracticeTestPage() {
       },
     ];
 
+    if (testId === "august-sat") {
+      finishTest();
+      return;
+    }
+
     if (mod === 1) {
       const responses = qs.map((q, index) => ({
         questionId: q.question_id,
@@ -930,6 +1013,7 @@ export default function PracticeTestPage() {
       await loadModule2Questions(nextDifficulty, section);
     } else if (section === "Reading and Writing") {
       // RW done -> start Math module 1
+      clearHighlights();
       setSelectedSection("Math");
       setModule(1);
       setModule2Difficulty(null);
@@ -1014,35 +1098,327 @@ export default function PracticeTestPage() {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim() && isHighlightActive) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      setCurrentSelection(selection);
-      setHighlightMenu({
-        visible: true,
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10,
-      });
-    } else {
-      setHighlightMenu({ visible: false, x: 0, y: 0 });
-    }
+  const highlightColors: Record<string, string> = {
+    "bg-yellow-200/80": "rgb(253, 230, 138)",
+    "bg-blue-200/80": "rgb(191, 219, 254)",
+    "bg-pink-200/80": "rgb(251, 207, 232)",
   };
 
-  const handleWordDoubleClick = () => {};
+  const getHighlightColorClass = (span: HTMLElement) =>
+    Object.entries(highlightColors).find(
+      ([, rgb]) => rgb === span.style.backgroundColor,
+    )?.[0] ?? null;
 
-  const applyHighlight = (color: string) => {
-    setMenuDisplayColor(color);
+  const cleanupSelectionAndMenu = () => {
+    window.getSelection()?.removeAllRanges();
+    setCurrentSelection(null);
     setHighlightMenu({ visible: false, x: 0, y: 0 });
-  };
-
-  const applyUnderlineStyle = (_style: string) => {
     setShowUnderlineSubmenu(false);
   };
 
+  const handleTextSelection = () => {
+    if (!isHighlightActive) {
+      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (
+      !selection ||
+      selection.rangeCount === 0 ||
+      selection.toString().trim().length === 0
+    ) {
+      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const node = selection.anchorNode;
+    const isInsidePassage =
+      passageRef.current &&
+      node &&
+      (passageRef.current === node || passageRef.current.contains(node));
+    const isInsideQuestion =
+      questionRef.current &&
+      node &&
+      (questionRef.current === node || questionRef.current.contains(node));
+
+    if (!isInsidePassage && !isInsideQuestion) {
+      setHighlightMenu({ visible: false, x: 0, y: 0 });
+      return;
+    }
+
+    const rect = range.getBoundingClientRect();
+    setCurrentSelection(range);
+    setMenuDisplayColor(activeHighlightColor);
+
+    const menuWidth = 320;
+    const menuHeight = 50;
+    const edgePadding = 16;
+    const minX = menuWidth / 2 + edgePadding;
+    const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+    const menuX = Math.max(minX, Math.min(rect.left + rect.width / 2, maxX));
+    let menuY = rect.top - 10;
+    if (menuY < menuHeight + edgePadding) {
+      menuY = rect.bottom + 10 + menuHeight;
+    }
+
+    setHighlightMenu({ visible: true, x: menuX, y: menuY });
+  };
+
+  const wrapRangeMultiNode = (range: Range, span: HTMLElement) => {
+    if (
+      range.startContainer === range.endContainer &&
+      range.startContainer.nodeType === Node.TEXT_NODE
+    ) {
+      range.surroundContents(span);
+      return;
+    }
+
+    const walker = document.createTreeWalker(
+      range.commonAncestorContainer,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) =>
+          range.intersectsNode(node)
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT,
+      },
+    );
+    const nodes: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) nodes.push(node as Text);
+
+    nodes.forEach((textNode) => {
+      const nodeRange = document.createRange();
+      nodeRange.selectNodeContents(textNode);
+      if (textNode === range.startContainer) {
+        nodeRange.setStart(textNode, range.startOffset);
+      }
+      if (textNode === range.endContainer) {
+        nodeRange.setEnd(textNode, range.endOffset);
+      }
+      if (!nodeRange.collapsed) {
+        nodeRange.surroundContents(span.cloneNode() as HTMLElement);
+      }
+    });
+  };
+
+  const applyUnderlineStyle = (
+    style: "solid" | "dashed" | "dotted" | "none",
+    overrideRange?: Range,
+  ) => {
+    const targetRange = overrideRange || currentSelection;
+    if (!targetRange || targetRange.collapsed) {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const node = targetRange.commonAncestorContainer;
+    const parentElement =
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : (node as HTMLElement);
+
+    if (parentElement?.classList.contains("dsat-highlight")) {
+      parentElement.classList.remove(
+        "underline",
+        "decoration-2",
+        "decoration-gray-400",
+        "decoration-solid",
+        "decoration-dashed",
+        "decoration-dotted",
+      );
+      if (style !== "none") {
+        parentElement.classList.add(
+          "underline",
+          "decoration-2",
+          "decoration-gray-400",
+          `decoration-${style}`,
+        );
+      } else if (!parentElement.style.backgroundColor) {
+        const parent = parentElement.parentNode;
+        if (parent) {
+          while (parentElement.firstChild) {
+            parent.insertBefore(parentElement.firstChild, parentElement);
+          }
+          parent.removeChild(parentElement);
+        }
+      }
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    if (style === "none") {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.className = `dsat-highlight underline decoration-2 decoration-gray-400 decoration-${style}`;
+    try {
+      wrapRangeMultiNode(targetRange, span);
+    } catch (error) {
+      console.error("Underline error:", error);
+    }
+    cleanupSelectionAndMenu();
+  };
+
+  const applyHighlight = (colorClass: string, overrideRange?: Range) => {
+    const targetRange = overrideRange || currentSelection;
+    if (!targetRange || targetRange.collapsed) {
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    setActiveHighlightColor(colorClass);
+    const backgroundColor =
+      colorClass === "bg-yellow-200/80"
+        ? "#fde68a"
+        : colorClass === "bg-pink-200/80"
+          ? "#fbcfe8"
+          : "#bfdbfe";
+    const node = targetRange.commonAncestorContainer;
+    const parentElement =
+      node.nodeType === Node.TEXT_NODE
+        ? node.parentElement
+        : (node as HTMLElement);
+
+    if (parentElement?.classList.contains("dsat-highlight")) {
+      const hadUnderline = parentElement.classList.contains("underline");
+      const decorationStyle = [
+        "decoration-solid",
+        "decoration-dashed",
+        "decoration-dotted",
+      ].find((className) => parentElement.classList.contains(className));
+      parentElement.style.backgroundColor = backgroundColor;
+      parentElement.className = "dsat-highlight";
+      if (hadUnderline) {
+        parentElement.classList.add(
+          "underline",
+          "decoration-2",
+          "decoration-gray-400",
+        );
+        if (decorationStyle) parentElement.classList.add(decorationStyle);
+      }
+      cleanupSelectionAndMenu();
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.classList.add("dsat-highlight");
+    span.style.backgroundColor = backgroundColor;
+    span.style.padding = "2px 0";
+    span.style.borderRadius = "2px";
+    try {
+      wrapRangeMultiNode(targetRange, span);
+    } catch (error) {
+      console.error("Highlight error:", error);
+    }
+    cleanupSelectionAndMenu();
+  };
+
   const clearHighlights = () => {
-    setHighlightedText(new Set());
+    [passageRef.current, questionRef.current].forEach((container) => {
+      container?.querySelectorAll(".dsat-highlight").forEach((highlight) => {
+        const parent = highlight.parentNode;
+        if (parent) {
+          while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+          }
+          parent.removeChild(highlight);
+        }
+      });
+    });
+  };
+
+  const handleWordDoubleClick = (event: React.MouseEvent) => {
+    if (!isHighlightActive || event.detail !== 2) return;
+    setTimeout(() => {
+      const selection = window.getSelection();
+      if (
+        selection &&
+        !selection.isCollapsed &&
+        selection.toString().trim().length > 0
+      ) {
+        const range = selection.getRangeAt(0);
+        setCurrentSelection(range);
+        applyHighlight(activeHighlightColor || "bg-yellow-200/80", range);
+      }
+    }, 10);
+  };
+
+  useEffect(() => {
+    if (!highlightMenu.visible) setShowUnderlineSubmenu(false);
+  }, [highlightMenu.visible]);
+
+  useEffect(() => {
+    if (!isHighlightActive) {
+      clearHighlights();
+      cleanupSelectionAndMenu();
+    }
+  }, [isHighlightActive]);
+
+  useEffect(() => {
+    const handleMouseUp = (event: MouseEvent) => {
+      if (!isHighlightActive) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest(".dsat-highlight-toolbar")) return;
+
+      const highlightSpan = target.closest(
+        ".dsat-highlight",
+      ) as HTMLElement | null;
+      if (highlightSpan) {
+        const range = document.createRange();
+        range.selectNodeContents(highlightSpan);
+        setCurrentSelection(range);
+        setMenuDisplayColor(getHighlightColorClass(highlightSpan));
+
+        const rect = highlightSpan.getBoundingClientRect();
+        const menuWidth = 320;
+        const menuHeight = 50;
+        const edgePadding = 16;
+        const minX = menuWidth / 2 + edgePadding;
+        const maxX = window.innerWidth - menuWidth / 2 - edgePadding;
+        const menuX = Math.max(
+          minX,
+          Math.min(rect.left + rect.width / 2, maxX),
+        );
+        let menuY = rect.top - 10;
+        if (menuY < menuHeight + edgePadding) {
+          menuY = rect.bottom + 10 + menuHeight;
+        }
+        setHighlightMenu({ visible: true, x: menuX, y: menuY });
+        return;
+      }
+
+      setTimeout(handleTextSelection, 10);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => document.removeEventListener("mouseup", handleMouseUp);
+  }, [isHighlightActive, activeHighlightColor]);
+
+  const checkCurrentAnswer = () => {
+    if (!answerForCurrentQuestion || !currentQuestion) return;
+    setCheckedAnswers((previous) => ({
+      ...previous,
+      [currentQuestion.question_id]: answerForCurrentQuestion,
+    }));
+    if (!isAnswerCorrect(currentQuestion, answerForCurrentQuestion)) {
+      setWrongAnswerChoices((previous) => {
+        const wrongChoices = previous[currentQuestion.question_id] ?? [];
+        if (wrongChoices.includes(answerForCurrentQuestion)) return previous;
+        return {
+          ...previous,
+          [currentQuestion.question_id]: [
+            ...wrongChoices,
+            answerForCurrentQuestion,
+          ],
+        };
+      });
+    }
   };
 
   const adjustImageZoom = (idx: number, delta: number) => {
@@ -1205,7 +1581,7 @@ export default function PracticeTestPage() {
         <div className="flex flex-col min-h-screen md:h-screen max-w-[1920px] mx-auto bg-white dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 overflow-auto md:overflow-hidden selection:bg-cyan-200 relative">
           {highlightMenu.visible && (
             <div
-              className="dsat-highlight-toolbar fixed z-100 flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 max-w-[90vw]"
+              className="dsat-highlight-toolbar fixed z-100 flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-700 max-w-[90vw]"
               style={{
                 top: highlightMenu.y,
                 left: highlightMenu.x,
@@ -1235,47 +1611,47 @@ export default function PracticeTestPage() {
                     e.stopPropagation();
                     setShowUnderlineSubmenu((v) => !v);
                   }}
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
                   <UnderlineIcon size={18} />
                 </button>
                 {showUnderlineSubmenu && (
                   <div
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="absolute top-10 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 py-1 w-16 z-50 flex flex-col items-center"
+                    className="absolute top-10 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-700 py-1 w-16 z-50 flex flex-col items-center"
                   >
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyUnderlineStyle("solid")}
-                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                     >
-                      <span className="text-base font-serif border-b-2 border-gray-700 leading-none px-1">
+                      <span className="text-base font-serif border-b-2 border-gray-700 dark:border-gray-300 leading-none px-1">
                         U
                       </span>
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyUnderlineStyle("dashed")}
-                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                     >
-                      <span className="text-base font-serif border-b-2 border-dashed border-gray-700 leading-none px-1">
+                      <span className="text-base font-serif border-b-2 border-dashed border-gray-700 dark:border-gray-300 leading-none px-1">
                         U
                       </span>
                     </button>
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyUnderlineStyle("dotted")}
-                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                      className="w-full py-2.5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                     >
-                      <span className="text-base font-serif border-b-2 border-dotted border-gray-700 leading-none px-1">
+                      <span className="text-base font-serif border-b-2 border-dotted border-gray-700 dark:border-gray-300 leading-none px-1">
                         U
                       </span>
                     </button>
-                    <div className="w-8 h-px bg-gray-100 my-1" />
+                    <div className="w-8 h-px bg-gray-100 dark:bg-gray-700 my-1" />
                     <button
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyUnderlineStyle("none")}
-                      className="w-full py-2 text-xs text-gray-500 hover:bg-gray-50 rounded-lg"
+                      className="w-full py-2 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                     >
                       None
                     </button>
@@ -1291,7 +1667,7 @@ export default function PracticeTestPage() {
                   });
                   setHighlightMenu({ visible: false, x: 0, y: 0 });
                 }}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <Copy size={18} />
               </button>
@@ -1299,14 +1675,24 @@ export default function PracticeTestPage() {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   clearHighlights();
-                  setHighlightMenu({ visible: false, x: 0, y: 0 });
+                  cleanupSelectionAndMenu();
                 }}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <Trash2 size={18} />
               </button>
             </div>
           )}
+
+          <style>{`
+            .dsat-highlight {
+              cursor: pointer;
+              transition: opacity 0.15s ease;
+            }
+            .dsat-highlight:hover {
+              opacity: 0.6;
+            }
+          `}</style>
 
           <header className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-6 py-3 sm:py-2.5 shrink-0 bg-white dark:bg-gray-900 z-40 relative border-b-2 border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 sm:gap-6 w-auto sm:w-1/3 relative">
@@ -1518,6 +1904,14 @@ export default function PracticeTestPage() {
                               Mark for Review
                             </span>
                           </button>
+                          <button
+                            type="button"
+                            aria-label="Copy question"
+                            onClick={copyCurrentQuestion}
+                            className="w-9 h-9 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                          >
+                            <Copy size={16} strokeWidth={2} />
+                          </button>
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
@@ -1568,17 +1962,35 @@ export default function PracticeTestPage() {
                             <div className="space-y-3">
                               {Object.entries(currentQuestion.choices).map(
                                 ([key, value]) => {
-                                  const isSelected = selectedAnswer === key;
+                                  const isSelected =
+                                    answerForCurrentQuestion === key;
                                   const isHighlighted =
-                                    highlightedAnswer === key;
+                                    highlightedAnswer === key ||
+                                    (isSelected && !isCurrentAnswerChecked);
                                   const isEliminated =
                                     eliminatedChoices.has(key);
+                                  const isPreviouslyWrong =
+                                    wrongAnswerChoices[
+                                      currentQuestion.question_id
+                                    ]?.includes(key) ?? false;
+                                  const isCorrectOption =
+                                    isCorrectAnswerLocked &&
+                                    key === currentQuestion.correct_answer;
 
-                                  const borderClass = isHighlighted
-                                    ? "border-sky-500"
-                                    : isEliminated
-                                      ? "border-gray-300 bg-gray-50/40"
-                                      : "border-gray-600 hover:border-gray-900";
+                                  const borderClass = isPreviouslyWrong
+                                    ? "border-red-500"
+                                    : isCorrectOption
+                                      ? "border-green-500"
+                                      : isHighlighted
+                                        ? "border-sky-500"
+                                        : isEliminated
+                                          ? "border-gray-300 bg-gray-50/40"
+                                          : "border-gray-600 hover:border-gray-900";
+                                  const bgClass = isPreviouslyWrong
+                                    ? "bg-red-50 dark:bg-red-900/20"
+                                    : isCorrectOption
+                                      ? "bg-green-50 dark:bg-green-900/20"
+                                      : "bg-white dark:bg-gray-800";
                                   const textClass = isEliminated
                                     ? "text-gray-400 line-through"
                                     : "text-[#1C1C1E] dark:text-gray-100";
@@ -1587,20 +1999,30 @@ export default function PracticeTestPage() {
                                     <div
                                       key={key}
                                       onClick={() => handleAnswerHighlight(key)}
-                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all bg-white dark:bg-gray-800 min-w-0 cursor-pointer ${borderClass}`}
+                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all min-w-0 ${isCorrectAnswerLocked ? "cursor-default" : "cursor-pointer"} ${borderClass} ${bgClass}`}
                                     >
                                       <div
                                         className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans ${
-                                          isHighlighted
-                                            ? "bg-sky-500 text-white"
-                                            : isSelected
-                                              ? "bg-black text-white"
-                                              : isEliminated
-                                                ? "border-2 border-gray-300 text-gray-400"
-                                                : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
+                                          isCorrectOption
+                                            ? "bg-green-600 text-white"
+                                            : isPreviouslyWrong
+                                              ? "bg-red-600 text-white"
+                                              : isHighlighted
+                                                ? "bg-sky-500 text-white"
+                                                : isSelected
+                                                  ? "bg-black text-white"
+                                                  : isEliminated
+                                                    ? "border-2 border-gray-300 text-gray-400"
+                                                    : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
                                         }`}
                                       >
-                                        {key}
+                                        {isCorrectOption ? (
+                                          <Check size={16} strokeWidth={3} />
+                                        ) : isPreviouslyWrong ? (
+                                          <X size={16} strokeWidth={3} />
+                                        ) : (
+                                          key
+                                        )}
                                       </div>
 
                                       {currentQuestion.choice_graphics?.[
@@ -1620,6 +2042,21 @@ export default function PracticeTestPage() {
                                           {value}
                                         </span>
                                       )}
+
+                                      {isHighlighted &&
+                                        !isPreviouslyWrong &&
+                                        !isCorrectAnswerLocked && (
+                                          <button
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              checkCurrentAnswer();
+                                            }}
+                                            className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                          >
+                                            Check
+                                          </button>
+                                        )}
 
                                       {isCrossOutMode && (
                                         <button
@@ -1700,6 +2137,7 @@ export default function PracticeTestPage() {
                       !isMobile ? { width: `${leftPaneWidth}%` } : undefined
                     }
                     className={`passage-content w-full md:w-auto shrink-0 md:shrink p-6 sm:p-8 md:p-10 overflow-y-auto md:overflow-y-auto bg-white dark:bg-gray-900 ${isHighlightActive ? "cursor-text" : "cursor-default"}`}
+                    onMouseUp={handleTextSelection}
                     onClick={handleWordDoubleClick}
                   >
                     {isQuestionLoading ? (
@@ -1829,26 +2267,7 @@ export default function PracticeTestPage() {
 
                         <div className="flex items-center gap-1 shrink-0">
                           <button
-                            onClick={() => {
-                              if (currentQuestion) {
-                                const questionText =
-                                  currentQuestion.question || "";
-                                const choices = Object.entries(
-                                  currentQuestion.choices || {},
-                                )
-                                  .map(([key, value]) => `${key}. ${value}`)
-                                  .join("\n");
-                                const fullText = `${questionText}\n\n${choices}`;
-                                navigator.clipboard
-                                  .writeText(fullText)
-                                  .catch((err) => {
-                                    console.error(
-                                      "Clipboard write failed:",
-                                      err,
-                                    );
-                                  });
-                              }
-                            }}
+                            onClick={copyCurrentQuestion}
                             className="w-9 h-9 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
                           >
                             <Copy size={16} strokeWidth={2} />
@@ -1890,11 +2309,20 @@ export default function PracticeTestPage() {
                             <div className="space-y-3">
                               {Object.entries(currentQuestion.choices).map(
                                 ([key, value]) => {
-                                  const isSelected = selectedAnswer === key;
+                                  const isSelected =
+                                    answerForCurrentQuestion === key;
                                   const isHighlighted =
-                                    highlightedAnswer === key;
+                                    highlightedAnswer === key ||
+                                    (isSelected && !isCurrentAnswerChecked);
                                   const isEliminated =
                                     eliminatedChoices.has(key);
+                                  const isPreviouslyWrong =
+                                    wrongAnswerChoices[
+                                      currentQuestion.question_id
+                                    ]?.includes(key) ?? false;
+                                  const isCorrectOption =
+                                    isCorrectAnswerLocked &&
+                                    key === currentQuestion.correct_answer;
 
                                   let borderClass = "border-gray-400";
                                   let bgClass = "bg-white dark:bg-gray-800";
@@ -1902,7 +2330,14 @@ export default function PracticeTestPage() {
                                     ? "text-gray-400 dark:text-gray-500 line-through"
                                     : "text-[#1C1C1E] dark:text-gray-100";
 
-                                  if (isHighlighted) {
+                                  if (isPreviouslyWrong) {
+                                    borderClass = "border-red-500";
+                                    bgClass = "bg-red-50 dark:bg-red-900/20";
+                                  } else if (isCorrectOption) {
+                                    borderClass = "border-green-500";
+                                    bgClass =
+                                      "bg-green-50 dark:bg-green-900/20";
+                                  } else if (isHighlighted) {
                                     borderClass = "border-sky-500";
                                     bgClass = "bg-white dark:bg-gray-800";
                                   } else if (!isEliminated) {
@@ -1917,20 +2352,30 @@ export default function PracticeTestPage() {
                                     <div
                                       key={key}
                                       onClick={() => handleAnswerHighlight(key)}
-                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 cursor-pointer`}
+                                      className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${isCorrectAnswerLocked ? "cursor-default" : "cursor-pointer"}`}
                                     >
                                       <div
                                         className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
-                                          isHighlighted
-                                            ? "bg-sky-500 text-white"
-                                            : isSelected
-                                              ? "bg-black text-white"
-                                              : isEliminated
-                                                ? "border-2 border-gray-300 text-gray-400"
-                                                : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
+                                          isCorrectOption
+                                            ? "bg-green-600 text-white"
+                                            : isPreviouslyWrong
+                                              ? "bg-red-600 text-white"
+                                              : isHighlighted
+                                                ? "bg-sky-500 text-white"
+                                                : isSelected
+                                                  ? "bg-black text-white"
+                                                  : isEliminated
+                                                    ? "border-2 border-gray-300 text-gray-400"
+                                                    : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
                                         }`}
                                       >
-                                        {key}
+                                        {isCorrectOption ? (
+                                          <Check size={16} strokeWidth={3} />
+                                        ) : isPreviouslyWrong ? (
+                                          <X size={16} strokeWidth={3} />
+                                        ) : (
+                                          key
+                                        )}
                                       </div>
 
                                       {currentQuestion.choice_graphics?.[
@@ -1950,6 +2395,21 @@ export default function PracticeTestPage() {
                                           {value}
                                         </span>
                                       )}
+
+                                      {isHighlighted &&
+                                        !isPreviouslyWrong &&
+                                        !isCorrectAnswerLocked && (
+                                          <button
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              checkCurrentAnswer();
+                                            }}
+                                            className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
+                                          >
+                                            Check
+                                          </button>
+                                        )}
 
                                       {isCrossOutMode && (
                                         <button
@@ -2090,33 +2550,54 @@ export default function PracticeTestPage() {
                   Question Navigator
                 </h4>
                 <div className="grid grid-cols-5 gap-2">
-                  {questions.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setCurrentQuestionIndex(index);
-                        setSelectedAnswer("");
-                        setHighlightedAnswer("");
-                        setEliminatedChoices(new Set());
-                        setShowQuestionBank(false);
-                      }}
-                      className={`w-10 h-10 rounded-full text-sm font-bold transition-colors ${
-                        index === currentQuestionIndex
-                          ? "bg-black dark:bg-gray-600 text-white"
-                          : selectedAnswers[index]
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-300 dark:border-green-600"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
+                  {questions.map((question, index) => {
+                    const hasWrongAnswer =
+                      (wrongAnswerChoices[question.question_id]?.length ?? 0) >
+                      0;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          clearHighlights();
+                          setCurrentQuestionIndex(index);
+                          setSelectedAnswer("");
+                          setHighlightedAnswer("");
+                          setEliminatedChoices(new Set());
+                          setShowQuestionBank(false);
+                        }}
+                        className={`w-10 h-10 rounded-full text-sm font-bold transition-colors ${
+                          hasWrongAnswer
+                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-2 border-red-300 dark:border-red-600"
+                            : index === currentQuestionIndex
+                              ? "bg-black dark:bg-gray-600 text-white"
+                              : selectedAnswers[index]
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-300 dark:border-green-600"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Fdffd ff*/}
               </div>
             )}
           </footer>
+
+          <AnimatePresence>
+            {showCopyToast && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/90 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg z-200"
+              >
+                {toastMessage}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </>

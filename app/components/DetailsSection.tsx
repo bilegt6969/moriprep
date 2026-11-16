@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * "Details that matter." section.
@@ -247,7 +254,19 @@ function PanelSkeleton({ kind }: { kind: string }) {
         </div>
       )}
 
-      {kind === "protect" && <span className="sk-blob sk-pill" />}
+      {kind === "protect" && (
+        <div className="skeleton__stat">
+          <div className="skeleton__stat-top">
+            <div className="skeleton__stat-copy">
+              <span className="sk-blob sk-stat-label" />
+              <span className="sk-blob sk-stat-value" />
+            </div>
+            <span className="sk-blob sk-stat-chip" />
+          </div>
+          <span className="sk-blob sk-stat-chart" />
+          <span className="sk-blob sk-stat-tabs" />
+        </div>
+      )}
 
       {kind === "organise" && (
         <div className="skeleton__list">
@@ -351,9 +370,50 @@ function PanelSkeleton({ kind }: { kind: string }) {
           flex-shrink: 0;
         }
 
-        .sk-pill {
-          width: 240px;
-          height: 48px;
+        .skeleton__stat {
+          width: min(340px, 100%);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 14px;
+          border-radius: 20px;
+          background: #ffffff;
+          box-shadow: 0 8px 24px rgba(23, 24, 26, 0.07);
+        }
+        .skeleton__stat .sk-blob {
+          background: #e7e6e3;
+        }
+        .skeleton__stat-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .skeleton__stat-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+        }
+        .sk-stat-label {
+          width: 76px;
+          height: 8px;
+        }
+        .sk-stat-value {
+          width: 92px;
+          height: 28px;
+        }
+        .sk-stat-chip {
+          width: 52px;
+          height: 22px;
+          border-radius: 999px;
+        }
+        .sk-stat-chart {
+          width: 100%;
+          height: 72px;
+          border-radius: 8px;
+        }
+        .sk-stat-tabs {
+          width: 100%;
+          height: 31px;
           border-radius: 999px;
         }
 
@@ -579,176 +639,272 @@ function MonitorVisual() {
   );
 }
 
-/* ---- 2. Never Miss a Weak Spot: Glowing dynamic notification pill ---- */
+/* ---- 2. Correctness by subject: Animated stat card and trend chart ---- */
+
+const CORRECTNESS_DOMAINS = [
+  {
+    label: "RW",
+    score: 84.2,
+    change: 5.3,
+    points: [52, 58, 56, 60, 62, 60, 68, 66, 72, 76, 80, 84.2],
+  },
+  {
+    label: "Math",
+    score: 78.6,
+    change: 3.8,
+    points: [45, 50, 48, 54, 57, 55, 62, 60, 68, 70, 74, 78.6],
+  },
+  {
+    label: "All",
+    score: 81.4,
+    change: 4.6,
+    points: [49, 54, 52, 58, 60, 59, 65, 63, 70, 73, 77, 81.4],
+  },
+] as const;
+
+function getCorrectnessChartPaths(values: readonly number[]) {
+  const width = 300;
+  const height = 76;
+  const paddingX = 4;
+  const paddingY = 6;
+  const points = values.map((value, index) => ({
+    x: paddingX + (index / (values.length - 1)) * (width - paddingX * 2),
+    y: height - paddingY - (value / 100) * (height - paddingY * 2),
+  }));
+  const line = points.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const previous = points[index - 1];
+    const controlX = (previous.x + point.x) / 2;
+    return `${path} C ${controlX} ${previous.y} ${controlX} ${point.y} ${point.x} ${point.y}`;
+  }, "");
+
+  return {
+    line,
+    area: `${line} L ${width - paddingX} ${height} L ${paddingX} ${height} Z`,
+    lastPoint: points[points.length - 1],
+  };
+}
 
 function ProtectVisual() {
-  const [complete, setComplete] = useState(false);
+  const [activeDomain, setActiveDomain] = useState(0);
+  const reduceMotion = useReducedMotion();
+  const pauseAutoAdvanceUntil = useRef(0);
+  const scoreValue = useMotionValue<number>(CORRECTNESS_DOMAINS[0].score);
+  const changeValue = useMotionValue<number>(CORRECTNESS_DOMAINS[0].change);
+  const scoreText = useTransform(scoreValue, (value) => `${value.toFixed(1)}%`);
+  const changeText = useTransform(
+    changeValue,
+    (value) => `+${value.toFixed(1)}%`,
+  );
+  const selected = CORRECTNESS_DOMAINS[activeDomain];
+  const chartPaths = getCorrectnessChartPaths(selected.points);
+  const transition = reduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 180, damping: 28 };
 
   useEffect(() => {
-    const cycle = () => {
-      setComplete(false);
-      const toComplete = setTimeout(() => setComplete(true), 1800);
-      return toComplete;
+    const options = {
+      duration: reduceMotion ? 0 : 0.75,
+      ease: [0.22, 1, 0.36, 1] as const,
     };
-    let inner = cycle();
-    const id = setInterval(() => {
-      clearTimeout(inner);
-      inner = cycle();
-    }, 4000);
+    const scoreAnimation = animate(scoreValue, selected.score, options);
+    const changeAnimation = animate(changeValue, selected.change, options);
+
     return () => {
-      clearInterval(id);
-      clearTimeout(inner);
+      scoreAnimation.stop();
+      changeAnimation.stop();
     };
-  }, []);
+  }, [changeValue, reduceMotion, scoreValue, selected.change, selected.score]);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    const interval = window.setInterval(() => {
+      if (Date.now() < pauseAutoAdvanceUntil.current) return;
+      setActiveDomain((current) => (current + 1) % CORRECTNESS_DOMAINS.length);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [reduceMotion]);
+
+  const selectDomain = (index: number) => {
+    pauseAutoAdvanceUntil.current = Date.now() + 8000;
+    setActiveDomain(index);
+  };
 
   return (
-    <div className="analysis">
-      <div
-        className={`analysis__pill${complete ? " analysis__pill--complete" : ""}`}
-        style={{ width: complete ? "220px" : "215px" }}
-      >
-        <div className="analysis__icon-wrap">
-          <span className={`analysis__spinner ${complete ? "hidden" : ""}`} />
-          <svg
-            className={`analysis__check ${!complete ? "hidden" : ""}`}
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-          >
-            <path
-              d="M2.5 7.3 5.6 10.4 11.5 3.6"
-              stroke="#fff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+    <div className="correctness-stat">
+      <div className="correctness-stat__top">
+        <div>
+          <p className="correctness-stat__label">Correctness</p>
+          <div className="correctness-stat__value">
+            <motion.span>{scoreText}</motion.span>
+          </div>
         </div>
+        <motion.span className="correctness-stat__change">
+          {changeText}
+        </motion.span>
+      </div>
 
-        <div className="analysis__text-wrap">
-          <span
-            className={`analysis__label analysis__label--analyzing ${
-              complete ? "hidden" : ""
-            }`}
+      <div className="correctness-stat__chart-wrap">
+        <motion.svg
+          className="correctness-stat__chart"
+          viewBox="0 0 300 76"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id="correctness-chart-area"
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0" stopColor="#34d17a" stopOpacity=".32" />
+              <stop offset="1" stopColor="#34d17a" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <motion.path
+            initial={false}
+            animate={{ d: chartPaths.area }}
+            transition={transition}
+            fill="url(#correctness-chart-area)"
+          />
+          <motion.path
+            initial={false}
+            animate={{ d: chartPaths.line }}
+            transition={transition}
+            fill="none"
+            stroke="#34d17a"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <motion.circle
+            initial={false}
+            animate={{
+              cx: chartPaths.lastPoint.x,
+              cy: chartPaths.lastPoint.y,
+            }}
+            transition={transition}
+            r="4.5"
+            fill="#34d17a"
+          />
+        </motion.svg>
+      </div>
+
+      <div
+        className="correctness-stat__segments"
+        role="group"
+        aria-label="Correctness by subject"
+      >
+        <motion.span
+          className="correctness-stat__pill"
+          animate={{ x: `${activeDomain * 100}%` }}
+          transition={transition}
+        />
+        {CORRECTNESS_DOMAINS.map((domain, index) => (
+          <button
+            key={domain.label}
+            type="button"
+            className={
+              index === activeDomain
+                ? "correctness-stat__button on"
+                : "correctness-stat__button"
+            }
+            aria-pressed={index === activeDomain}
+            tabIndex={-1}
+            onClick={() => selectDomain(index)}
           >
-            Analyzing Weak Spots
-          </span>
-          <span
-            className={`analysis__label analysis__label--complete ${
-              !complete ? "hidden" : ""
-            }`}
-          >
-            No Weak Spots Missed
-          </span>
-        </div>
+            {domain.label}
+          </button>
+        ))}
       </div>
 
       <style jsx>{`
-        .analysis {
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .correctness-stat {
+          width: min(340px, calc(100% - 48px));
+          padding: 16px;
+          border-radius: 22px;
+          background: #ffffff;
+          border: 1px solid rgba(23, 24, 26, 0.08);
+          box-shadow: 0 12px 32px -8px rgba(23, 24, 26, 0.1);
+          color: #17181a;
+          font-family: Inter, "Helvetica Neue", Arial, sans-serif;
         }
-        .analysis__pill {
-          position: relative;
+        .correctness-stat__top {
           display: flex;
-          align-items: center;
-          height: 52px;
-          padding: 0 16px 0 14px;
+          align-items: flex-start;
+          justify-content: space-between;
+        }
+        .correctness-stat__label {
+          margin: 0;
+          color: #6f6e68;
+          font-size: 12px;
+          line-height: 16px;
+        }
+        .correctness-stat__value {
+          position: relative;
+          height: 38px;
+          overflow: hidden;
+          font-size: 32px;
+          font-weight: 600;
+          line-height: 38px;
+          letter-spacing: -0.02em;
+          font-variant-numeric: tabular-nums;
+        }
+        .correctness-stat :global(.correctness-stat__change) {
+          padding: 4px 9px;
+          border-radius: 999px;
+          background: rgba(52, 209, 122, 0.14);
+          color: #15803d;
+          font-size: 13px;
+          font-weight: 600;
+          font-variant-numeric: tabular-nums;
+        }
+        .correctness-stat__chart-wrap {
+          margin: 8px 0;
+        }
+        .correctness-stat :global(.correctness-stat__chart) {
+          display: block;
+          width: 100%;
+          height: 76px;
+          overflow: visible;
+        }
+        .correctness-stat__segments {
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          padding: 3px;
+          border-radius: 999px;
+          background: rgba(23, 24, 26, 0.04);
+        }
+        .correctness-stat__button {
+          position: relative;
+          z-index: 1;
+          padding: 7px 0;
+          border: 0;
+          background: none;
+          color: #6f6e68;
+          cursor: pointer;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 500;
+          transition: color 0.35s ease;
+        }
+        .correctness-stat__button.on {
+          color: #17181a;
+        }
+        .correctness-stat__segments :global(.correctness-stat__pill) {
+          position: absolute;
+          top: 3px;
+          bottom: 3px;
+          left: 3px;
+          width: calc((100% - 6px) / 3);
           border-radius: 999px;
           background: #ffffff;
-          overflow: hidden;
-          box-shadow:
-            0 0 0 1px rgba(55, 132, 244, 0.15),
-            0 12px 32px -8px rgba(55, 132, 244, 0.25);
-          transition:
-            width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
-            box-shadow 0.8s ease;
-        }
-        .analysis__pill--complete {
-          box-shadow:
-            0 0 0 1px rgba(68, 198, 127, 0.2),
-            0 12px 32px -8px rgba(68, 198, 127, 0.3);
-        }
-        .analysis__icon-wrap {
-          position: relative;
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3784f4, #60a5fa);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition:
-            background 0.8s ease,
-            transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .analysis__pill--complete .analysis__icon-wrap {
-          background: linear-gradient(135deg, #44c67f, #34d399);
-          transform: scale(1.05);
-        }
-        .analysis__spinner {
-          position: absolute;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          border: 2px solid rgba(255, 255, 255, 0.35);
-          border-top-color: #fff;
-          animation: spin 0.8s linear infinite;
-          transition: opacity 0.4s ease;
-        }
-        .analysis__spinner.hidden {
-          opacity: 0;
-        }
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .analysis__check {
-          position: absolute;
-          transition:
-            transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-            opacity 0.4s ease;
-        }
-        .analysis__check.hidden {
-          opacity: 0;
-          transform: scale(0.4) rotate(-45deg);
-        }
-        .analysis__text-wrap {
-          position: relative;
-          flex: 1;
-          height: 20px;
-          margin-left: 12px;
-        }
-        .analysis__label {
-          position: absolute;
-          left: 0;
-          top: 0;
-          font-size: 15px;
-          font-weight: 600;
-          white-space: nowrap;
-          transition:
-            opacity 0.5s ease,
-            transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .analysis__label--analyzing {
-          color: var(--blue, #3784f4);
-          transform: translate3d(0, 0, 0);
-        }
-        .analysis__label--analyzing.hidden {
-          opacity: 0;
-          transform: translate3d(0, -16px, 0);
-        }
-        .analysis__label--complete {
-          color: var(--green, #44c67f);
-          transform: translate3d(0, 0, 0);
-        }
-        .analysis__label--complete.hidden {
-          opacity: 0;
-          transform: translate3d(0, 16px, 0);
+          box-shadow: 0 1px 5px rgba(23, 24, 26, 0.12);
         }
       `}</style>
     </div>

@@ -33,6 +33,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
   BarChart3,
   BookOpen,
+  ChevronDown,
   ChevronsUpDown,
   HelpCircle,
   History,
@@ -41,11 +42,18 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Apple-style UI Colors & Utilities
 const COLORS = {
@@ -209,7 +217,7 @@ type NavItem =
         | React.ComponentType<{ className?: string }>
         | React.ForwardRefExoticComponent<any>;
       hasSubmenu: true;
-      subItems: { label: string; href: string }[];
+      subItems: { label: string; href: string; badge?: string }[];
       comingSoon?: boolean;
     };
 
@@ -233,8 +241,8 @@ const navGroups: NavGroup[] = [
       {
         label: "Lessons",
         icon: BookOpen,
-        href: "/lessons",
-        comingSoon: true,
+        hasSubmenu: true,
+        subItems: [{ label: "Vocabulary", href: "/vocabulary", badge: "Beta" }],
       },
       { label: "Resources", href: "/resources", icon: ResourcesIcon },
       { label: "Blog", href: "/blog", icon: BookOpen },
@@ -269,7 +277,7 @@ const settingsItems: NavItem[] = [
 
 // True Apple Styling Rules: Absolutely no borders, flat rounded shapes, uniform sizing
 const NAV_ITEM_BASE =
-  "flex items-center gap-3 h-[30px] px-3 rounded-[10px] text-[13.5px] transition-colors duration-200 w-full outline-none";
+  "flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-[13.5px] outline-none transition-colors duration-200 md:h-[34px]";
 const NAV_ITEM_ACTIVE = "bg-black/[0.05] text-[#1D1D1F] font-semibold";
 const NAV_ITEM_INACTIVE =
   "text-[#545459] font-medium hover:text-[#1D1D1F] hover:bg-black/[0.03]";
@@ -349,6 +357,7 @@ function AppNavbarContent({
 }) {
   const { open: sidebarOpen, isMobile } = useAnimatedSidebar();
   const collapsed = !isMobile && !sidebarOpen;
+  const reduceMotion = useReducedMotion() ?? false;
   const [streak, setStreak] = useState(0);
 
   // Fetch Streak (Unchanged logic)
@@ -470,7 +479,7 @@ function AppNavbarContent({
                 src="/morin.svg"
                 alt="MoriPrep Wordmark"
                 width={120}
-                height={24}
+                height={33}
                 className="h-6 w-auto shrink-0 object-contain ml-4"
                 priority
               />
@@ -509,39 +518,124 @@ function AppNavbarContent({
                     return (
                       <AnimatedSidebarMenuItem key={item.label}>
                         {"hasSubmenu" in item && item.hasSubmenu ? (
-                          <>
-                            <AnimatedSidebarMenuButton
-                              isActive={isActive}
-                              ariaExpanded={openSubmenu === item.label}
-                              icon={
-                                item.icon && (
-                                  <item.icon className="size-[18px] shrink-0" />
-                                )
-                              }
-                              className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}`}
-                              onSelect={() =>
-                                setOpenSubmenu((prev) =>
-                                  prev === item.label ? null : item.label,
-                                )
-                              }
-                            >
-                              {item.label}
-                            </AnimatedSidebarMenuButton>
-                            <AnimatedSidebarMenuSub
-                              open={openSubmenu === item.label}
-                            >
-                              {"subItems" in item &&
-                                item.subItems?.map((subItem) => (
+                          collapsed ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                aria-label={item.label}
+                                title={item.label}
+                                className={`flex h-10 w-full items-center justify-center rounded-xl px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring md:h-[34px] ${
+                                  isActive
+                                    ? NAV_ITEM_ACTIVE
+                                    : `${NAV_ITEM_INACTIVE} hover:bg-black/[0.04]`
+                                }`}
+                              >
+                                {item.icon && (
+                                  <item.icon
+                                    aria-hidden="true"
+                                    className="size-[18px] shrink-0"
+                                  />
+                                )}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                side="right"
+                                align="start"
+                                sideOffset={10}
+                                className="w-56 rounded-2xl border border-black/[0.06] bg-white/95 p-2 shadow-xl backdrop-blur-xl"
+                              >
+                                <DropdownMenuLabel className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-[#86868B]">
+                                  Lessons
+                                </DropdownMenuLabel>
+                                {item.subItems.map((subItem) => (
+                                  <DropdownMenuItem
+                                    key={subItem.label}
+                                    asChild
+                                    className="min-h-11 cursor-pointer rounded-xl px-2.5 text-[13px] focus:bg-black/[0.04]"
+                                  >
+                                    <Link
+                                      href={subItem.href}
+                                      aria-current={
+                                        isPathActive(pathname, subItem.href)
+                                          ? "page"
+                                          : undefined
+                                      }
+                                      className="flex w-full items-center gap-2.5"
+                                    >
+                                      <BookOpen className="size-4 shrink-0 text-[#86868B]" />
+                                      <span className="min-w-0 flex-1 truncate">
+                                        {subItem.label}
+                                      </span>
+                                      {subItem.badge && (
+                                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                          {subItem.badge}
+                                        </span>
+                                      )}
+                                    </Link>
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <>
+                              <AnimatedSidebarMenuButton
+                                ariaLabel={item.label}
+                                isActive={isActive}
+                                ariaExpanded={openSubmenu === item.label}
+                                icon={
+                                  item.icon && (
+                                    <item.icon className="size-[18px] shrink-0" />
+                                  )
+                                }
+                                className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : NAV_ITEM_INACTIVE}`}
+                                onSelect={() =>
+                                  setOpenSubmenu((prev) =>
+                                    prev === item.label ? null : item.label,
+                                  )
+                                }
+                              >
+                                <span className="flex w-full items-center justify-between">
+                                  {item.label}
+                                  <motion.span
+                                    aria-hidden="true"
+                                    animate={{
+                                      rotate:
+                                        openSubmenu === item.label ? 180 : 0,
+                                    }}
+                                    transition={
+                                      reduceMotion
+                                        ? { duration: 0 }
+                                        : {
+                                            duration: 0.28,
+                                            ease: [0.16, 1, 0.3, 1],
+                                          }
+                                    }
+                                    className="ml-2 grid size-4 shrink-0 place-items-center text-[#86868B]"
+                                  >
+                                    <ChevronDown className="size-3.5" />
+                                  </motion.span>
+                                </span>
+                              </AnimatedSidebarMenuButton>
+                              <AnimatedSidebarMenuSub
+                                open={openSubmenu === item.label}
+                              >
+                                {item.subItems.map((subItem) => (
                                   <AnimatedSidebarMenuSubItem
                                     key={subItem.label}
                                   >
                                     <AnimatedSidebarMenuSubButton
+                                      ariaLabel={`${subItem.label}${subItem.badge ? `, ${subItem.badge}` : ""}`}
+                                      badge={
+                                        subItem.badge ? (
+                                          <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-700">
+                                            {subItem.badge}
+                                          </span>
+                                        ) : undefined
+                                      }
                                       isActive={isPathActive(
                                         pathname,
                                         subItem.href,
                                       )}
                                       href={subItem.href}
-                                      className={`!rounded-[8px] text-[13px] px-3 h-7 transition-colors ${
+                                      className={`!rounded-[8px] px-3 text-[13px] h-9 transition-colors md:h-7 ${
                                         isPathActive(pathname, subItem.href)
                                           ? "text-[#1D1D1F] font-semibold bg-black/[0.04]"
                                           : "text-[#545459] font-medium hover:text-[#1D1D1F]"
@@ -551,10 +645,12 @@ function AppNavbarContent({
                                     </AnimatedSidebarMenuSubButton>
                                   </AnimatedSidebarMenuSubItem>
                                 ))}
-                            </AnimatedSidebarMenuSub>
-                          </>
+                              </AnimatedSidebarMenuSub>
+                            </>
+                          )
                         ) : (
                           <AnimatedSidebarMenuButton
+                            ariaLabel={item.label}
                             isActive={isActive}
                             disabled={isComingSoon}
                             icon={
@@ -595,6 +691,7 @@ function AppNavbarContent({
                   return (
                     <AnimatedSidebarMenuItem key={item.label}>
                       <AnimatedSidebarMenuButton
+                        ariaLabel={item.label}
                         isActive={isActive}
                         icon={<item.icon className="size-[18px] shrink-0" />}
                         href={"href" in item ? item.href : undefined}
@@ -620,7 +717,7 @@ function AppNavbarContent({
       {/* Main Content Area: Pure White, Rounded, No harsh borders */}
       <AnimatedSidebarInset className="relative bg-white overflow-hidden md:h-[calc(100vh-16px)] md:my-2 md:mr-2 md:-ml-1 md:rounded-[32px] md:shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_8px_32px_-16px_rgba(0,0,0,0.08)]">
         {/* Scroll area now runs UNDER the header */}
-        <div className="h-full overflow-y-auto overflow-x-hidden px-8 pb-12 pt-16">
+        <div className="h-full min-w-0 w-full overflow-y-auto overflow-x-hidden px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-16 sm:px-6 md:px-8 md:pb-12">
           {children}
         </div>
 
@@ -644,7 +741,7 @@ function AppNavbarContent({
         </div>
 
         {/* Header content sits on top of the blur */}
-        <header className="absolute inset-x-0 top-0 z-20 flex h-16 shrink-0 items-center gap-4 px-8">
+        <header className="absolute inset-x-0 top-0 z-20 flex h-16 min-w-0 shrink-0 items-center gap-2 px-4 sm:gap-4 sm:px-6 md:px-8">
           <AnimatedSidebarTrigger className="text-[#86868B] transition-colors hover:text-[#1D1D1F] md:hidden">
             <svg
               width="20"
@@ -679,8 +776,8 @@ function AppNavbarContent({
               />
             </svg>
           </AnimatedSidebarTrigger>
-          <div className="flex items-center gap-2">
-            <p className="text-[15px] font-semibold text-[#1D1D1F] tracking-tight truncate">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-[15px] font-semibold tracking-tight text-[#1D1D1F]">
               {activeLabel}
             </p>
             <AnimatedSidebarTrigger className="text-[#86868B] transition-colors hover:text-[#1D1D1F] hidden md:flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-black/[0.04] outline-none">
@@ -690,7 +787,7 @@ function AppNavbarContent({
           <div className="flex-1" />
 
           {/* Simple bright pill for the streak */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF9500] text-white">
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FF9500] px-3 py-1.5 text-white">
             <svg
               viewBox="0 0 24 24"
               fill="currentColor"

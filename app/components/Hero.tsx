@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { memo, useEffect, useRef, useState } from "react";
 import { SlotText } from "slot-text/react";
 import "slot-text/style.css";
@@ -62,6 +62,228 @@ const schools = [
   { logo: "8.png", url: "https://www.utoronto.ca" },
   { logo: "9.png", url: "https://dukekunshan.edu.cn" },
 ];
+
+const moriMorphDuration = 1400;
+const moriMorphHold = 2200;
+
+function GooMorphMori() {
+  const reduceMotion = useReducedMotion();
+  const [currentWord, setCurrentWord] = useState("mori");
+  const [nextWord, setNextWord] = useState("морь");
+  const [isMorphing, setIsMorphing] = useState(false);
+  const wordMeasureRef = useRef<HTMLSpanElement>(null);
+  const [wordWidths, setWordWidths] = useState<{
+    mori: number;
+    cyrillic: number;
+  }>();
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    let morphTimeout: number | undefined;
+    const holdTimeout = window.setTimeout(() => {
+      setIsMorphing(true);
+      morphTimeout = window.setTimeout(() => {
+        setCurrentWord(nextWord);
+        setNextWord(currentWord);
+        setIsMorphing(false);
+      }, moriMorphDuration);
+    }, moriMorphHold);
+
+    return () => {
+      if (morphTimeout) window.clearTimeout(morphTimeout);
+      window.clearTimeout(holdTimeout);
+    };
+  }, [currentWord, nextWord, reduceMotion]);
+
+  useEffect(() => {
+    const measureElement = wordMeasureRef.current;
+    if (!measureElement) return;
+
+    const mori = measureElement.children[0];
+    const cyrillic = measureElement.children[1];
+    const measureWords = () => {
+      setWordWidths({
+        mori: mori.getBoundingClientRect().width,
+        cyrillic: cyrillic.getBoundingClientRect().width,
+      });
+    };
+
+    measureWords();
+    const resizeObserver = new ResizeObserver(measureWords);
+    resizeObserver.observe(mori);
+    resizeObserver.observe(cyrillic);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const cyrillicScale =
+    wordWidths && wordWidths.cyrillic > 0
+      ? wordWidths.mori / wordWidths.cyrillic
+      : undefined;
+  const cyrillicFontSize =
+    cyrillicScale === undefined
+      ? undefined
+      : { fontSize: `${cyrillicScale * 100}%` };
+  const horizontalPadding =
+    wordWidths === undefined ? undefined : Math.max(2, wordWidths.mori * 0.025);
+
+  return (
+    <>
+      <svg className="hero-goo-filter" aria-hidden="true">
+        <filter id="mori-goo-morph">
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -140"
+          />
+        </filter>
+      </svg>
+      <span
+        className={`hero-goo-morph text-[1.35em] font-eb-garamond font-light${isMorphing ? " is-melting" : ""}`}
+        role="status"
+        aria-live="polite"
+        aria-label={isMorphing ? nextWord : currentWord}
+        style={
+          wordWidths === undefined || horizontalPadding === undefined
+            ? undefined
+            : {
+                width: `${wordWidths.mori + horizontalPadding * 2}px`,
+                paddingLeft: `${horizontalPadding}px`,
+                paddingRight: `${horizontalPadding}px`,
+              }
+        }
+      >
+        <span
+          className={`hero-goo-word hero-goo-word-current${currentWord === "морь" ? " hero-goo-word-cyrillic" : ""}`}
+          aria-hidden="true"
+          style={currentWord === "морь" ? cyrillicFontSize : undefined}
+        >
+          <span className="hero-goo-word-text">{currentWord}</span>
+        </span>
+        <span
+          className={`hero-goo-word hero-goo-word-next${nextWord === "морь" ? " hero-goo-word-cyrillic" : ""}`}
+          aria-hidden="true"
+          style={nextWord === "морь" ? cyrillicFontSize : undefined}
+        >
+          <span className="hero-goo-word-text">{nextWord}</span>
+        </span>
+        <span
+          ref={wordMeasureRef}
+          className="hero-goo-measure"
+          aria-hidden="true"
+        >
+          <span className="hero-goo-word-text">mori</span>
+          <span className="hero-goo-word-text">морь</span>
+        </span>
+      </span>
+    </>
+  );
+}
+
+function MagneticStartButton() {
+  const reduceMotion = useReducedMotion();
+  const [offset, setOffset] = useState({
+    buttonX: 0,
+    buttonY: 0,
+    labelX: 0,
+    labelY: 0,
+  });
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (reduceMotion) return;
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const dx = event.clientX - bounds.left - bounds.width / 2;
+    const dy = event.clientY - bounds.top - bounds.height / 2;
+    const distance = Math.hypot(dx, dy);
+    const pull = distance < 130 ? 1 - (distance / 130) * 0.35 : 0;
+
+    setOffset({
+      buttonX: dx * 0.32 * pull,
+      buttonY: dy * 0.38 * pull,
+      labelX: dx * 0.14 * pull,
+      labelY: dy * 0.18 * pull,
+    });
+  };
+
+  return (
+    <div
+      className="relative inline-block p-1.5"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() =>
+        setOffset({ buttonX: 0, buttonY: 0, labelX: 0, labelY: 0 })
+      }
+    >
+      <div
+        className="relative will-change-transform"
+        style={{
+          transform: `translate3d(${offset.buttonX}px, ${offset.buttonY}px, 0)`,
+          transition: reduceMotion
+            ? undefined
+            : "transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        }}
+      >
+        <div
+          className="absolute inset-0 rounded-full"
+          aria-hidden="true"
+          style={{
+            border: "1px solid rgba(156, 163, 175, 0.4)",
+            zIndex: -1,
+          }}
+        />
+        <motion.a
+          href="/question-rush"
+          className="relative z-10 flex h-12 items-center justify-center rounded-full px-6 text-[17px] font-medium leading-none tracking-tight text-white transition-colors duration-100"
+          style={{
+            borderRadius: "32px",
+            letterSpacing: "-0.01375rem",
+            backgroundColor: "rgba(23, 23, 23, 0.8)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+          }}
+          whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+          onMouseEnter={(event) =>
+            (event.currentTarget.style.backgroundColor =
+              "rgba(18, 18, 18, 0.9)")
+          }
+          onMouseLeave={(event) =>
+            (event.currentTarget.style.backgroundColor =
+              "rgba(23, 23, 23, 0.8)")
+          }
+        >
+          <span
+            className="inline-flex items-center gap-3"
+            style={{
+              transform: `translate3d(${offset.labelX}px, ${offset.labelY}px, 0)`,
+              transition: reduceMotion
+                ? undefined
+                : "transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+            }}
+          >
+            Start Practicing
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 12h13M13 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </motion.a>
+      </div>
+    </div>
+  );
+}
 
 // ==========================================
 // ISOLATED TICKER COMPONENT
@@ -194,7 +416,7 @@ export function Hero() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setWordIndex((prev: number) => (prev + 1) % words.length);
+      setWordIndex((previous) => (previous + 1) % words.length);
     }, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -236,7 +458,7 @@ export function Hero() {
   return (
     <section
       id="join"
-      className="relative h-screen flex items-center justify-center bg-white overflow-hidden px-4 md:px-10 lg:px-10"
+      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-white px-4 py-20 md:h-screen md:min-h-0 md:px-10 md:py-0 lg:px-10"
     >
       {/* Background gradient/glow effect */}
       <div className="absolute inset-0 bg-linear-to-br from-blue-50 via-white to-orange-50 opacity-50" />
@@ -244,7 +466,7 @@ export function Hero() {
       {/* Main content container */}
       <div className="container mx-auto px-4 md:px-6 lg:px-10 relative z-20">
         <motion.div
-          className="max-w-6xl mx-auto text-center -translate-y-24"
+          className="mx-auto max-w-6xl text-center md:-translate-y-24"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -277,17 +499,13 @@ export function Hero() {
 
           {/* Main Headline */}
           <motion.h1
-            className="text-[44px] md:text-[68px] font-medium leading-[1.1] tracking-tighter text-primary mb-4"
+            className="mb-4 text-[clamp(2.5rem,10vw,2.75rem)] font-medium leading-[1.1] tracking-tighter text-primary md:text-[68px]"
             style={{
               color: "var(--heading)",
             }}
             variants={itemVariants}
           >
-            at{" "}
-            <span className="text-[1.35em] font-eb-garamond tracking-tighter font-light">
-              mori
-            </span>{" "}
-            Prep
+            at <GooMorphMori /> Prep
             <br />
             everything is{" "}
             <SlotText
@@ -313,38 +531,7 @@ export function Hero() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4"
             variants={itemVariants}
           >
-            <div className="relative inline-block p-1.5">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  border: "1px solid rgba(156, 163, 175, 0.4)",
-                  zIndex: -1,
-                }}
-              />
-              <a
-                href="/question-rush"
-                className="flex items-center justify-center gap-3 px-6 py-3 text-white rounded-full font-medium text-[17px] leading-none tracking-tight transition-colors duration-100 relative z-10"
-                style={{
-                  borderRadius: "32px",
-                  height: "3rem",
-                  letterSpacing: "-0.01375rem",
-                  backgroundColor: "rgba(23, 23, 23, 0.8)",
-                  backdropFilter: "blur(10px)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    "rgba(18, 18, 18, 0.9)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    "rgba(23, 23, 23, 0.8)")
-                }
-              >
-                Start Practicing
-              </a>
-            </div>
+            <MagneticStartButton />
           </motion.div>
         </motion.div>
       </div>

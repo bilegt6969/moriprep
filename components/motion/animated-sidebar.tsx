@@ -60,17 +60,14 @@ const LABEL_EXIT_TRANSITION = {
   ease: EASE_OUT,
 } as const;
 
-const SUBMENU_TRANSITION = {
-  duration: 0.18,
-  ease: EASE_OUT,
-} as const;
-
 const SUBMENU_VARIANTS: Variants = {
   closed: {
     opacity: 0,
-    clipPath: "inset(0 0 100% 0 round 8px)",
+    height: 0,
+    marginTop: 0,
+    y: -4,
     transition: {
-      duration: 0.14,
+      duration: 0.24,
       ease: EASE_OUT,
       staggerChildren: 0.025,
       staggerDirection: -1,
@@ -78,12 +75,14 @@ const SUBMENU_VARIANTS: Variants = {
   },
   open: {
     opacity: 1,
-    clipPath: "inset(0 0 0% 0 round 8px)",
+    height: "auto",
+    marginTop: 4,
+    y: 0,
     transition: {
-      duration: 0.2,
-      delayChildren: 0.035,
+      duration: 0.32,
+      delayChildren: 0.04,
       ease: EASE_OUT,
-      staggerChildren: 0.045,
+      staggerChildren: 0.035,
     },
   },
 };
@@ -91,14 +90,15 @@ const SUBMENU_VARIANTS: Variants = {
 const SUBMENU_ITEM_VARIANTS: Variants = {
   closed: {
     opacity: 0,
-    y: -6,
-    filter: "blur(3px)",
+    y: -4,
   },
   open: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: SUBMENU_TRANSITION,
+    transition: {
+      duration: 0.24,
+      ease: EASE_OUT,
+    },
   },
 };
 
@@ -844,7 +844,7 @@ export const AnimatedSidebarMenuSub = forwardRef<
   const panel = useAnimatedSidebarPanel();
 
   return (
-    <AnimatePresence initial={false} mode="popLayout">
+    <AnimatePresence initial={false}>
       {open && !panel.collapsed ? (
         <motion.ul
           {...props}
@@ -857,7 +857,7 @@ export const AnimatedSidebarMenuSub = forwardRef<
           transition={context.reduce ? { duration: 0.12 } : undefined}
           data-slot="sidebar-menu-sub"
           className={cn(
-            "relative mt-1 ml-5 flex min-w-0 flex-col gap-0.5 border-gray-200 border-l pl-3",
+            "relative ml-5 flex min-w-0 flex-col gap-0.5 overflow-hidden border-gray-200 border-l pl-3",
             className,
           )}
         >
@@ -886,6 +886,8 @@ export const AnimatedSidebarMenuSubItem = forwardRef<
 export interface AnimatedSidebarMenuSubButtonProps {
   children: ReactNode;
   icon?: ReactNode;
+  badge?: ReactNode;
+  ariaLabel?: string;
   href?: string;
   isActive?: boolean;
   disabled?: boolean;
@@ -899,6 +901,8 @@ export interface AnimatedSidebarMenuSubButtonProps {
 export function AnimatedSidebarMenuSubButton({
   children,
   icon,
+  badge,
+  ariaLabel,
   href,
   isActive = false,
   disabled = false,
@@ -930,6 +934,7 @@ export function AnimatedSidebarMenuSubButton({
         {icon ?? <span className="size-1 rounded-full bg-current" />}
       </span>
       <span className="min-w-0 flex-1 truncate">{children}</span>
+      {badge ? <span className="ml-auto shrink-0">{badge}</span> : null}
     </>
   );
 
@@ -945,6 +950,8 @@ export function AnimatedSidebarMenuSubButton({
   return href ? (
     <motion.a
       href={href}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       target={target}
       rel={rel ?? (target === "_blank" ? "noreferrer noopener" : undefined)}
       aria-current={isActive ? "page" : undefined}
@@ -960,6 +967,8 @@ export function AnimatedSidebarMenuSubButton({
   ) : (
     <motion.button
       type="button"
+      aria-label={ariaLabel}
+      title={ariaLabel}
       disabled={disabled}
       aria-current={isActive ? "page" : undefined}
       tabIndex={disabled ? -1 : 0}
@@ -977,6 +986,7 @@ export interface AnimatedSidebarMenuButtonProps {
   children: ReactNode;
   icon?: ReactNode;
   badge?: ReactNode;
+  ariaLabel?: string;
   href?: string;
   isActive?: boolean;
   ariaExpanded?: boolean;
@@ -992,6 +1002,7 @@ export function AnimatedSidebarMenuButton({
   children,
   icon,
   badge,
+  ariaLabel,
   href,
   isActive = false,
   ariaExpanded,
@@ -1100,8 +1111,8 @@ export function AnimatedSidebarMenuButton({
       aria-current={isActive ? "page" : undefined}
       aria-expanded={ariaExpanded}
       aria-disabled={disabled || undefined}
-      aria-label={panel.collapsed ? textLabel : undefined}
-      title={panel.collapsed ? textLabel : undefined}
+      aria-label={panel.collapsed ? (ariaLabel ?? textLabel) : undefined}
+      title={panel.collapsed ? (ariaLabel ?? textLabel) : undefined}
       tabIndex={disabled ? -1 : 0}
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}
@@ -1116,8 +1127,8 @@ export function AnimatedSidebarMenuButton({
       disabled={disabled}
       aria-current={isActive ? "page" : undefined}
       aria-expanded={ariaExpanded}
-      aria-label={panel.collapsed ? textLabel : undefined}
-      title={panel.collapsed ? textLabel : undefined}
+      aria-label={panel.collapsed ? (ariaLabel ?? textLabel) : undefined}
+      title={panel.collapsed ? (ariaLabel ?? textLabel) : undefined}
       tabIndex={disabled ? -1 : 0}
       onClick={select}
       whileTap={context.reduce || disabled ? undefined : { scale: 0.98 }}

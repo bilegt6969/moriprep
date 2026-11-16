@@ -85,18 +85,18 @@ export default function ChartsPage() {
     <div className="min-h-screen bg-[#F5F5F7]">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-12"
+          className="mb-8 sm:mb-12"
         >
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-gray-900 mb-4">
+          <h1 className="mb-4 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
             Your Progress
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl">
+          <p className="max-w-2xl text-base text-gray-600 sm:text-lg md:text-xl">
             Track your performance and identify areas for improvement.
           </p>
         </motion.div>
@@ -106,9 +106,9 @@ export default function ChartsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+          className="mb-8 grid grid-cols-2 gap-3 sm:mb-12 sm:gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6"
         >
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
                 <BookOpen className="text-blue-600" size={20} />
@@ -122,7 +122,7 @@ export default function ChartsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
                 <CheckCircle className="text-green-600" size={20} />
@@ -136,7 +136,7 @@ export default function ChartsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                 <Clock className="text-purple-600" size={20} />
@@ -150,7 +150,7 @@ export default function ChartsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
                 <Flame className="text-orange-600" size={20} />
@@ -170,9 +170,9 @@ export default function ChartsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-12"
+          className="mb-8 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:mb-12 sm:p-8"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <Target className="text-gray-600" size={24} />
               <h3 className="text-xl font-semibold text-gray-900">
@@ -199,13 +199,13 @@ export default function ChartsPage() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:mb-12 sm:gap-6 lg:grid-cols-2 lg:gap-8">
           {/* Domain Performance */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100"
+            className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8"
           >
             <h3 className="text-xl font-semibold text-gray-900 mb-6">
               Domain Performance
@@ -249,7 +249,7 @@ export default function ChartsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100"
+            className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8"
           >
             <h3 className="text-xl font-semibold text-gray-900 mb-6">
               Weekly Activity
@@ -285,13 +285,13 @@ export default function ChartsPage() {
         </div>
 
         {/* Weak & Strong Areas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
           {/* Weak Areas */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100"
+            className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8"
           >
             <div className="flex items-center gap-3 mb-6">
               <AlertTriangle className="text-orange-500" size={24} />
@@ -340,7 +340,7 @@ export default function ChartsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100"
+            className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8"
           >
             <div className="flex items-center gap-3 mb-6">
               <Award className="text-green-500" size={24} />

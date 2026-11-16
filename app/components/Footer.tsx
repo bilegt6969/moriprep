@@ -206,8 +206,9 @@ export function Footer() {
 
         {/* Bottom row on mobile: just copyright (socials moved up top). Desktop: original right column */}
         <div className="flex items-center justify-between pt-8 border-t border-[#f0f0f0] md:pt-0 md:border-0 md:flex-col md:items-end md:gap-5 md:justify-start">
-          <p className="text-[#a3a3a3] text-[15px] font-medium">
-            © 2026 Mori Prep
+          <p className="flex flex-col items-end text-right text-[15px] font-medium text-[#a3a3a3]">
+            <span>© 2026 Mori Prep</span>
+            <span>Powered by Bytecode</span>
           </p>
 
           {/* Socials shown here only on desktop */}

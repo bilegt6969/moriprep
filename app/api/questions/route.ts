@@ -7,12 +7,88 @@ let cachedRWQuestionsData: any = null;
 let cachedMathQuestionsData: any = null;
 let cachedOctoberSATData: any = null;
 let cachedOctoberSATMathData: any = null;
+let cachedAugustSATData: any = null;
 
 async function loadQuestionsData(
   testType: string = "Reading and Writing",
   source: string = "default",
   request?: NextRequest,
 ) {
+  if (source === "august_2026") {
+    if (cachedAugustSATData === null) {
+      try {
+        const filePath = path.join(
+          process.cwd(),
+          "public",
+          "data",
+          "august_2026_questions.json",
+        );
+        const fileContent = await readFile(filePath, "utf-8");
+        const rawData = JSON.parse(fileContent);
+        if (!Array.isArray(rawData)) {
+          throw new Error("August 2026 question data must be an array");
+        }
+
+        cachedAugustSATData = rawData.map((question: any, index: number) => {
+          if (
+            typeof question?.id !== "string" ||
+            !Array.isArray(question.options) ||
+            question.options.length !== 4 ||
+            !Number.isInteger(question.c_answer) ||
+            question.c_answer < 0 ||
+            question.c_answer >= question.options.length ||
+            !question.options.every(
+              (option: any) => typeof option?.text === "string",
+            )
+          ) {
+            throw new Error(
+              `Invalid August 2026 question at position ${question?.position ?? index + 1}`,
+            );
+          }
+
+          const choices = Object.fromEntries(
+            question.options.map((option: any, optionIndex: number) => [
+              String.fromCharCode(65 + optionIndex),
+              option.text,
+            ]),
+          );
+          const correctAnswer = String.fromCharCode(65 + question.c_answer);
+
+          return {
+            question_id: `aug26-q${String(question.position ?? index + 1).padStart(3, "0")}`,
+            assessment: "August 2026 SAT",
+            test: "August 2026 SAT",
+            domain: "Reading and Writing",
+            skill: "Reading and Writing",
+            difficulty: "Medium",
+            passage: question.passage ?? "",
+            prompt: question.prompt ?? "",
+            question: question.prompt ?? "",
+            choices,
+            correct_answer: correctAnswer,
+            correct_answer_text: choices[correctAnswer],
+            rationale: question.explanation ?? "",
+            parse_status: "strict",
+            source_file: "combined.json",
+            has_graphic: false,
+            graphics: [],
+            has_underline: false,
+            raw_text: [question.passage, question.prompt]
+              .filter(Boolean)
+              .join("\n"),
+            section: "Reading and Writing",
+            question_number: question.position,
+            question_type: "mcq",
+          };
+        });
+      } catch (error) {
+        console.error("Error loading August 2026 questions:", error);
+        throw error;
+      }
+    }
+    return cachedAugustSATData;
+  }
+
   if (source === "october_sat") {
     // Determine which JSON file to load based on test type
     const isMath = testType === "Math";

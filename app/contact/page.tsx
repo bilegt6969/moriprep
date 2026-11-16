@@ -10,12 +10,12 @@ export default function ContactPage() {
     <>
       <Navbar siteName="Mori Prep" categories={[]} showBanner={false} />
       <section className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden py-20">
-        <div className="w-full max-w-[1200px] px-2 md:px-10 flex flex-col gap-4 animate-fade-in-up">
+        <div className="w-full max-w-[1200px] px-4 md:px-10 flex flex-col gap-4 animate-fade-in-up">
           {/* ── TOP ROW: Two Cards ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Contact Us Card */}
-            <div className="bg-[#F5F5F7] rounded-[24px] p-12 md:p-20 flex flex-col items-center text-center transition-all duration-500 ease-out  hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h2 className="text-[32px] font-medium tracking-tight mb-3">
+            <div className="bg-[#F5F5F7] rounded-[24px] p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col items-center text-center transition-all duration-500 ease-out hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h2 className="text-2xl sm:text-[32px] font-medium tracking-tight mb-3">
                 Contact us
               </h2>
               <p className="text-base text-[#86868B] mb-10">
@@ -30,8 +30,8 @@ export default function ContactPage() {
             </div>
 
             {/* Partner with LISA Card */}
-            <div className="bg-[#F5F5F7] rounded-[24px] p-12 md:p-20 flex flex-col items-center text-center transition-all duration-500 ease-out  hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              <h2 className="text-[32px] font-medium tracking-tight mb-3">
+            <div className="bg-[#F5F5F7] rounded-[24px] p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col items-center text-center transition-all duration-500 ease-out hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <h2 className="text-2xl sm:text-[32px] font-medium tracking-tight mb-3">
                 Partner with us
               </h2>
               <p className="text-base text-[#86868B] mb-10">
@@ -47,10 +47,10 @@ export default function ContactPage() {
           </div>
 
           {/* ── BOTTOM SECTION: Stay Tuned ── */}
-          <div className="bg-[#F5F5F7] rounded-[24px] p-10 md:p-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center transition-all duration-500 ease-out hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="bg-[#F5F5F7] rounded-[24px] p-6 sm:p-10 md:p-14 lg:p-20 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center transition-all duration-500 ease-out hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             {/* Left: Text */}
             <div className="text-center md:pr-10 mb-6 md:mb-0">
-              <h2 className="text-[32px] font-medium tracking-tight mb-4">
+              <h2 className="text-2xl sm:text-[32px] font-medium tracking-tight mb-4">
                 Stay tuned
               </h2>
               <p className="text-base text-[#86868B] leading-relaxed max-w-[300px] mx-auto mb-6">

@@ -9,7 +9,9 @@ import {
     Home,
     Info,
     Library,
+    Menu,
     User,
+    X,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -24,6 +26,7 @@ const iosSpring = {
 export default function Navbar() {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const mainNavItems = [
     { name: "Overview", href: "/", icon: Home },
@@ -52,29 +55,29 @@ export default function Navbar() {
         Positioned fixed to the top.
       */}
       <header
-        className="fixed inset-x-0 top-0 z-50 flex h-14 w-full items-center justify-between border-b border-slate-200/60 bg-white/70 px-6 backdrop-blur-2xl transition-colors dark:border-white/10 dark:bg-black/60"
+        className="fixed inset-x-0 top-0 z-50 flex h-14 w-full items-center justify-between border-b border-slate-200/60 bg-white/85 px-4 backdrop-blur-2xl transition-colors dark:border-white/10 dark:bg-black/60 lg:px-6"
         onMouseLeave={() => {
           setHoveredNav(null);
           setIsDropdownOpen(false);
         }}
       >
         {/* Left: Brand Logo */}
-        <div className="flex w-48 items-center">
+        <div className="flex min-w-0 items-center lg:w-40">
           <Link
             href="/"
             className="flex items-center transition-opacity hover:opacity-70"
-            aria-label="OnePrep"
+            aria-label="Mori Prep"
           >
             <img
               src="/morin.svg"
               alt="Mori Prep"
-              className="h-7 w-auto max-w-[7rem] object-contain grayscale opacity-10"
+              className="h-7 w-auto max-w-[7rem] object-contain opacity-75"
             />
           </Link>
         </div>
 
         {/* Center: Main Navigation */}
-        <nav className="flex flex-1 items-center justify-center gap-1">
+        <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
             const isHovered = hoveredNav === item.name;
@@ -91,6 +94,10 @@ export default function Navbar() {
                   onMouseLeave={() => setIsDropdownOpen(false)}
                 >
                   <button
+                    type="button"
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="true"
+                    onClick={() => setIsDropdownOpen(true)}
                     className={`relative z-10 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-[14px] font-medium transition-colors duration-200 ${
                       isHovered
                         ? "text-blue-600 dark:text-white"
@@ -175,14 +182,80 @@ export default function Navbar() {
         </nav>
 
         {/* Right: Blue Profile Avatar from Reference Image */}
-        <div className="flex w-48 justify-end">
+        <div className="flex items-center justify-end gap-2 lg:w-40">
           <button
+            type="button"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-primary-navigation"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            className="grid size-10 place-items-center rounded-full text-slate-700 transition-colors hover:bg-slate-100 lg:hidden dark:text-slate-200 dark:hover:bg-white/10"
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <button
+            type="button"
             aria-label="User Profile"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#007AFF] text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+            className="hidden h-8 w-8 items-center justify-center rounded-full bg-[#007AFF] text-white shadow-sm transition-transform hover:scale-105 active:scale-95 lg:flex"
           >
             <User size={16} strokeWidth={2.5} />
           </button>
         </div>
+
+        {isMobileMenuOpen && (
+          <nav
+            id="mobile-primary-navigation"
+            aria-label="Main navigation"
+            className="absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-slate-200/70 bg-white/95 p-3 shadow-xl backdrop-blur-2xl lg:hidden dark:border-white/10 dark:bg-neutral-950/95"
+          >
+            {mainNavItems.map((item) =>
+              item.hasDropdown ? (
+                <div key={item.name} className="border-b border-slate-100 py-1 dark:border-white/10">
+                  <button
+                    type="button"
+                    aria-expanded={isDropdownOpen}
+                    onClick={() => setIsDropdownOpen((open) => !open)}
+                    className="flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    <span className="flex items-center gap-3">
+                      <item.icon size={17} aria-hidden="true" />
+                      {item.name}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <div className="pb-2 pl-10">
+                      {questionBankItems.map((subItem) => (
+                        <Link
+                          key={subItem.title}
+                          href={subItem.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex min-h-10 items-center rounded-lg px-3 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
+                        >
+                          {subItem.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                >
+                  <item.icon size={17} aria-hidden="true" />
+                  {item.name}
+                </Link>
+              ),
+            )}
+          </nav>
+        )}
       </header>
 
       {/* Spacer to prevent content from going under the fixed navbar */}

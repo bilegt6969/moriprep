@@ -1,8 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion";
 import Image from "next/image";
-import { FC, useState } from "react";
+import { FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -24,6 +29,144 @@ const itemVariants = {
     },
   },
 };
+
+const headingWords = [
+  "Practice,",
+  "learn,",
+  "review.",
+  "All in",
+  "one",
+  "place.",
+];
+
+function ReadAlongHeading() {
+  const [activeWord, setActiveWord] = useState(0);
+  const [layoutVersion, setLayoutVersion] = useState(0);
+  const reduceMotion = useReducedMotion();
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const wordRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const previousLineTop = useRef<number | null>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const width = useMotionValue(0);
+  const height = useMotionValue(0);
+  const opacity = useMotionValue(0);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const word = wordRefs.current[activeWord];
+    if (!container || !word) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const wordRect = word.getBoundingClientRect();
+    const fontSize = Number.parseFloat(getComputedStyle(word).fontSize);
+    const padding = fontSize * 0.16;
+    const targetX = wordRect.left - containerRect.left - padding;
+    const targetY =
+      wordRect.top - containerRect.top + (wordRect.height - fontSize * 1.3) / 2;
+    const targetWidth = wordRect.width + padding * 2;
+    const targetHeight = fontSize * 1.3;
+    const lineChanged =
+      previousLineTop.current !== null &&
+      Math.abs(previousLineTop.current - wordRect.top) > 2;
+    previousLineTop.current = wordRect.top;
+
+    if (reduceMotion || opacity.get() === 0) {
+      x.set(targetX);
+      y.set(targetY);
+      width.set(targetWidth);
+      height.set(targetHeight);
+      opacity.set(1);
+      return;
+    }
+
+    if (lineChanged) {
+      opacity.set(0);
+      x.set(targetX);
+      y.set(targetY);
+      width.set(targetWidth);
+      height.set(targetHeight);
+      const fadeIn = animate(opacity, 1, { duration: 0.16, delay: 0.04 });
+      return () => fadeIn.stop();
+    }
+
+    const animations = [
+      animate(x, targetX, { type: "spring", stiffness: 400, damping: 40 }),
+      animate(y, targetY, { type: "spring", stiffness: 400, damping: 40 }),
+      animate(width, targetWidth, {
+        type: "spring",
+        stiffness: 400,
+        damping: 40,
+      }),
+    ];
+    return () => animations.forEach((animation) => animation.stop());
+  }, [activeWord, height, layoutVersion, opacity, reduceMotion, width, x, y]);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    const delay =
+      activeWord === headingWords.length - 1
+        ? 2000
+        : 300 + headingWords[activeWord].length * 40;
+    const timeout = window.setTimeout(() => {
+      setActiveWord((current) =>
+        current === headingWords.length - 1 ? 0 : current + 1,
+      );
+    }, delay);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeWord, reduceMotion]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      setLayoutVersion((version) => version + 1);
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={containerRef} className="relative block">
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 z-0 rounded-[0.34em] bg-[#4882ff]"
+        style={{ x, y, width, height, opacity }}
+      />
+      {headingWords.map((word, index) => (
+        <span key={word}>
+          {index === 3 && <br />}
+          <button
+            ref={(element) => {
+              wordRefs.current[index] = element;
+            }}
+            type="button"
+            aria-label={`Read from ${word.replace(/[.,]/g, "")}`}
+            onClick={() => setActiveWord(index)}
+            className={`relative z-10 inline appearance-none bg-transparent p-0 text-inherit focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717] ${
+              index < activeWord
+                ? "text-[#343433]"
+                : index === activeWord
+                  ? "text-white"
+                  : "text-[#a5a5a5]"
+            }`}
+            style={
+              index < headingWords.length - 1
+                ? { marginRight: "0.05em" }
+                : undefined
+            }
+          >
+            {word}
+          </button>
+          {index < headingWords.length - 1 && " "}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 // Same pattern used in FeatureShowcase's ImageWithSkeleton: pulse while
 // loading, swap to a graceful fallback on error instead of leaving Next.js's
@@ -95,13 +238,13 @@ export function SendReceiveSwap() {
       <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-10 pt-[6.375rem] pb-[6rem] border-t-2 border-[#f2f0ed]">
         {/* Section Header */}
         <motion.h1
-          className="font-sans text-[44px] font-medium leading-[48px] tracking-[-1.35px] text-[#343433]"
+          className="font-sans text-[44px] font-medium leading-[48px] tracking-[-1.35px] text-[#000000]"
+          aria-label="Practice, learn, review. All in one place."
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <span className="block">Practice, learn, review.</span> All in one
-          place.
+          <ReadAlongHeading />
         </motion.h1>
 
         {/* 3-Column Grid */}
