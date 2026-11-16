@@ -24,7 +24,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   loadVocabularyProgress,
   saveVocabularyProgress,
@@ -40,7 +47,7 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong.";
 }
 
-export default function VocabularyStudyPage() {
+function VocabularyStudyContent() {
   const searchParams = useSearchParams();
   const deckId = searchParams.get("deck");
   const deck = useMemo(
@@ -455,5 +462,27 @@ export default function VocabularyStudyPage() {
         ) : null}
       </main>
     </div>
+  );
+}
+
+export default function VocabularyStudyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-dvh flex-col bg-white"
+          aria-busy="true"
+          role="status"
+          aria-label="Loading vocabulary study session"
+        >
+          <div className="h-14 shrink-0 border-b border-[#e7e7e7]" />
+          <div className="flex flex-1 items-center justify-center px-4">
+            <div className="h-[min(234px,31dvh)] min-h-[150px] w-full max-w-[490px] animate-pulse rounded-xl bg-[#f5f5f7]" />
+          </div>
+        </div>
+      }
+    >
+      <VocabularyStudyContent />
+    </Suspense>
   );
 }
