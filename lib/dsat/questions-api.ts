@@ -1,4 +1,4 @@
-import type { DSATQuestion } from "@/types/dsat";
+import type { DSATQuestion, SATMathQuestion } from "@/types/dsat";
 
 export type Section = "Reading and Writing" | "Math";
 
@@ -59,7 +59,7 @@ export async function saveUserProgress(
   answer: string,
   isCorrect: boolean,
   timeSpent: number,
-  question?: DSATQuestion,
+  question?: DSATQuestion | SATMathQuestion,
 ): Promise<void> {
   const token = await getIdToken();
   if (!token) {

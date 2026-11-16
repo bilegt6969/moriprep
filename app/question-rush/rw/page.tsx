@@ -1,11 +1,16 @@
 "use client";
 
+import AnswerChoices from "@/components/dsat/question-rush/AnswerChoices";
+import PassageContent from "@/components/dsat/question-rush/PassageContent";
 import {
     saveAnsweredQuestions,
     saveQuestionReport,
     saveUserProgress,
     updateUserStats,
 } from "@/lib/dsat/questions-api";
+import { domainSkills } from "@/lib/dsat/domain-skills";
+import { QUESTION_RUSH_LAST_SESSION_KEY } from "@/lib/dsat/practice-session";
+import { WARMUP_DURATION_SECONDS } from "@/lib/dsat/warmup";
 import { auth } from "@/lib/firebase";
 import { Attempt, DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
@@ -34,8 +39,6 @@ import {
     Trash2,
     Underline as UnderlineIcon,
     X,
-    ZoomIn,
-    ZoomOut,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -200,6 +203,22 @@ function RWPracticePageContent() {
   const difficultiesParam = searchParams.get("difficulties");
   const skillParam = searchParams.get("skills");
   const questionIdParam = searchParams.get("question_id");
+  const warmupMode = searchParams.get("warmup") === "1";
+  const warmupCountParam = Number(searchParams.get("warmupCount"));
+  const warmupQuestionLimit =
+    Number.isSafeInteger(warmupCountParam) && warmupCountParam > 0
+      ? Math.min(warmupCountParam, 20)
+      : 5;
+  const priorityParam = searchParams.get("priority");
+  const priorityQuestionOrder = useMemo(
+    () =>
+      new Map(
+        (priorityParam?.split(",").filter(Boolean) ?? []).map(
+          (questionId, index) => [questionId, index],
+        ),
+      ),
+    [priorityParam],
+  );
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -301,6 +320,11 @@ function RWPracticePageContent() {
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isTimerPaused, setIsTimerPaused] = useState(false);
+  const [warmupSecondsRemaining, setWarmupSecondsRemaining] = useState(
+    WARMUP_DURATION_SECONDS,
+  );
+  const [isWarmupPaused, setIsWarmupPaused] = useState(false);
+  const [isSessionComplete, setIsSessionComplete] = useState(false);
 
   const [showQuestionBank, setShowQuestionBank] = useState(false);
   const [explanationMode, setExplanationMode] = useState<
@@ -391,6 +415,44 @@ function RWPracticePageContent() {
       });
       console.log("after attempt filter:", filtered.length);
     }
+
+    if (warmupMode) {
+      const priority = filtered
+        .filter((question) =>
+          priorityQuestionOrder.has(question.question_id),
+        )
+        .sort(
+          (a, b) =>
+            priorityQuestionOrder.get(a.question_id)! -
+            priorityQuestionOrder.get(b.question_id)!,
+        );
+      const prioritizedIds = new Set(
+        priority.map((question) => question.question_id),
+      );
+      const remaining = filtered.filter(
+        (question) => !prioritizedIds.has(question.question_id),
+      );
+      const missed = remaining.filter(
+        (question) =>
+          answeredQuestions.get(question.question_id)?.isCorrect === false,
+      );
+      const missedIds = new Set(missed.map((question) => question.question_id));
+      const unseen = remaining.filter(
+        (question) =>
+          !answeredQuestions.has(question.question_id) &&
+          !missedIds.has(question.question_id),
+      );
+      const other = remaining.filter(
+        (question) =>
+          answeredQuestions.has(question.question_id) &&
+          !missedIds.has(question.question_id),
+      );
+      filtered = [...priority, ...missed, ...unseen, ...other].slice(
+        0,
+        warmupQuestionLimit,
+      );
+    }
+
     console.log("filteredQuestions final:", filtered.length);
     return filtered;
   }, [
@@ -402,17 +464,23 @@ function RWPracticePageContent() {
     statusFilter,
     attemptFilter,
     answeredQuestions,
+    warmupMode,
+    warmupQuestionLimit,
+    priorityQuestionOrder,
   ]);
 
-  // Update total questions count whenever filteredQuestions changes
-  // Only use filteredQuestions.length when attempt/status filters are active
-  // Otherwise, keep the count from the API (set in fetchQuestions)
+  // Warmups use a capped question set; other sessions use the API count unless
+  // performance filters narrow the set.
   useEffect(() => {
-    if (attemptFilter !== "all" || statusFilter !== "all") {
+    if (
+      warmupMode ||
+      attemptFilter !== "all" ||
+      statusFilter !== "all"
+    ) {
       setTotalQuestions(filteredQuestions.length);
       setActualTotalQuestions(filteredQuestions.length);
     }
-  }, [filteredQuestions.length, attemptFilter, statusFilter]);
+  }, [filteredQuestions.length, attemptFilter, statusFilter, warmupMode]);
 
   // Handle fullscreen toggle
   const toggleFullscreen = () => {
@@ -775,7 +843,7 @@ function RWPracticePageContent() {
     // setIsCrossOutMode(false);
     setShowExplanation(false);
     setElapsedSeconds(0);
-    setIsTimerPaused(false);
+    setIsTimerPaused(warmupMode && isWarmupPaused);
     showHistory && setShowHistory(false);
     setImageZoomLevels({});
 
@@ -816,6 +884,28 @@ function RWPracticePageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedQuestion?.question_id]);
+
+  useEffect(() => {
+    if (warmupMode) return;
+    const params = new URLSearchParams(searchParams.toString());
+    const hasConfiguration = [
+      "domain",
+      "domains",
+      "difficulty",
+      "difficulties",
+      "skills",
+    ].some((key) => params.has(key));
+    if (!hasConfiguration) return;
+
+    try {
+      localStorage.setItem(
+        QUESTION_RUSH_LAST_SESSION_KEY,
+        `/question-rush/rw?${params.toString()}`,
+      );
+    } catch (error) {
+      console.error("Error saving current practice session:", error);
+    }
+  }, [searchParams, warmupMode]);
 
   // Reset wrong answers when changing questions
   useEffect(() => {
@@ -874,6 +964,33 @@ function RWPracticePageContent() {
     }
     return () => clearInterval(interval);
   }, [selectedQuestion, isTimerPaused]);
+
+  useEffect(() => {
+    if (
+      !warmupMode ||
+      !selectedQuestion ||
+      isWarmupPaused ||
+      isSessionComplete
+    ) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setWarmupSecondsRemaining((remaining) => Math.max(0, remaining - 1));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [
+    warmupMode,
+    selectedQuestion?.question_id,
+    isWarmupPaused,
+    isSessionComplete,
+  ]);
+
+  useEffect(() => {
+    if (warmupMode && warmupSecondsRemaining === 0) {
+      setIsSessionComplete(true);
+    }
+  }, [warmupMode, warmupSecondsRemaining]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -1121,6 +1238,23 @@ function RWPracticePageContent() {
   }
 
   function handleNextQuestion() {
+    const currentIndex = filteredQuestions.findIndex(
+      (q) => q.question_id === selectedQuestion?.question_id,
+    );
+    const hasNextQuestion =
+      isRemixMode && !warmupMode
+        ? filteredQuestions.some(
+            (q) =>
+              q.domain === selectedQuestion?.domain &&
+              q.question_id !== selectedQuestion?.question_id,
+          )
+        : currentIndex >= 0 && currentIndex < filteredQuestions.length - 1;
+    if (currentIndex >= 0 && !hasNextQuestion) {
+      setIsSessionComplete(true);
+      setIsWarmupPaused(true);
+      return;
+    }
+
     // Reset state for next question
     setSelectedAnswer("");
     setHighlightedAnswer("");
@@ -1128,7 +1262,7 @@ function RWPracticePageContent() {
     setShowExplanation(false);
     setWrongAnswers(new Set());
     setEliminatedChoices(new Set());
-    setIsTimerPaused(false);
+    setIsTimerPaused(warmupMode && isWarmupPaused);
 
     if (isRemixMode && selectedQuestion) {
       // Add current question to history before navigating
@@ -1150,9 +1284,6 @@ function RWPracticePageContent() {
       }
     } else {
       // Normal sequential navigation
-      const currentIndex = filteredQuestions.findIndex(
-        (q) => q.question_id === selectedQuestion?.question_id,
-      );
       if (currentIndex === -1) return; // current question isn't in the list — don't jump anywhere
       if (currentIndex < filteredQuestions.length - 1) {
         setSelectedQuestion(filteredQuestions[currentIndex + 1] || null);
@@ -1168,7 +1299,7 @@ function RWPracticePageContent() {
     setShowExplanation(false);
     setWrongAnswers(new Set());
     setEliminatedChoices(new Set());
-    setIsTimerPaused(false);
+    setIsTimerPaused(warmupMode && isWarmupPaused);
 
     if (isRemixMode) {
       // Go back through navigation history
@@ -1208,7 +1339,7 @@ function RWPracticePageContent() {
     setShowExplanation(false);
     setWrongAnswers(new Set());
     setEliminatedChoices(new Set());
-    setIsTimerPaused(false);
+    setIsTimerPaused(warmupMode && isWarmupPaused);
   }
 
   function handleGoBack() {
@@ -1226,7 +1357,7 @@ function RWPracticePageContent() {
     setShowExplanation(false);
     setWrongAnswers(new Set());
     setEliminatedChoices(new Set());
-    setIsTimerPaused(false);
+    setIsTimerPaused(warmupMode && isWarmupPaused);
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -1651,87 +1782,55 @@ function RWPracticePageContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Import shared domain skills mapping
-  const domainSkills: Record<string, string[]> = {
-    "Information and Ideas": [
-      "Central Ideas and Details",
-      "Inferences",
-      "Command of Evidence — Textual",
-      "Command of Evidence — Quantitative",
-    ],
-    "Craft and Structure": [
-      "Words in Context",
-      "Text Structure and Purpose",
-      "Cross-Text Connections",
-    ],
-    "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
-    "Standard English Conventions": [
-      "Boundaries",
-      "Form, Structure, and Sense",
-    ],
-  };
   const domains = Object.keys(domainSkills);
   const availableSkills =
     selectedDomains.length === 0
       ? Array.from(new Set(questions.map((q) => q.skill)))
       : selectedDomains.flatMap((d) => domainSkills[d] || []);
 
-  // Memoize passage to prevent re-render on highlight menu state changes
-  const memoizedPassage = useMemo(() => {
-    if (!selectedQuestion?.passage) return null;
-
-    let htmlContent = selectedQuestion.passage;
-
-    // Handle underline
-    if (selectedQuestion.has_underline && selectedQuestion.underlined_text) {
-      htmlContent = htmlContent.replace(
-        selectedQuestion.underlined_text,
-        `<u class="bg-gray-200 px-1">${selectedQuestion.underlined_text}</u>`,
-      );
-    }
-
-    // Handle dual text (Text 1 and Text 2)
-    const hasText1 = htmlContent.includes("Text 1");
-    const hasText2 = htmlContent.includes("Text 2");
-
-    if (hasText1 && hasText2) {
-      // Split by "Text 2" and format both
-      const parts = htmlContent.split("Text 2");
-      const text1Part = parts[0].replace(
-        "Text 1",
-        "<strong>Text 1</strong><br><br>",
-      );
-      const text2Part = parts[1]
-        ? `<br><br><strong>Text 2</strong><br><br>${parts[1]}`
-        : "";
-      htmlContent = text1Part + text2Part;
-    }
-
-    return (
-      <>
-        {selectedQuestion.introduction && (
-          <div
-            className="mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
-            dangerouslySetInnerHTML={{ __html: selectedQuestion.introduction }}
-          />
-        )}
-        <div
-          className={`mb-6 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif ${selectedQuestion.introduction ? "pl-12" : ""}`}
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
-        />
-      </>
-    );
-  }, [
-    selectedQuestion?.passage,
-    selectedQuestion?.introduction,
-    selectedQuestion?.has_underline,
-    selectedQuestion?.underlined_text,
-  ]);
-
   const needsAnsweredData = attemptFilter !== "all" || statusFilter !== "all";
+  const timerPaused = warmupMode ? isWarmupPaused : isTimerPaused;
 
   if (loading || (needsAnsweredData && !isAnsweredDataSettled)) {
     return <SkeletonLoader />;
+  }
+
+  if (isSessionComplete) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-6 text-center">
+        <div className="max-w-lg rounded-3xl bg-white p-10 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#86868b]">
+            {warmupMode ? "Five-minute warmup" : "Practice session"}
+          </p>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#1d1d1f]">
+            {warmupMode && warmupSecondsRemaining === 0
+              ? "Time is up"
+              : "Session complete"}
+          </h1>
+          <p className="mt-3 text-base leading-7 text-[#6e6e73]">
+            {warmupMode
+              ? "Your warmup is finished. Keep the momentum going with a full practice session."
+              : "You have reached the end of this question set."}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/overview")}
+              className="rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+            >
+              Back to overview
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/question-rush?configure=rw")}
+              className="rounded-full bg-[#f5f5f7] px-6 py-3 text-sm font-semibold text-[#1d1d1f] transition-colors hover:bg-[#ececf0]"
+            >
+              Start another session
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -1893,23 +1992,34 @@ function RWPracticePageContent() {
                 {isTimerHidden ? (
                   <Clock size={20} className="text-gray-400" />
                 ) : (
-                  formatTime(elapsedSeconds)
+                  formatTime(
+                    warmupMode ? warmupSecondsRemaining : elapsedSeconds,
+                  )
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsTimerPaused(!isTimerPaused)}
+                  aria-label={timerPaused ? "Resume timer" : "Pause timer"}
+                  onClick={() => {
+                    if (warmupMode) {
+                      const nextPaused = !isWarmupPaused;
+                      setIsWarmupPaused(nextPaused);
+                      setIsTimerPaused(nextPaused || showExplanation);
+                    } else {
+                      setIsTimerPaused((paused) => !paused);
+                    }
+                  }}
                   className="w-9 h-9 flex items-center justify-center border border-gray-200 hover:bg-gray-50 rounded-full transition-colors"
                 >
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.div
-                      key={isTimerPaused ? "play" : "pause"}
+                      key={timerPaused ? "play" : "pause"}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.5 }}
                       transition={{ duration: 0.15 }}
                     >
-                      {isTimerPaused ? (
+                      {timerPaused ? (
                         <Play
                           size={12}
                           strokeWidth={2.5}
@@ -2029,59 +2139,11 @@ function RWPracticePageContent() {
                   ref={passageRef}
                   className="max-w-3xl mx-auto md:mx-0 text-[17px] sm:text-[19px] leading-[1.7] text-[#1C1C1E] dark:text-gray-100 font-serif"
                 >
-                  {selectedQuestion.has_graphic &&
-                    selectedQuestion.graphics &&
-                    selectedQuestion.graphics.length > 0 && (
-                      <div className="my-4">
-                        {selectedQuestion.graphics.map((graphic, idx) => {
-                          const zoom = imageZoomLevels[idx] ?? 100;
-                          return (
-                            <div
-                              key={idx}
-                              className="mb-6 flex items-start gap-3"
-                            >
-                              {typeof graphic === "object" &&
-                                graphic.image_path && (
-                                  <div className="flex-1 min-w-0 overflow-auto">
-                                    <img
-                                      src={`/questions_charts/${graphic.image_path.split("/").pop()}`}
-                                      alt="Question graphic"
-                                      style={{ width: `${zoom}%` }}
-                                      className="h-auto rounded-lg border border-gray-200 transition-[width] duration-150"
-                                      onError={(e) => {
-                                        (
-                                          e.target as HTMLImageElement
-                                        ).style.display = "none";
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                              <div className="flex flex-col gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => adjustImageZoom(idx, 20)}
-                                  disabled={zoom >= 200}
-                                  aria-label="Zoom in"
-                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                >
-                                  <ZoomIn size={16} strokeWidth={2} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => adjustImageZoom(idx, -20)}
-                                  disabled={zoom <= 50}
-                                  aria-label="Zoom out"
-                                  className="w-9 h-9 flex items-center justify-center border-2 border-gray-200 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-40 disabled:hover:bg-transparent text-gray-600"
-                                >
-                                  <ZoomOut size={16} strokeWidth={2} />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  {memoizedPassage}
+                  <PassageContent
+                    question={selectedQuestion}
+                    imageZoomLevels={imageZoomLevels}
+                    onAdjustImageZoom={adjustImageZoom}
+                  />
                 </div>
               )}
             </div>
@@ -2217,139 +2279,20 @@ function RWPracticePageContent() {
                       </div>
                     )}
 
-                    {/* Answers List */}
-                    <div className="space-y-3">
-                      {Object.entries(selectedQuestion.choices).map(
-                        ([key, value]) => {
-                          const isSelected = selectedAnswer === key;
-                          const isHighlighted = highlightedAnswer === key;
-                          const isEliminated = eliminatedChoices.has(key);
-                          const isCorrectAnswer =
-                            key === selectedQuestion.correct_answer;
-                          // Use local session state, not lifetime history — lets you re-attempt a
-                          // question you've answered before instead of it being permanently locked
-                          // with the old answer revealed.
-                          const hasAnswered = !!selectedAnswer;
-                          const isLocked =
-                            !!selectedAnswer &&
-                            selectedAnswer === selectedQuestion.correct_answer;
-                          const isWrongSelected =
-                            hasAnswered && isSelected && !isCorrectAnswer;
-                          const isRightAnswerShown =
-                            hasAnswered && isSelected && isCorrectAnswer;
-                          const isPreviouslyWrong = wrongAnswers.has(key);
-
-                          let borderClass = "border-gray-400";
-                          let bgClass = "bg-white dark:bg-gray-800";
-                          let textClass = isEliminated
-                            ? "text-gray-400 dark:text-gray-500 line-through"
-                            : "text-[#1C1C1E] dark:text-gray-100";
-
-                          // Show red border for previously wrong answers (persistent)
-                          if (isPreviouslyWrong) {
-                            borderClass = "border-red-600";
-                            bgClass = "bg-red-50";
-                          } else if (hasAnswered) {
-                            if (isSelected && isCorrectAnswer) {
-                              // Only show correct answer in green if user selected it
-                              borderClass = "border-green-600";
-                              bgClass = "bg-green-50";
-                            } else if (isSelected && !isCorrectAnswer) {
-                              // Show wrong answer in red
-                              borderClass = "border-red-600";
-                              bgClass = "bg-red-50";
-                            }
-                          } else if (isHighlighted) {
-                            borderClass = "border-sky-500";
-                            bgClass = "bg-white dark:bg-gray-800";
-                          } else if (!isEliminated) {
-                            borderClass =
-                              "border-gray-600 hover:border-gray-900";
-                          } else {
-                            borderClass = "border-gray-300 bg-gray-50/40";
-                          }
-
-                          return (
-                            <div
-                              key={key}
-                              onClick={() => handleAnswerHighlight(key)}
-                              className={`group relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${borderClass} ${bgClass} min-w-0 ${isLocked ? "cursor-default" : "cursor-pointer"}`}
-                            >
-                              <div
-                                className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 text-sm font-bold font-sans transition-colors ${
-                                  isRightAnswerShown
-                                    ? "bg-green-600 text-white"
-                                    : isWrongSelected
-                                      ? "bg-red-600 text-white"
-                                      : isHighlighted
-                                        ? "bg-sky-500 text-white"
-                                        : isSelected
-                                          ? "bg-black text-white"
-                                          : isEliminated
-                                            ? "border-2 border-gray-300 text-gray-400"
-                                            : "border-2 border-gray-600 text-[#1C1C1E] dark:text-gray-100"
-                                }`}
-                              >
-                                {isRightAnswerShown ? (
-                                  <Check size={16} strokeWidth={3} />
-                                ) : isWrongSelected ? (
-                                  <X size={16} strokeWidth={3} />
-                                ) : (
-                                  key
-                                )}
-                              </div>
-
-                              <span
-                                className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                              >
-                                {value}
-                              </span>
-
-                              {isHighlighted &&
-                                !isLocked &&
-                                !showExplanation &&
-                                !isPreviouslyWrong && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAnswerSubmit();
-                                    }}
-                                    className="flex items-center justify-center px-4 py-2 shrink-0 bg-sky-500 hover:bg-sky-600 border-2 border-sky-600 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                                  >
-                                    Check
-                                  </button>
-                                )}
-
-                              {isWrongSelected && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowExplanation(true);
-                                  }}
-                                  className="flex items-center justify-center px-4 py-2 shrink-0 bg-black hover:bg-gray-800 rounded-full transition-colors ml-2 text-white text-sm font-semibold"
-                                >
-                                  Explain
-                                </button>
-                              )}
-
-                              {isCrossOutMode && !isLocked && (
-                                <button
-                                  onClick={(e) => toggleElimination(e, key)}
-                                  className="flex items-center justify-center w-9 h-9 shrink-0 hover:bg-gray-100 rounded-full transition-colors relative ml-2"
-                                >
-                                  <div
-                                    className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[11px] font-bold font-sans ${isEliminated ? "border-gray-400 text-gray-400" : "border-gray-500 text-gray-600 group-hover:border-gray-800 group-hover:text-gray-800"}`}
-                                  >
-                                    {key}
-                                    <div className="absolute w-full h-[1.5px] bg-current -rotate-45" />
-                                  </div>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        },
-                      )}
-                    </div>
+                    <AnswerChoices
+                      choices={selectedQuestion.choices}
+                      correctAnswer={selectedQuestion.correct_answer}
+                      selectedAnswer={selectedAnswer}
+                      highlightedAnswer={highlightedAnswer}
+                      eliminatedChoices={eliminatedChoices}
+                      wrongAnswers={wrongAnswers}
+                      showExplanation={showExplanation}
+                      isCrossOutMode={isCrossOutMode}
+                      onAnswerHighlight={handleAnswerHighlight}
+                      onAnswerSubmit={() => void handleAnswerSubmit()}
+                      onShowExplanation={() => setShowExplanation(true)}
+                      onToggleElimination={toggleElimination}
+                    />
                   </div>
                 )}
               </div>
@@ -2688,21 +2631,26 @@ function RWPracticePageContent() {
           <div className="flex flex-col h-screen bg-white font-sans text-gray-900 items-center justify-center">
             <div className="text-center">
               <h2 className="text-2xl font-semibold mb-4">
-                Configure Your Practice
+                {warmupMode
+                  ? "No warmup questions found"
+                  : "Configure Your Practice"}
               </h2>
               <p className="text-gray-600 mb-6">
-                Please configure your practice session from the main practice
-                page.
+                {warmupMode
+                  ? "No questions matched your recent weak areas. Try the full practice setup instead."
+                  : "Please configure your practice session from the main practice page."}
               </p>
               <div className="flex gap-4 justify-center">
                 <button
-                  onClick={() => router.push("/question-rush")}
+                  onClick={() =>
+                    router.push(warmupMode ? "/overview" : "/question-rush")
+                  }
                   className="px-6 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-black transition-colors"
                 >
-                  Go to Practice
+                  {warmupMode ? "Back to Overview" : "Go to Practice"}
                 </button>
                 {/* Try to use saved configuration if available */}
-                {hasSavedConfig && (
+                {!warmupMode && hasSavedConfig && (
                   <button
                     onClick={() => {
                       const savedConfig =

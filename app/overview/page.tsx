@@ -6,6 +6,8 @@ import {
     getUserProfile,
     updateUserProfile,
 } from "@/lib/user-api";
+import { getUserProgress, type UserProgress } from "@/lib/dsat/questions-api";
+import { getWarmupPlan } from "@/lib/dsat/warmup";
 import type { Auth } from "firebase/auth";
 import {
     AnimatePresence,
@@ -567,6 +569,7 @@ export default function HomePage() {
   const [newScore, setNewScore] = useState<string>("");
 
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [practiceStreak, setPracticeStreak] = useState<number>(0);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [weeklyQuestions, setWeeklyQuestions] = useState<number>(0);
@@ -574,6 +577,25 @@ export default function HomePage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showExamDatePopup, setShowExamDatePopup] = useState(false);
   const [isSavingExamDate, setIsSavingExamDate] = useState(false);
+
+  const warmupPlan = useMemo(
+    () => getWarmupPlan(userProgress, userAnswers),
+    [userProgress, userAnswers],
+  );
+  const warmupHref = useMemo(() => {
+    const params = new URLSearchParams({
+      warmup: "1",
+      warmupCount: String(warmupPlan.questionCount),
+      domains: warmupPlan.domains.join(","),
+    });
+    if (warmupPlan.skills.length > 0) {
+      params.set("skills", warmupPlan.skills.join(","));
+    }
+    if (warmupPlan.priorityQuestionIds.length > 0) {
+      params.set("priority", warmupPlan.priorityQuestionIds.join(","));
+    }
+    return `/question-rush/rw?${params.toString()}`;
+  }, [warmupPlan]);
 
   const [hideScore, setHideScore] = useState(false);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
@@ -667,11 +689,25 @@ export default function HomePage() {
       }
     };
 
+    const fetchProgress = async () => {
+      if (!auth?.currentUser) return;
+
+      try {
+        setUserProgress(await getUserProgress());
+      } catch (error) {
+        console.error("Error fetching user progress:", error);
+      }
+    };
+
     if (isAuthenticated) {
       fetchUserData();
       fetchUserAnswers();
+      fetchProgress();
     }
   }, [isAuthenticated, applyExamDates]);
+
+  const handleFullPracticeClick = () =>
+    router.push("/question-rush?configure=rw");
 
   const calculatePracticeStreak = (answers: UserAnswer[]) => {
     if (answers.length === 0) return 0;
@@ -1071,8 +1107,10 @@ export default function HomePage() {
             {getMotivationalMessage()} {getMotivationalSubtext()}
           </p>
           <div className="-ml-1.5 mt-6 flex flex-wrap items-center gap-x-1 gap-y-2">
-            <DarkPill href="/question-rush/rw">Full Practice Session</DarkPill>
-            <SoftPill href="/question-rush/rw">5-Minute Warmup</SoftPill>
+            <DarkPill onClick={handleFullPracticeClick}>
+              Full Practice Session
+            </DarkPill>
+            <SoftPill href={warmupHref}>5-Minute Warmup</SoftPill>
             <SoftPill href="/history">Review Practice History</SoftPill>
           </div>
         </motion.header>
@@ -1144,7 +1182,7 @@ export default function HomePage() {
                           transition={spring}
                         >
                           <Link
-                            href="/question-rush/rw"
+                            href="/question-rush/daily"
                             className="flex h-11 items-center rounded-full bg-white px-5 text-[15px] font-medium tracking-[-0.01em] text-[#1d1d1f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA3FF]"
                           >
                             Continue practicing

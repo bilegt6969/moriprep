@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { PRACTICE_CONFIG_KEY } from "@/lib/dsat/practice-session";
 
 interface RWPracticeConfigPopupProps {
   isOpen: boolean;
@@ -57,16 +58,76 @@ export function RWPracticeConfigPopup({
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Start with all difficulties and all domains selected by default
+  // Restore the last setup, or start with all options selected.
   useEffect(() => {
-    setSelectedDifficulties(allDifficulties);
-    setSelectedDomains(domains);
-    setSelectedSkills(allSkills);
-    setStatusFilter("all");
-    setAttemptFilter("all");
-  }, []);
+    const setDefaults = () => {
+      setSelectedDifficulties(allDifficulties);
+      setSelectedDomains(domains);
+      setSelectedSkills(allSkills);
+      setStatusFilter("all");
+      setAttemptFilter("all");
+    };
 
-  // Removed localStorage persistence - always start fresh
+    try {
+      const savedConfig = localStorage.getItem(PRACTICE_CONFIG_KEY);
+      if (!savedConfig) {
+        setDefaults();
+        return;
+      }
+
+      const parsed: unknown = JSON.parse(savedConfig);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setDefaults();
+        return;
+      }
+
+      const config = parsed as Record<string, unknown>;
+      const savedDomains = Array.isArray(config.domains)
+        ? config.domains
+            .filter(
+              (domain): domain is string => typeof domain === "string",
+            )
+            .map((domain) =>
+              domain === "Standard English Conventions"
+                ? "Standard English Convention"
+                : domain,
+            )
+            .filter((domain) => domains.includes(domain))
+        : domains;
+      const savedDifficulties = Array.isArray(config.difficulties)
+        ? config.difficulties.filter(
+            (difficulty): difficulty is string =>
+              typeof difficulty === "string" &&
+              allDifficulties.includes(difficulty),
+          )
+        : allDifficulties;
+      const savedSkills = Array.isArray(config.skills)
+        ? config.skills.filter(
+            (skill): skill is string =>
+              typeof skill === "string" && allSkills.includes(skill),
+          )
+        : savedDomains.flatMap((domain) => domainSkills[domain] ?? []);
+
+      setSelectedDomains(savedDomains);
+      setSelectedDifficulties(savedDifficulties);
+      setSelectedSkills(savedSkills);
+      setStatusFilter(
+        config.statusFilter === "correct" ||
+          config.statusFilter === "incorrect"
+          ? config.statusFilter
+          : "all",
+      );
+      setAttemptFilter(
+        config.attemptFilter === "not-tried" ||
+          config.attemptFilter === "tried"
+          ? config.attemptFilter
+          : "all",
+      );
+    } catch (error) {
+      console.error("Error restoring practice configuration:", error);
+      setDefaults();
+    }
+  }, []);
 
   // Debounced filtered count fetcher
   useEffect(() => {

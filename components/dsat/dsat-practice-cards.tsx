@@ -3,6 +3,15 @@
 import { MathPracticeConfigPopup } from "@/components/dsat/math-practice-config-popup";
 import { RWPracticeConfigPopup } from "@/components/dsat/rw-practice-config-popup";
 import {
+  PRACTICE_CONFIG_KEY,
+  QUESTION_RUSH_LAST_SESSION_KEY,
+  isQuestionRushSessionPath,
+} from "@/lib/dsat/practice-session";
+import {
+  domainSkills,
+  domains as rwDomains,
+} from "@/lib/dsat/domain-skills";
+import {
   animate,
   motion,
   useMotionTemplate,
@@ -269,10 +278,87 @@ export function DSATPracticeCards() {
 
   useEffect(() => {
     setMounted(true);
+    if (
+      new URLSearchParams(window.location.search).get("configure") === "rw"
+    ) {
+      setIsRWConfigPopupOpen(true);
+    }
   }, []);
 
-  const handleStartRWPractice = (config: PracticeConfig) =>
-    router.push(buildPracticeUrl("/question-rush/rw", config));
+  const handleStartRWPractice = (config: PracticeConfig) => {
+    const practicePath = buildPracticeUrl("/question-rush/rw", config);
+    let resumePath: string | null = null;
+
+    try {
+      localStorage.setItem(PRACTICE_CONFIG_KEY, JSON.stringify(config));
+
+      const savedPath = localStorage.getItem(QUESTION_RUSH_LAST_SESSION_KEY);
+      if (isQuestionRushSessionPath(savedPath)) {
+        const savedUrl = new URL(savedPath, window.location.origin);
+        const requestedUrl = new URL(practicePath, window.location.origin);
+        const getEffectiveConfig = (url: URL) => {
+          const selectedDomains = (
+            url.searchParams.get("domains")?.split(",") ??
+            url.searchParams.get("domain")?.split(",") ??
+            rwDomains
+          ).map((domain) =>
+            domain === "Standard English Conventions"
+              ? "Standard English Convention"
+              : domain,
+          );
+          const selectedDifficulties =
+            url.searchParams.get("difficulties")?.split(",") ??
+            url.searchParams.get("difficulty")?.split(",") ??
+            ["Easy", "Medium", "Hard"];
+          const selectedSkills =
+            url.searchParams.get("skills")?.split(",") ??
+            selectedDomains.flatMap((domain) => domainSkills[domain] ?? []);
+
+          return {
+            domains: selectedDomains,
+            difficulties: selectedDifficulties,
+            skills: selectedSkills,
+            statusFilter: url.searchParams.get("statusFilter") ?? "all",
+            attemptFilter: url.searchParams.get("attemptFilter") ?? "all",
+          };
+        };
+        const savedConfig = getEffectiveConfig(savedUrl);
+        const requestedConfig = getEffectiveConfig(requestedUrl);
+        const sameValues = (left: string[], right: string[]) => {
+          if (left.length !== right.length) return false;
+          const sortedRight = [...right].sort();
+          return [...left]
+            .sort()
+            .every((value, index) => value === sortedRight[index]);
+        };
+        const sameConfig =
+          sameValues(savedConfig.domains, requestedConfig.domains) &&
+          sameValues(savedConfig.difficulties, requestedConfig.difficulties) &&
+          sameValues(savedConfig.skills, requestedConfig.skills) &&
+          savedConfig.statusFilter === requestedConfig.statusFilter &&
+          savedConfig.attemptFilter === requestedConfig.attemptFilter;
+
+        if (
+          sameConfig &&
+          savedUrl.searchParams.has("question_id") &&
+          savedUrl.searchParams.get("warmup") !== "1"
+        ) {
+          resumePath = savedPath;
+        }
+      }
+
+      if (!resumePath) {
+        localStorage.setItem(QUESTION_RUSH_LAST_SESSION_KEY, practicePath);
+      }
+    } catch (error) {
+      console.error(
+        "Error saving or resuming Reading & Writing practice:",
+        error,
+      );
+    }
+
+    router.push(resumePath ?? practicePath);
+  };
 
   const handleStartMathPractice = (config: PracticeConfig) =>
     router.push(buildPracticeUrl("/question-rush/math", config));

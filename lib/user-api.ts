@@ -75,6 +75,32 @@ export async function getUserAnswers(): Promise<any[]> {
   return response.json();
 }
 
+export async function saveUserAnswer(
+  questionId: string,
+  domain: string,
+  category: string,
+  isCorrect: boolean,
+): Promise<void> {
+  const token = await getIdToken();
+  if (!token) {
+    throw new Error("User not authenticated");
+  }
+
+  const response = await fetch("/api/user/answers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ questionId, domain, category, isCorrect }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to save answer");
+  }
+}
+
 /**
  * Helper function to get the current Firebase ID token
  */
