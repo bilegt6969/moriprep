@@ -1,12 +1,10 @@
-import { getAdminApp, getAuth } from "firebase-admin/auth";
+import { verifyIdToken } from "@/lib/auth/server";
 import { NextRequest } from "next/server";
 import { vi } from "vitest";
 import { GET } from "./route";
 
-// Mock Firebase Admin
-vi.mock("firebase-admin/auth", () => ({
-  getAdminApp: vi.fn(),
-  getAuth: vi.fn(),
+vi.mock("@/lib/auth/server", () => ({
+  verifyIdToken: vi.fn(),
 }));
 
 // Mock Firebase client
@@ -59,12 +57,7 @@ describe("API: /api/question-stats - Security", () => {
     });
 
     it("should return 401 when token is invalid", async () => {
-      (getAdminApp as any).mockReturnValue({});
-      (getAuth as any).mockReturnValue({
-        verifyIdToken: vi.fn().mockRejectedValue({
-          code: "auth/invalid-id-token",
-        }),
-      });
+      vi.mocked(verifyIdToken).mockResolvedValue(null);
 
       const request = new NextRequest(
         "http://localhost:3000/api/question-stats?userId=user123",
@@ -78,12 +71,7 @@ describe("API: /api/question-stats - Security", () => {
     });
 
     it("should return 401 when token is expired", async () => {
-      (getAdminApp as any).mockReturnValue({});
-      (getAuth as any).mockReturnValue({
-        verifyIdToken: vi.fn().mockRejectedValue({
-          code: "auth/id-token-expired",
-        }),
-      });
+      vi.mocked(verifyIdToken).mockResolvedValue(null);
 
       const request = new NextRequest(
         "http://localhost:3000/api/question-stats?userId=user123",
@@ -99,12 +87,7 @@ describe("API: /api/question-stats - Security", () => {
 
   describe("User-specific stats - Authorization", () => {
     it("should return 403 when authenticated user requests another user's stats", async () => {
-      (getAdminApp as any).mockReturnValue({});
-      (getAuth as any).mockReturnValue({
-        verifyIdToken: vi.fn().mockResolvedValue({
-          uid: "userA",
-        }),
-      });
+      vi.mocked(verifyIdToken).mockResolvedValue({ uid: "userA" } as any);
 
       const request = new NextRequest(
         "http://localhost:3000/api/question-stats?userId=userB",
@@ -118,12 +101,7 @@ describe("API: /api/question-stats - Security", () => {
     });
 
     it("should allow authenticated user to request their own stats", async () => {
-      (getAdminApp as any).mockReturnValue({});
-      (getAuth as any).mockReturnValue({
-        verifyIdToken: vi.fn().mockResolvedValue({
-          uid: "userA",
-        }),
-      });
+      vi.mocked(verifyIdToken).mockResolvedValue({ uid: "userA" } as any);
 
       const request = new NextRequest(
         "http://localhost:3000/api/question-stats?userId=userA",

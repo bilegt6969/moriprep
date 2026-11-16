@@ -1,5 +1,4 @@
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import { verifyIdToken } from "@/lib/auth/server";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -14,30 +13,11 @@ export async function verifyAuthToken(request: NextRequest): Promise<string> {
 
   const idToken = authHeader.substring(7);
 
-  try {
-    // Initialize Firebase Admin if not already initialized
-    if (getApps().length === 0) {
-      initializeApp({
-        credential: {
-          getAccessToken: async () => {
-            // Placeholder - will use environment variables in production
-            return "" as any;
-          },
-        },
-      });
-    }
-    const decodedToken = await getAuth().verifyIdToken(idToken);
-    return decodedToken.uid;
-  } catch (authError: any) {
-    if (
-      authError.code === "auth/id-token-expired" ||
-      authError.code === "auth/id-token-revoked" ||
-      authError.code === "auth/invalid-id-token"
-    ) {
-      throw new Error("Unauthorized");
-    }
-    throw authError;
+  const decodedToken = await verifyIdToken(idToken);
+  if (!decodedToken) {
+    throw new Error("Unauthorized");
   }
+  return decodedToken.uid;
 }
 
 /**

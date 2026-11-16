@@ -1,10 +1,10 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import {
-    AUTH_SESSION_COOKIE,
-    GUEST_ID_COOKIE,
-    secureCookieOptions,
-} from "lib/auth/cookies";
+  AUTH_SESSION_COOKIE,
+  GUEST_ID_COOKIE,
+  secureCookieOptions,
+} from "@/lib/auth/cookies";
 import { cookies } from "next/headers";
 
 export function getAdminApp(): App {
@@ -53,8 +53,8 @@ export async function verifyIdToken(
   idToken: string,
 ): Promise<DecodedIdToken | null> {
   try {
-    getAdminApp();
-    return await getAuth().verifyIdToken(idToken);
+    const app = getAdminApp();
+    return await getAuth(app).verifyIdToken(idToken);
   } catch {
     return null;
   }
