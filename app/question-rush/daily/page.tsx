@@ -3,6 +3,8 @@
 import AnswerChoices from "@/components/dsat/question-rush/AnswerChoices";
 import PassageContent from "@/components/dsat/question-rush/PassageContent";
 import { MathText } from "@/components/MathText";
+import { SanitizedQuestionHtml } from "@/components/SanitizedQuestionHtml";
+import { isMathAnswerCorrect } from "@/lib/dsat/math-answer";
 import {
   selectMixedPracticeQuestions,
   type MixedPracticeQuestion,
@@ -22,7 +24,9 @@ function isMathQuestion(
   return item.section === "Math";
 }
 
-function getQuestion(item: MixedPracticeQuestion): DSATQuestion | SATMathQuestion {
+function getQuestion(
+  item: MixedPracticeQuestion,
+): DSATQuestion | SATMathQuestion {
   return item.question;
 }
 
@@ -33,7 +37,11 @@ function getQuestionKey(item: MixedPracticeQuestion): string {
 function isCorrectAnswer(item: MixedPracticeQuestion, answer: string): boolean {
   const question = item.question;
   if (isMathQuestion(item) && question.question_type === "spr") {
-    return answer.trim().toLowerCase() === question.correct_answer.trim().toLowerCase();
+    return isMathAnswerCorrect(
+      answer,
+      question.correct_answer,
+      question.accepted_answers,
+    );
   }
   return answer === question.correct_answer;
 }
@@ -58,7 +66,9 @@ export default function DailyPracticePage() {
       ]);
 
       if (!rwResponse.ok || !mathResponse.ok) {
-        throw new Error("Could not load the practice questions. Please try again.");
+        throw new Error(
+          "Could not load the practice questions. Please try again.",
+        );
       }
 
       const [rwQuestions, mathQuestions] = (await Promise.all([
@@ -213,6 +223,8 @@ export default function DailyPracticePage() {
   const rwQuestion =
     current.section === "Reading & Writing" ? current.question : null;
   const question = current.question;
+  const isRawMathHtmlQuestion =
+    mathQuestion?.source_file.startsWith("raw-math/") ?? false;
   const prompt =
     mathQuestion?.question ?? rwQuestion?.prompt ?? question.question;
   const choices = question.choices ?? {};
@@ -221,7 +233,10 @@ export default function DailyPracticePage() {
     <main className="min-h-screen bg-[#f7f7f8] px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-[1920px]">
         <header className="mb-8 flex items-center justify-between gap-4">
-          <Link href="/overview" className="text-sm text-gray-500 hover:text-black">
+          <Link
+            href="/overview"
+            className="text-sm text-gray-500 hover:text-black"
+          >
             Exit practice
           </Link>
           <p className="text-sm font-medium text-gray-600">
@@ -232,7 +247,9 @@ export default function DailyPracticePage() {
         <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-gray-200">
           <div
             className="h-full rounded-full bg-[#0080FF] transition-[width]"
-            style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            style={{
+              width: `${((currentIndex + 1) / questions.length) * 100}%`,
+            }}
           />
         </div>
 
@@ -252,11 +269,15 @@ export default function DailyPracticePage() {
                 {rwQuestion ? (
                   <PassageContent question={rwQuestion} />
                 ) : mathQuestion ? (
-                  <MathText
-                    text={prompt}
-                    mathExpressions={mathQuestion.math_expressions}
-                    figures={mathQuestion.figures}
-                  />
+                  isRawMathHtmlQuestion ? (
+                    <SanitizedQuestionHtml html={prompt} />
+                  ) : (
+                    <MathText
+                      text={prompt}
+                      mathExpressions={mathQuestion.math_expressions}
+                      figures={mathQuestion.figures}
+                    />
+                  )
                 ) : null}
               </div>
             </div>
@@ -293,15 +314,20 @@ export default function DailyPracticePage() {
                   isCrossOutMode={false}
                   lockOnAnswer
                   revealCorrectAnswer
+                  renderChoiceAsBlock={isRawMathHtmlQuestion}
                   onAnswerHighlight={setSelectedAnswer}
                   onAnswerSubmit={() => void submitAnswer()}
                   renderChoice={(_key, choice) =>
                     mathQuestion ? (
-                      <MathText
-                        text={choice}
-                        mathExpressions={mathQuestion.math_expressions}
-                        figures={mathQuestion.figures}
-                      />
+                      isRawMathHtmlQuestion ? (
+                        <SanitizedQuestionHtml html={choice} />
+                      ) : (
+                        <MathText
+                          text={choice}
+                          mathExpressions={mathQuestion.math_expressions}
+                          figures={mathQuestion.figures}
+                        />
+                      )
                     ) : (
                       choice
                     )
@@ -320,19 +346,37 @@ export default function DailyPracticePage() {
                   <p className="font-semibold">
                     {currentResult.isCorrect ? "Correct" : "Not quite"}
                   </p>
-                  {!currentResult.isCorrect && (
-                    <p className="mt-1 text-sm">
-                      Correct answer: {question.correct_answer}
-                      {question.correct_answer_text
-                        ? ` — ${question.correct_answer_text}`
-                        : ""}
-                    </p>
-                  )}
-                  {question.rationale && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
-                      {question.rationale}
-                    </p>
-                  )}
+                  {!currentResult.isCorrect &&
+                    (isRawMathHtmlQuestion &&
+                    mathQuestion?.question_type !== "spr" ? (
+                      <>
+                        <p className="mt-1 text-sm">
+                          Correct answer: {question.correct_answer}
+                        </p>
+                        <SanitizedQuestionHtml
+                          className="text-sm"
+                          html={question.correct_answer_text ?? ""}
+                        />
+                      </>
+                    ) : (
+                      <p className="mt-1 text-sm">
+                        Correct answer: {question.correct_answer}
+                        {question.correct_answer_text
+                          ? ` — ${question.correct_answer_text}`
+                          : ""}
+                      </p>
+                    ))}
+                  {question.rationale &&
+                    (isRawMathHtmlQuestion ? (
+                      <SanitizedQuestionHtml
+                        className="mt-2 text-sm leading-6"
+                        html={question.rationale}
+                      />
+                    ) : (
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                        {question.rationale}
+                      </p>
+                    ))}
                 </div>
               )}
 
@@ -355,8 +399,8 @@ export default function DailyPracticePage() {
                   </button>
                 </div>
               )}
-              </div>
             </div>
+          </div>
         </section>
       </div>
     </main>

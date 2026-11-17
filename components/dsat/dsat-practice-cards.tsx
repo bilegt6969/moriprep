@@ -7,10 +7,7 @@ import {
   QUESTION_RUSH_LAST_SESSION_KEY,
   isQuestionRushSessionPath,
 } from "@/lib/dsat/practice-session";
-import {
-  domainSkills,
-  domains as rwDomains,
-} from "@/lib/dsat/domain-skills";
+import { domainSkills, domains as rwDomains } from "@/lib/dsat/domain-skills";
 import {
   animate,
   motion,
@@ -32,12 +29,6 @@ interface PracticeConfig {
   skills: string[];
   statusFilter?: string;
   attemptFilter?: string;
-}
-
-interface QuestionStats {
-  rw: number;
-  math: number;
-  error: boolean;
 }
 
 // --- Design tokens (shared with the dashboard + landing page) ---
@@ -112,7 +103,7 @@ interface PracticeCardProps {
   accent: string;
   icon: React.ReactNode;
   title: string;
-  total: number;
+  total: number | null;
   error: boolean;
   description: string;
   domains: string[];
@@ -268,21 +259,47 @@ export function DSATPracticeCards() {
   const [isRWConfigPopupOpen, setIsRWConfigPopupOpen] = useState(false);
   const [isMathConfigPopupOpen, setIsMathConfigPopupOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-
-  // Static question counts
-  const stats: QuestionStats = {
-    rw: 1845,
-    math: 150,
-    error: false,
-  };
+  const [mathQuestionCount, setMathQuestionCount] = useState<number | null>(
+    null,
+  );
+  const [mathCountError, setMathCountError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (
-      new URLSearchParams(window.location.search).get("configure") === "rw"
-    ) {
+    if (new URLSearchParams(window.location.search).get("configure") === "rw") {
       setIsRWConfigPopupOpen(true);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/questions?test=Math&count_only=true")
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load the Math question count");
+        }
+
+        const data = await response.json();
+        if (
+          typeof data?.count !== "number" ||
+          !Number.isInteger(data.count) ||
+          data.count < 0
+        ) {
+          throw new Error("Math question count response is invalid");
+        }
+
+        if (!cancelled) setMathQuestionCount(data.count);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Could not load Math question count:", error);
+        setMathCountError(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleStartRWPractice = (config: PracticeConfig) => {
@@ -306,10 +323,14 @@ export function DSATPracticeCards() {
               ? "Standard English Convention"
               : domain,
           );
-          const selectedDifficulties =
-            url.searchParams.get("difficulties")?.split(",") ??
-            url.searchParams.get("difficulty")?.split(",") ??
-            ["Easy", "Medium", "Hard"];
+          const selectedDifficulties = url.searchParams
+            .get("difficulties")
+            ?.split(",") ??
+            url.searchParams.get("difficulty")?.split(",") ?? [
+              "Easy",
+              "Medium",
+              "Hard",
+            ];
           const selectedSkills =
             url.searchParams.get("skills")?.split(",") ??
             selectedDomains.flatMap((domain) => domainSkills[domain] ?? []);
@@ -392,8 +413,8 @@ export function DSATPracticeCards() {
               accent={C.green}
               icon={<BookOpen className="h-5 w-5" />}
               title="Reading & Writing"
-              total={stats.rw}
-              error={stats.error}
+              total={1845}
+              error={false}
               description="Master reading comprehension with adaptive questions across four domains."
               domains={[
                 "Information and Ideas",
@@ -408,8 +429,8 @@ export function DSATPracticeCards() {
               accent={C.blue}
               icon={<Calculator className="h-5 w-5" />}
               title="Mathematics"
-              total={stats.math}
-              error={stats.error}
+              total={mathQuestionCount}
+              error={mathCountError}
               description="Tackle complex math problems with advanced problem sets across five areas."
               domains={[
                 "Algebra",

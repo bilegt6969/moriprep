@@ -2,45 +2,47 @@
 
 import DesmosCalculator from "@/components/dsat/DesmosCalculator";
 import { MathText } from "@/components/MathText";
+import { SanitizedQuestionHtml } from "@/components/SanitizedQuestionHtml";
 import { mathDomainSkills } from "@/lib/dsat/math-domain-skills";
+import { isMathAnswerCorrect } from "@/lib/dsat/math-answer";
 import {
-    saveAnsweredQuestions,
-    saveUserProgress,
-    updateUserStats,
+  saveAnsweredQuestions,
+  saveUserProgress,
+  updateUserStats,
 } from "@/lib/dsat/questions-api";
 import { DSATQuestion } from "@/types/dsat";
 import { onAuthStateChanged } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertCircle,
-    Bookmark,
-    Check,
-    ChevronDown,
-    ChevronLeft,
-    Clock,
-    Command,
-    Copy,
-    Flag,
-    Highlighter,
-    List,
-    Maximize2,
-    Minimize2,
-    Moon,
-    MoreVertical,
-    Pause,
-    Play,
-    Shuffle,
-    Trash2,
-    Underline as UnderlineIcon,
-    X,
+  AlertCircle,
+  Bookmark,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  Clock,
+  Command,
+  Copy,
+  Flag,
+  Highlighter,
+  List,
+  Maximize2,
+  Minimize2,
+  Moon,
+  MoreVertical,
+  Pause,
+  Play,
+  Shuffle,
+  Trash2,
+  Underline as UnderlineIcon,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, {
-    Suspense,
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
 const springTransition = {
@@ -563,6 +565,8 @@ function MathPracticeContent() {
   }, [isDarkMode]);
 
   const currentQuestion = questionsData[currentQuestionIndex];
+  const isRawMathHtmlQuestion =
+    currentQuestion?.source_file.startsWith("raw-math/") ?? false;
 
   // Handle answer selection
   const handleAnswerSelect = (letter: string) => {
@@ -680,6 +684,34 @@ function MathPracticeContent() {
     handleAnswerSelect(highlightedAnswer);
   };
 
+  const handleStudentResponseSubmit = () => {
+    const submittedAnswer = selectedAnswer?.trim() ?? "";
+    if (!submittedAnswer || !currentQuestion || showExplanation) return;
+
+    const correct = isMathAnswerCorrect(
+      submittedAnswer,
+      currentQuestion.correct_answer,
+      currentQuestion.accepted_answers,
+    );
+    setSelectedAnswer(submittedAnswer);
+    setIsCorrect(correct);
+    setShowExplanation(true);
+    if (!correct) {
+      setWrongAnswers((prev) => new Set(prev).add(submittedAnswer));
+    }
+    if (user) {
+      const timeSpent = timeElapsed;
+      saveUserProgress(
+        currentQuestion.question_id,
+        submittedAnswer,
+        correct,
+        timeSpent,
+        currentQuestion,
+      );
+      updateUserStats(correct, timeSpent);
+    }
+  };
+
   // Toggle elimination (cross-out mode)
   const toggleElimination = (e: React.MouseEvent, key: string) => {
     e.stopPropagation();
@@ -770,6 +802,14 @@ function MathPracticeContent() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showKeyboardShortcuts) {
         if (e.key === "Escape") setShowKeyboardShortcuts(false);
+        return;
+      }
+
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target.isContentEditable ||
+          e.target.matches("input, textarea, select"))
+      ) {
         return;
       }
 
@@ -1273,61 +1313,65 @@ function MathPracticeContent() {
                 >
                   {/* Question prompt */}
                   <div className="mb-6 text-[17px] sm:text-[19px] font-serif text-[#1C1C1E] dark:text-gray-100 leading-relaxed">
-                    <MathText
-                      text={currentQuestion.question}
-                      mathExpressions={
-                        (currentQuestion as any).math_expressions || []
-                      }
-                      figures={(currentQuestion as any).figures || []}
-                    />
+                    {isRawMathHtmlQuestion ? (
+                      <SanitizedQuestionHtml html={currentQuestion.question} />
+                    ) : (
+                      <MathText
+                        text={currentQuestion.question}
+                        mathExpressions={
+                          (currentQuestion as any).math_expressions || []
+                        }
+                        figures={(currentQuestion as any).figures || []}
+                      />
+                    )}
                   </div>
 
                   {/* Answers List */}
                   {(currentQuestion as any).question_type === "spr" ? (
                     // Student-Produced Response (SPR) - text input
-                    <div className="space-y-4">
-                      <div className="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Your Answer
-                        </label>
+                    <form
+                      className="max-w-xl space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleStudentResponseSubmit();
+                      }}
+                    >
+                      <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-5 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/70">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <label
+                            htmlFor="math-student-response"
+                            className="text-sm font-semibold text-gray-800 dark:text-gray-200"
+                          >
+                            Your Answer
+                          </label>
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                            Free response
+                          </span>
+                        </div>
                         <input
+                          id="math-student-response"
                           type="text"
-                          value={selectedAnswer || ""}
+                          value={selectedAnswer ?? ""}
                           onChange={(e) => setSelectedAnswer(e.target.value)}
-                          disabled={!!selectedAnswer}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg font-mono focus:outline-none focus:border-black disabled:bg-gray-50 disabled:text-gray-400"
-                          placeholder="Enter your answer"
+                          disabled={showExplanation}
+                          autoComplete="off"
+                          spellCheck={false}
+                          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-lg font-medium text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/15 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-sky-400 dark:disabled:bg-gray-800"
+                          placeholder="Enter your response"
                         />
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Decimals and fractions are both accepted when they
+                          have the same value.
+                        </p>
                       </div>
                       <button
-                        onClick={() => {
-                          const correct =
-                            selectedAnswer === currentQuestion.correct_answer;
-                          setIsCorrect(correct);
-                          setShowExplanation(true);
-                          if (!correct && selectedAnswer) {
-                            setWrongAnswers((prev) =>
-                              new Set(prev).add(selectedAnswer!),
-                            );
-                          }
-                          if (user && selectedAnswer) {
-                            const timeSpent = timeElapsed;
-                            saveUserProgress(
-                              currentQuestion.question_id,
-                              selectedAnswer,
-                              correct,
-                              timeSpent,
-                              currentQuestion,
-                            );
-                            updateUserStats(correct, timeSpent);
-                          }
-                        }}
-                        disabled={!selectedAnswer}
-                        className="px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        type="submit"
+                        disabled={!selectedAnswer?.trim() || showExplanation}
+                        className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/20 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:focus-visible:ring-white/20 dark:disabled:bg-gray-700 dark:disabled:text-gray-400"
                       >
                         Submit Answer
                       </button>
-                    </div>
+                    </form>
                   ) : (
                     // Multiple Choice (MCQ)
                     <div className="space-y-3">
@@ -1405,20 +1449,27 @@ function MathPracticeContent() {
                                 )}
                               </div>
 
-                              <span
-                                className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
-                              >
-                                <MathText
-                                  text={value as string}
-                                  mathExpressions={
-                                    (currentQuestion as any).math_expressions ||
-                                    []
-                                  }
-                                  figures={
-                                    (currentQuestion as any).figures || []
-                                  }
+                              {isRawMathHtmlQuestion ? (
+                                <SanitizedQuestionHtml
+                                  className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                                  html={value as string}
                                 />
-                              </span>
+                              ) : (
+                                <span
+                                  className={`text-[17px] sm:text-[19px] font-serif leading-relaxed flex-1 min-w-0 ${textClass}`}
+                                >
+                                  <MathText
+                                    text={value as string}
+                                    mathExpressions={
+                                      (currentQuestion as any)
+                                        .math_expressions || []
+                                    }
+                                    figures={
+                                      (currentQuestion as any).figures || []
+                                    }
+                                  />
+                                </span>
+                              )}
 
                               {isHighlighted &&
                                 !isLocked &&
@@ -1492,21 +1543,41 @@ function MathPracticeContent() {
                           <p className="font-semibold text-gray-900">
                             {isCorrect ? "Correct!" : "Incorrect"}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {(currentQuestion as any).question_type === "spr"
-                              ? `The correct answer is ${currentQuestion.correct_answer}`
-                              : `The correct answer is ${currentQuestion.correct_answer}: ${currentQuestion.correct_answer_text}`}
-                          </p>
+                          {isRawMathHtmlQuestion &&
+                          (currentQuestion as any).question_type !== "spr" ? (
+                            <>
+                              <p className="text-sm text-gray-600">
+                                The correct answer is{" "}
+                                {currentQuestion.correct_answer}:
+                              </p>
+                              <SanitizedQuestionHtml
+                                className="text-sm text-gray-600"
+                                html={currentQuestion.correct_answer_text}
+                              />
+                            </>
+                          ) : (
+                            <p className="text-sm text-gray-600">
+                              {(currentQuestion as any).question_type === "spr"
+                                ? `The correct answer is ${currentQuestion.correct_answer}`
+                                : `The correct answer is ${currentQuestion.correct_answer}: ${currentQuestion.correct_answer_text}`}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="text-sm text-gray-700 leading-relaxed">
-                        <MathText
-                          text={currentQuestion.rationale}
-                          mathExpressions={
-                            (currentQuestion as any).math_expressions || []
-                          }
-                          figures={(currentQuestion as any).figures || []}
-                        />
+                        {isRawMathHtmlQuestion ? (
+                          <SanitizedQuestionHtml
+                            html={currentQuestion.rationale}
+                          />
+                        ) : (
+                          <MathText
+                            text={currentQuestion.rationale}
+                            mathExpressions={
+                              (currentQuestion as any).math_expressions || []
+                            }
+                            figures={(currentQuestion as any).figures || []}
+                          />
+                        )}
                       </div>
                     </motion.div>
                   )}

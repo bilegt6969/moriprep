@@ -19,12 +19,11 @@ interface MathPracticeConfig {
 }
 
 import {
-    mathAllSkills,
-    mathDomainSkills,
-    mathDomains,
+  mathAllSkills,
+  mathDomainSkills,
+  mathDomains,
 } from "@/lib/dsat/math-domain-skills";
 const allDifficulties = ["Easy", "Medium", "Hard"];
-const DEFAULT_TOTAL_QUESTIONS = 1925; // Updated based on actual math questions count
 
 const PILL_SELECTED = "bg-zinc-900 text-white shadow-md";
 const PILL_UNSELECTED =
@@ -94,7 +93,7 @@ export function MathPracticeConfigPopup({
             params.set("domain", selectedDomains.join(","));
           }
           if (selectedSkills.length > 0) {
-            params.set("skill", selectedSkills.join(","));
+            selectedSkills.forEach((skill) => params.append("skill[]", skill));
           }
           if (userId) {
             params.set("userId", userId);
@@ -123,7 +122,22 @@ export function MathPracticeConfigPopup({
           statusFilter === "all" &&
           attemptFilter === "all"
         ) {
-          setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
+          const response = await fetch(
+            "/api/questions?test=Math&count_only=true",
+            { signal: controller.signal },
+          );
+          if (!response.ok) {
+            throw new Error("Failed to load the total Math question count");
+          }
+          const data = await response.json();
+          if (
+            typeof data?.count !== "number" ||
+            !Number.isInteger(data.count) ||
+            data.count < 0
+          ) {
+            throw new Error("Math question count response is invalid");
+          }
+          setFilteredCount(data.count);
           return;
         }
 
@@ -172,8 +186,14 @@ export function MathPracticeConfigPopup({
               globalResponse && globalResponse.ok
                 ? await globalResponse.json()
                 : {};
-            const totalAvailable =
-              globalData.count ?? globalData.total ?? DEFAULT_TOTAL_QUESTIONS;
+            const totalAvailable = globalData.count ?? globalData.total;
+            if (
+              typeof totalAvailable !== "number" ||
+              !Number.isInteger(totalAvailable) ||
+              totalAvailable < 0
+            ) {
+              throw new Error("Global Math question count response is invalid");
+            }
             const finalCount = totalAvailable - count;
             setFilteredCount(Math.max(0, finalCount));
           } else {
@@ -191,15 +211,20 @@ export function MathPracticeConfigPopup({
           );
           if (!response.ok) throw new Error("Failed to load question stats");
           const data = await response.json();
-          setFilteredCount(data.count ?? data.total ?? DEFAULT_TOTAL_QUESTIONS);
-        } else {
-          setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
+          const count = data.count ?? data.total;
+          if (
+            typeof count !== "number" ||
+            !Number.isInteger(count) ||
+            count < 0
+          ) {
+            throw new Error("Filtered Math question count response is invalid");
+          }
+          setFilteredCount(count);
         }
       } catch (error) {
         if ((error as Error).name === "AbortError") return;
         console.error("Error fetching filtered count:", error);
         setCountIsStale(true);
-        setFilteredCount(DEFAULT_TOTAL_QUESTIONS);
       } finally {
         setIsLoadingCount(false);
       }

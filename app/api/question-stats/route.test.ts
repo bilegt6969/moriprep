@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import { readFileSync } from "fs";
+import path from "path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
@@ -18,6 +20,7 @@ vi.mock("firebase-admin/auth", () => ({
 // Mock file system
 vi.mock("fs", () => ({
   readFileSync: vi.fn(),
+  statSync: vi.fn(() => ({ mtimeMs: 1 })),
 }));
 
 describe("API: /api/question-stats", () => {
@@ -53,13 +56,47 @@ describe("API: /api/question-stats", () => {
     });
 
     it("should handle test parameter", async () => {
+      const commaContainingSkill =
+        "Ratios, rates, proportional relationships, and units";
+      const mathQuestions = [
+        {
+          domain: "Algebra",
+          skill: "Linear functions",
+          difficulty: "Easy",
+        },
+        {
+          domain: "Algebra",
+          skill: "Linear functions",
+          difficulty: "Hard",
+        },
+        {
+          domain: "Problem-Solving and Data Analysis",
+          skill: commaContainingSkill,
+          difficulty: "Medium",
+        },
+      ];
+      vi.mocked(readFileSync).mockReturnValueOnce(
+        JSON.stringify(mathQuestions),
+      );
+
       const request = new NextRequest(
         "http://localhost:3000/api/question-stats?test=Math",
       );
 
       const response = await GET(request);
+      const data = await response.json();
 
-      expect(response).toBeDefined();
+      expect(data).toEqual({ total: 3, count: 3 });
+      expect(readFileSync).toHaveBeenCalledWith(
+        path.join(process.cwd(), "public", "data", "math_questions.json"),
+        "utf8",
+      );
+
+      const filteredRequest = new NextRequest(
+        `http://localhost:3000/api/question-stats?test=Math&skill%5B%5D=${encodeURIComponent(commaContainingSkill)}`,
+      );
+      const filteredResponse = await GET(filteredRequest);
+      expect(await filteredResponse.json()).toEqual({ total: 1, count: 1 });
     });
   });
 

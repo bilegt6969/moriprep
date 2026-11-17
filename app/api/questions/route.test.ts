@@ -6,6 +6,7 @@ import { GET } from "./route";
 // Mock file system operations
 vi.mock("fs/promises", () => ({
   readFile: vi.fn(),
+  stat: vi.fn().mockResolvedValue({ mtimeMs: 1 }),
 }));
 
 // Sample test data

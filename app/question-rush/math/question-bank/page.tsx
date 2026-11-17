@@ -1,6 +1,7 @@
 "use client";
 
 import { MathText } from "@/components/MathText";
+import { SanitizedQuestionHtml } from "@/components/SanitizedQuestionHtml";
 import { SATMathQuestion } from "@/types/dsat";
 import { BookOpen, ChevronDown, Filter, Search, Tag } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -215,11 +216,15 @@ export default function MathQuestionBankPage() {
 
                   {/* Question Content */}
                   <div className="mb-4 text-gray-900">
-                    <MathText
-                      text={question.question}
-                      mathExpressions={question.math_expressions}
-                      figures={question.figures}
-                    />
+                    {question.source_file.startsWith("raw-math/") ? (
+                      <SanitizedQuestionHtml html={question.question} />
+                    ) : (
+                      <MathText
+                        text={question.question}
+                        mathExpressions={question.math_expressions}
+                        figures={question.figures}
+                      />
+                    )}
                   </div>
 
                   {/* Metadata */}

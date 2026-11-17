@@ -25,6 +25,10 @@ export interface Table {
 
 export interface DSATQuestion {
   question_id: string;
+  id?: number | null;
+  isLive?: boolean;
+  externalId?: string | null;
+  ibn?: string | null;
   assessment: string;
   test: string;
   domain: string;
@@ -84,6 +88,10 @@ export interface Figure extends MathExpression {
 
 export interface SATMathQuestion {
   question_id: string;
+  id?: number | null;
+  isLive?: boolean;
+  externalId?: string | null;
+  ibn?: string | null;
   assessment: string;
   test: string;
   domain: string;
@@ -91,12 +99,14 @@ export interface SATMathQuestion {
   difficulty: string;
   question_type: "mcq" | "spr"; // multiple choice or student-produced response
   question: string;
+  source_file: string;
   math_expressions: MathExpression[];
   has_figure: boolean;
   figures: Figure[];
   choices: {
     [key: string]: string;
   };
+  accepted_answers?: string[];
   correct_answer: string;
   correct_answer_text: string | null;
   rationale: string;

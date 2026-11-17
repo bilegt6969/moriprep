@@ -1,6 +1,6 @@
 import { handleAuthError, verifyAuthToken } from "@/lib/auth-verification";
 import { db, doc, getDoc } from "@/lib/firebase";
-import fs from "fs";
+import { readFileSync, statSync } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
@@ -14,6 +14,7 @@ let cachedLocalMathQuestions: any = null;
 let cachedLocalRWQuestions: any = null;
 let cachedMathIndex: any = null;
 let cachedRWIndex: any = null;
+let cachedMathModifiedAt: number | null = null;
 
 interface QuestionIndex {
   byDomain: Record<string, Set<number>>;
@@ -49,15 +50,22 @@ function buildQuestionIndex(questions: any[]): QuestionIndex {
 
 function loadLocalQuestions(testType: string) {
   if (testType === "Math") {
-    // Use cache if available
-    if (cachedLocalMathQuestions) {
+    const mathPath = path.join(
+      process.cwd(),
+      "public",
+      "data",
+      "math_questions.json",
+    );
+    const modifiedAt = statSync(mathPath).mtimeMs;
+    if (cachedLocalMathQuestions && cachedMathModifiedAt === modifiedAt) {
       log("Using cached math questions:", cachedLocalMathQuestions.length);
       return cachedLocalMathQuestions;
     }
-    const mathPath = path.join(process.cwd(), "math_questions.json");
-    const data = JSON.parse(fs.readFileSync(mathPath, "utf8"));
+
+    const data = JSON.parse(readFileSync(mathPath, "utf8"));
     cachedLocalMathQuestions = data;
     cachedMathIndex = buildQuestionIndex(data);
+    cachedMathModifiedAt = modifiedAt;
     log("Loaded and indexed local math questions:", data.length);
     return data;
   } else {
@@ -67,7 +75,7 @@ function loadLocalQuestions(testType: string) {
       return cachedLocalRWQuestions;
     }
     const rwPath = path.join(process.cwd(), "questions.json");
-    const data = JSON.parse(fs.readFileSync(rwPath, "utf8"));
+    const data = JSON.parse(readFileSync(rwPath, "utf8"));
     cachedLocalRWQuestions = data;
     cachedRWIndex = buildQuestionIndex(data);
     log("Loaded and indexed local RW questions:", data.length);
@@ -92,7 +100,10 @@ function parseListParam(searchParams: URLSearchParams, key: string): string[] {
   const comma = searchParams.get(key);
   const fromComma = comma ? comma.split(",").map((v) => v.trim()) : [];
   const repeated = searchParams.getAll(key).map((v) => v.trim());
-  return [...new Set([...fromComma, ...repeated])].filter(Boolean);
+  const exactRepeated = searchParams.getAll(`${key}[]`).map((v) => v.trim());
+  return [...new Set([...fromComma, ...repeated, ...exactRepeated])].filter(
+    Boolean,
+  );
 }
 
 /**

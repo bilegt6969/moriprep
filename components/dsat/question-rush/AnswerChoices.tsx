@@ -19,6 +19,7 @@ type AnswerChoicesProps = {
   onShowExplanation?: () => void;
   onToggleElimination?: (event: MouseEvent, key: string) => void;
   renderChoice?: (key: string, value: string) => ReactNode;
+  renderChoiceAsBlock?: boolean;
 };
 
 export default function AnswerChoices({
@@ -37,6 +38,7 @@ export default function AnswerChoices({
   onShowExplanation,
   onToggleElimination,
   renderChoice,
+  renderChoiceAsBlock = false,
 }: AnswerChoicesProps) {
   return (
     <div className="space-y-3">
@@ -46,10 +48,9 @@ export default function AnswerChoices({
         const isEliminated = eliminatedChoices.has(key);
         const isCorrect = key === correctAnswer;
         const hasAnswered = !!selectedAnswer;
-        const isLocked =
-          lockOnAnswer
-            ? hasAnswered
-            : hasAnswered && selectedAnswer === correctAnswer;
+        const isLocked = lockOnAnswer
+          ? hasAnswered
+          : hasAnswered && selectedAnswer === correctAnswer;
         const isWrongSelected = hasAnswered && isSelected && !isCorrect;
         const isRightAnswerShown = hasAnswered && isSelected && isCorrect;
         const isPreviouslyWrong = wrongAnswers.has(key);
@@ -110,11 +111,19 @@ export default function AnswerChoices({
               )}
             </div>
 
-            <span
-              className={`flex min-w-0 flex-1 font-serif text-[17px] leading-relaxed sm:text-[19px] ${textClass}`}
-            >
-              {renderChoice ? renderChoice(key, value) : value}
-            </span>
+            {renderChoiceAsBlock ? (
+              <div
+                className={`flex min-w-0 flex-1 font-serif text-[17px] leading-relaxed sm:text-[19px] ${textClass}`}
+              >
+                {renderChoice ? renderChoice(key, value) : value}
+              </div>
+            ) : (
+              <span
+                className={`flex min-w-0 flex-1 font-serif text-[17px] leading-relaxed sm:text-[19px] ${textClass}`}
+              >
+                {renderChoice ? renderChoice(key, value) : value}
+              </span>
+            )}
 
             {isHighlighted &&
               !isLocked &&

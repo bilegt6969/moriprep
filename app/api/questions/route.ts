@@ -1,10 +1,11 @@
-import { readFile } from "fs/promises";
+import { readFile, stat } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
 // Cache the questions data in memory to avoid repeated file reads
 let cachedRWQuestionsData: any = null;
 let cachedMathQuestionsData: any = null;
+let cachedMathQuestionsModifiedAt: number | null = null;
 let cachedOctoberSATData: any = null;
 let cachedOctoberSATMathData: any = null;
 let cachedAugustSATData: any = null;
@@ -186,26 +187,32 @@ async function loadQuestionsData(
   }
 
   if (testType === "Math") {
-    if (cachedMathQuestionsData === null) {
-      console.log("Loading math questions from /data/math_questions.json...");
-
-      try {
-        const filePath = path.join(
-          process.cwd(),
-          "public",
-          "data",
-          "math_questions.json",
-        );
-        const fileContent = await readFile(filePath, "utf-8");
-        cachedMathQuestionsData = JSON.parse(fileContent);
-        console.log(
-          "Math questions loaded and cached. Total questions:",
-          cachedMathQuestionsData.length,
-        );
-      } catch (error) {
-        console.error("Error loading math_questions.json:", error);
-        throw new Error("Failed to load math_questions.json from filesystem");
+    try {
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        "data",
+        "math_questions.json",
+      );
+      const { mtimeMs } = await stat(filePath);
+      if (
+        cachedMathQuestionsData !== null &&
+        cachedMathQuestionsModifiedAt === mtimeMs
+      ) {
+        return cachedMathQuestionsData;
       }
+
+      console.log("Loading math questions from /data/math_questions.json...");
+      const fileContent = await readFile(filePath, "utf-8");
+      cachedMathQuestionsData = JSON.parse(fileContent);
+      cachedMathQuestionsModifiedAt = mtimeMs;
+      console.log(
+        "Math questions loaded and cached. Total questions:",
+        cachedMathQuestionsData.length,
+      );
+    } catch (error) {
+      console.error("Error loading math_questions.json:", error);
+      throw new Error("Failed to load math_questions.json from filesystem");
     }
     return cachedMathQuestionsData;
   } else {
@@ -244,6 +251,10 @@ export async function GET(request: NextRequest) {
     const domain = searchParams.get("domain");
     const difficulty = searchParams.get("difficulty");
     const skill = searchParams.get("skill");
+    const exactSkills = searchParams
+      .getAll("skill[]")
+      .map((value) => value.trim())
+      .filter(Boolean);
     const limit = searchParams.get("limit");
     const offset = searchParams.get("offset");
     const question_id = searchParams.get("question_id");
@@ -410,8 +421,13 @@ export async function GET(request: NextRequest) {
         `Difficulty filter: ${difficulties.join(", ")} - Before: ${beforeFilter}, After: ${filtered.length}`,
       );
     }
-    if (skill) {
-      const skills = skill.split(",").map((s) => s.trim());
+    const skills = [
+      ...new Set([
+        ...(skill ? skill.split(",").map((s) => s.trim()) : []),
+        ...exactSkills,
+      ]),
+    ];
+    if (skills.length > 0) {
       const beforeFilter = filtered.length;
       filtered = filtered.filter((q: any) => skills.includes(q.skill));
       console.log(
